@@ -12,7 +12,5 @@
     "atom": ">=0.174.0 <2.0.0"
   },
   "dependencies": {
-    "script": "2.16.x",
-    "autocomplete-jedi": "1.2.x"
   }
 }
