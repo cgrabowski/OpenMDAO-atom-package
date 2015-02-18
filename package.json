@@ -6,7 +6,7 @@
   "activationCommands": {
     "atom-workspace": "openmdao-atom:toggle"
   },
-  "repository": "https://github.com/atom/openmdao-atom",
+  "repository": "https://github.com/swryan/openmdao-atom",
   "license": "MIT",
   "engines": {
     "atom": ">=0.174.0 <2.0.0"
