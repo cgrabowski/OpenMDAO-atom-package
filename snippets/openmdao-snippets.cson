@@ -1,13 +1,13 @@
 '.source.python':
   'New Component':
     'prefix': 'comp'
-    'body': 'class ${1:ComponentName}(Component):\n\t"""${2:$1 is a Component that calculates ${3:...}}"""\n\n\tdef execute(self):\n\t\t${4:pass}\n\n\tdef list_deriv_vars(self):\n\t\t${5:pass}\n\n\tdef provideJ(self):\n\t\t${6:pass}\n\n\n$0'
+    'body': 'class ${1:ComponentName}(Component):\n\t"""${2:$1 is a Component that calculates ${3:...}}"""\n\n\t# inputs\n\t${4:x} = ${5:Float}(${6:0.0}, iostatus=\'in\', desc=\'${7:description}\')\n\n\t# outputs\n\t${8:y} = ${9:Float}(${10:0.0}, iostatus=\'out\', desc=\'${11:description}\')\n\n\tdef execute(self):\n\t\t${12:self.x \= self.y}\n\n\tdef list_deriv_vars(self):\n\t\t${13:pass}\n\n\tdef provideJ(self):\n\t\t${14:pass}\n\n\n$0'
   'New Assembly':
     'prefix': 'assem'
     'body': 'class ${1:AssemblyName}(Assembly):\n\t"""${2:$1 is an Assembly that ${3:...}}"""\n\n\tdef configure(self):\n\t\t${4:self.add(\'${5:comp}\', ${6:constructor}())}\n\n\n$0'
   'New Component Class':
     'prefix': '(Component):'
-    'body': '(Component):\n\t"""${2:A Component that calculates ${3:...}}"""\n\n\tdef execute(self):\n\t\t${4:pass}\n\n\tdef list_deriv_vars(self):\n\t\t${5:pass}\n\n\tdef provideJ(self):\n\t\t${6:pass}\n\n\n$0'
+    'body': '(Component):\n\t"""${2:A Component that calculates ${3:...}}"""\n\n\t# inputs\n\t${4:x} = ${5:Float}(${6:0.0}, iostatus=\'in\', desc=\'${7:description}\')\n\n\t# outputs\n\t${8:y} = ${9:Float}(${10:0.0}, iostatus=\'out\', desc=\'${11:description}\')\n\n\tdef execute(self):\n\t\t${12:self.x \= self.y}\n\n\tdef list_deriv_vars(self):\n\t\t${13:pass}\n\n\tdef provideJ(self):\n\t\t${14:pass}\n\n\n$0'
   'New Assembly Class':
     'prefix': '(Assembly):'
     'body': '(Assembly):\n\t"""${2:An Assembly that ${3:...}}"""\n\n\tdef configure(self):\n\t\t${4:self.add(\'${5:comp}\', ${6:constructor}())}\n\n\n$0'
