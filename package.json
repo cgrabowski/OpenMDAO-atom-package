@@ -1,7 +1,7 @@
 {
   "name": "openmdao-atom",
   "main": "./lib/openmdao-atom",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Atom package with support for OpenMDAO",
   "activationCommands": {
     "atom-workspace": "openmdao-atom:toggle"
