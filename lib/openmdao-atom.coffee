@@ -1,33 +1,22 @@
-OpenmdaoAtomView = require './openmdao-atom-view'
-{CompositeDisposable} = require 'atom'
+# mirror autocomplete-plus-jedi functionality for openmdao specific suggestions
+
+cp = require 'child_process'
+OpenMDAOProvider = require './openmdao-provider'
 
 module.exports = OpenmdaoAtom =
-  openmdaoAtomView: null
-  modalPanel: null
-  subscriptions: null
+  provider: null
+  openmdaoServer: null
 
   activate: (state) ->
-    @openmdaoAtomView = new OpenmdaoAtomView(state.openmdaoAtomViewState)
-    @modalPanel = atom.workspace.addModalPanel(item: @openmdaoAtomView.getElement(), visible: false)
+    if !@openmdaoServer
+      projectPath = atom.project.getPath()
+      command = "python " + __dirname + "/openmdao-complete.py '" + projectPath + "'"
+      @openmdaoServer = cp.exec command
 
-    # Events subscribed to in atom's system can be easily cleaned up with a CompositeDisposable
-    @subscriptions = new CompositeDisposable
-
-    # Register command that toggles this view
-    @subscriptions.add atom.commands.add 'atom-workspace', 'openmdao-atom:toggle': => @toggle()
+    @provider = new OpenMDAOProvider()
 
   deactivate: ->
-    @modalPanel.destroy()
-    @subscriptions.dispose()
-    @openmdaoAtomView.destroy()
+    @openmdaoServer.kill()
 
-  serialize: ->
-    openmdaoAtomViewState: @openmdaoAtomView.serialize()
-
-  toggle: ->
-    console.log 'OpenmdaoAtom was toggled!'
-
-    if @modalPanel.isVisible()
-      @modalPanel.hide()
-    else
-      @modalPanel.show()
+  getProvider: ->
+    return {providers: [@provider]}

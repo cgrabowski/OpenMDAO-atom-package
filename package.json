@@ -3,13 +3,17 @@
   "main": "./lib/openmdao-atom",
   "version": "0.1.7",
   "description": "Atom package with support for OpenMDAO",
-  "activationCommands": {
-    "atom-workspace": "openmdao-atom:toggle"
-  },
   "repository": "https://github.com/swryan/openmdao-atom",
   "license": "MIT",
   "engines": {
     "atom": ">=0.174.0 <2.0.0"
+  },
+  "providedServices": {
+    "autocomplete.provider": {
+      "versions": {
+        "1.1.0": "getProvider"
+      }
+    }
   },
   "dependencies": {}
 }
