@@ -9,8 +9,6 @@ import time
 
 sys.path.append(os.path.realpath(__file__))
 
-import openmdao-util
-
 
 class http_completion(BaseHTTPRequestHandler):
     """
@@ -47,7 +45,7 @@ class http_completion(BaseHTTPRequestHandler):
 
 def run_server():
     """run the httpd"""
-    address = ('', 7777)
+    address = ('', 7776)
 
     while True:
         try:
@@ -75,20 +73,11 @@ def completions(source, line, column):
         list with dictionaries containing the name, docstring and description
         for all completions.
     """
-    script = openmdao-util.Script(
-        source=source,
-        line=line + 1,
-        column=column,
-    )
-
-    completions = list()
-
-    for completion in script.completions():
-        completions.append({
-            "name": completion.name,
-            "description": completion.description,
-            "docstring": completion.docstring(),
-        })
+    completions = [{
+        "name": "dummy",
+        "description": "desc",
+        "docstring": "docs",
+    }]
 
     return completions
 

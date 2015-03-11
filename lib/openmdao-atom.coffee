@@ -16,7 +16,8 @@ module.exports = OpenmdaoAtom =
     @provider = new OpenMDAOProvider()
 
   deactivate: ->
-    @openmdaoServer.kill()
+    if @openmdaoServer
+      @openmdaoServer.kill()
 
   getProvider: ->
     return {providers: [@provider]}
