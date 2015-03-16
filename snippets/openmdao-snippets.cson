@@ -11,3 +11,21 @@
   'New Assembly Class':
     'prefix': '(Assembly):'
     'body': '(Assembly):\n\t"""${2:An Assembly that ${3:...}}"""\n\n\tdef configure(self):\n\t\t${4:self.add(\'${5:comp}\', ${6:constructor}())}\n\n\n$0'
+  'New Float Variable':
+    'prefix': '= Float'
+    'body': '= Float(${1:0.0}, iotype=\'${2:in}\', desc=\'${3:description}\')\n\n$0'
+  'New Integer Variable':
+    'prefix': '= Int'
+    'body': '= Int(${1:0}, iotype=\'${2:in}\', desc=\'${3:description}\')\n\n$0'
+  'New Array Variable':
+    'prefix': '= Array'
+    'body': '= Array(${1:array([${2:0.0,0.0}])}, iotype=\'${3:in}\', desc=\'${4:description}\')\n\n$0'
+  'Float Constructor':
+    'prefix': 'Float('
+    'body': 'Float(${1:0.0}, iotype=\'${2:in}\', desc=\'${3:description}\'$0'
+  'Integer Constructor':
+    'prefix': 'Int('
+    'body': 'Int(${1:0}, iotype=\'${2:in}\', desc=\'${3:description}\'$0'
+  'Array Constructor':
+    'prefix': 'Array('
+    'body': 'Array(${1:array([${2:0.0,0.0}])}, iotype=\'${3:in}\', desc=\'${4:description}\'$0'
