@@ -1,31 +1,50 @@
 '.source.python':
   'New Component':
     'prefix': 'comp'
-    'body': 'class ${1:ComponentName}(Component):\n\t"""${2:$1 is a Component that calculates ${3:...}}"""\n\n\t# inputs\n\t${4:x} = ${5:Float}(${6:0.0}, iotype=\'in\', desc=\'${7:description}\')\n\n\t# outputs\n\t${8:y} = ${9:Float}(${10:0.0}, iotype=\'out\', desc=\'${11:description}\')\n\n\tdef execute(self):\n\t\t${12:self.y \= self.x}\n\n\t#def list_deriv_vars(self):\n\t\t#${13:pass}\n\n\t#def provideJ(self):\n\t\t#${14:pass}\n\n\n$0'
+    'body': 'class ${1:ComponentName}(Component):\n\t"""${2:$1 is a Component that calculates ${3:...}}"""\n\n\t# inputs\n\t${4:x} = ${5:Float}(${6:0.0}, iotype=\'in\', desc=\'${7:description}\')\n\n\t# outputs\n\t${8:y} = ${9:Float}(${10:0.0}, iotype=\'out\', desc=\'${11:description}\')\n\n\tdef execute(self):\n\t\t${12:self.y \= self.x}\n\n\t#def list_deriv_vars(self):\n\t\t#${13:pass}\n\n\t#def provideJ(self):\n\t\t#${14:pass}\n\n$0'
   'New Assembly':
     'prefix': 'assem'
-    'body': 'class ${1:AssemblyName}(Assembly):\n\t"""${2:$1 is an Assembly that ${3:...}}"""\n\n\tdef configure(self):\n\t\t${4:self.add(\'${5:comp}\', ${6:constructor}())}\n\n\n$0'
+    'body': 'class ${1:AssemblyName}(Assembly):\n\t"""${2:$1 is an Assembly that ${3:...}}"""\n\n\tdef configure(self):\n\t\t${4:self.add(\'${5:comp}\', ${6:constructor}())}\n\n$0'
   'New Component Class':
     'prefix': '(Component):'
-    'body': '(Component):\n\t"""${2:A Component that calculates ${3:...}}"""\n\n\t# inputs\n\t${4:x} = ${5:Float}(${6:0.0}, iotype=\'in\', desc=\'${7:description}\')\n\n\t# outputs\n\t${8:y} = ${9:Float}(${10:0.0}, iotype=\'out\', desc=\'${11:description}\')\n\n\tdef execute(self):\n\t\t${12:self.y \= self.x}\n\n\t#def list_deriv_vars(self):\n\t\t#${13:pass}\n\n\t#def provideJ(self):\n\t\t#${14:pass}\n\n\n$0'
+    'body': '(Component):\n\t"""${2:A Component that calculates ${3:...}}"""\n\n\t# inputs\n\t${4:x} = ${5:Float}(${6:0.0}, iotype=\'in\', desc=\'${7:description}\')\n\n\t# outputs\n\t${8:y} = ${9:Float}(${10:0.0}, iotype=\'out\', desc=\'${11:description}\')\n\n\tdef execute(self):\n\t\t${12:self.y \= self.x}\n\n\t#def list_deriv_vars(self):\n\t\t#${13:pass}\n\n\t#def provideJ(self):\n\t\t#${14:pass}\n\n$0'
   'New Assembly Class':
     'prefix': '(Assembly):'
-    'body': '(Assembly):\n\t"""${2:An Assembly that ${3:...}}"""\n\n\tdef configure(self):\n\t\t${4:self.add(\'${5:comp}\', ${6:constructor}())}\n\n\n$0'
-  'New Float Variable':
-    'prefix': '= Float'
-    'body': '= Float(${1:0.0}, iotype=\'${2:in}\', desc=\'${3:description}\')\n\n$0'
-  'New Integer Variable':
-    'prefix': '= Int'
-    'body': '= Int(${1:0}, iotype=\'${2:in}\', desc=\'${3:description}\')\n\n$0'
+    'body': '(Assembly):\n\t"""${2:An Assembly that ${3:...}}"""\n\n\tdef configure(self):\n\t\t${4:self.add(\'${5:comp}\', ${6:constructor}())}\n\n$0'
+
   'New Array Variable':
     'prefix': '= Array'
-    'body': '= Array(${1:array([${2:0.0,0.0}])}, iotype=\'${3:in}\', desc=\'${4:description}\')\n\n$0'
-  'Float Constructor':
-    'prefix': 'Float('
-    'body': 'Float(${1:0.0}, iotype=\'${2:in}\', desc=\'${3:description}\'$0'
-  'Integer Constructor':
-    'prefix': 'Int('
-    'body': 'Int(${1:0}, iotype=\'${2:in}\', desc=\'${3:description}\'$0'
-  'Array Constructor':
-    'prefix': 'Array('
-    'body': 'Array(${1:array([${2:0.0,0.0}])}, iotype=\'${3:in}\', desc=\'${4:description}\'$0'
+    'body': '= Array(${1:array([${2:0.0,0.0}])}, dtype=${3:float}, iotype=\'${4:in}\', desc=\'${5:description}\')\n$0'
+  'New Boolean Variable':
+    'prefix': '= Bool'
+    'body': '= Bool(${1:False}, iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
+  'New Complex Variable':
+    'prefix': '= Complex'
+    'body': '= Complex(${1:0.0}+${2:0}j, iotype=\'${3:in}\', desc=\'${4:description}\')\n$0'
+  'New Dict Variable':
+    'prefix': '= Dict'
+    'body': '= Dict(key_trait=${1:Int}, value_trait=${2:Float}, iotype=\'${3:in}\', desc=\'${4:description}\')\n$0'
+  'New Enum Variable':
+    'prefix': '= Enum'
+    'body': '= Enum(${1:1}, (${2:1, 2, 3}), iotype=\'${3:in}\', desc=\'${4:description}\')\n$0'
+  'New Float Variable':
+    'prefix': '= Float'
+    'body': '= Float(${1:0.0}, iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
+  'New File Variable':
+    'prefix': '= File'
+    'body': '= File(\'${1:filename}\', iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
+  'New Integer Variable':
+    'prefix': '= Int'
+    'body': '= Int(${1:0}, iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
+  'New List Variable':
+    'prefix': '= List'
+    'body': '= List(${1:[]}, iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
+  'New Slot Variable':
+    'prefix': '= Slot'
+    'body': '= Slot(${1:Component}, desc=\'${2:description}\', required=${3:True})\n$0'
+  'New String Variable':
+    'prefix': '= Str'
+    'body': '= Str(\'${1:}\', iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
+  'New VarTree Variable':
+    'prefix': '= VarTree'
+    'body': '= VarTree(${1:VariableTree}(), iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
