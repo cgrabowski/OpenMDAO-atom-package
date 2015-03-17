@@ -1,7 +1,7 @@
 {
   "name": "openmdao-atom",
   "main": "./lib/openmdao-atom",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Atom package with support for OpenMDAO",
   "repository": "https://github.com/swryan/openmdao-atom",
   "license": "MIT",
