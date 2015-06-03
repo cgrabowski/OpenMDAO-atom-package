@@ -1,12 +1,14 @@
 {
   "name": "openmdao-atom",
-  "main": "./lib/openmdao-atom",
-  "version": "0.1.10",
-  "description": "Atom package with support for OpenMDAO",
-  "repository": "https://github.com/swryan/openmdao-atom",
+  "main": "./lib/main.coffee",
+  "version": "0.0.1",
+  "description": "OpenMDAO Atom package",
+  "repository": "https://github.com/cgrabowski/openmdao-atom",
   "license": "MIT",
   "engines": {
     "atom": ">=0.174.0 <2.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "atom-space-pen-views": "^2.0.0"
+  }
 }

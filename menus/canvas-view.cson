@@ -1,0 +1,10 @@
+'menu': [
+  {
+    'label': 'View'
+    'submenu': [
+      {
+        'label': 'MDAO Visual', 'command': 'openmdao-atom:create'
+      }
+    ]
+  }
+]
