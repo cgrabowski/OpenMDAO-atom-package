@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <style>
+    div {
+      text-align: center;
+    }
+
+    rect {
+      stroke: #fff;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="chart"></div>
+  <script src="d3.min.js"></script>
+  <script>
+    window.onload = function() {
+
+      var w = 960,
+        h = 500,
+        x = d3.scale.linear().range([0, w]),
+        y = d3.scale.linear().range([0, h]),
+        color = d3.scale.ordinal().range(["rgb(255,247,236)", "rgb(254,232,200)", "rgb(253,212,158)", "rgb(253,187,132)", "rgb(252,141,89)", "rgb(239,101,72)", "rgb(215,48,31)", "rgb(179,0,0)", "rgb(127,0,0)"]);
+
+      var vis = d3.select("#chart").append("svg:svg")
+        .attr("width", w)
+        .attr("height", h);
+
+      var partition = d3.layout.partition()
+        .children(function(d) {
+          return isNaN(d.value) ? d3.entries(d.value) : null;
+        })
+        .value(function(d) {
+          return d.value;
+        });
+
+      var data = {
+        'root': {
+
+          'asdf': {
+            'a': {
+              'kdjfklsfj': 1,
+              'kdjfklsfsj': 1
+            },
+            'b': 1
+          },
+
+          'bnm': {
+            'c': 1,
+            'd': {
+              'lsdkjfdkljsf': {
+                'lsdkfj': 1,
+                'kldsjfdlk': 1
+              },
+              'kdjfkjsdfk': 1
+            }
+          }
+
+        }
+      };
+
+      var rect = vis.selectAll("rect")
+        .data(partition(d3.entries(data)[0]))
+        .enter().append("svg:rect")
+        .attr("x", function(d) {
+          return x(d.x);
+        })
+        .attr("y", function(d) {
+          return y(d.y);
+        })
+        .attr("width", function(d) {
+          return x(d.dx);
+        })
+        .attr("height", function(d) {
+          return y(d.dy);
+        })
+        .attr("fill", function(d) {
+          console.log(d);
+          return color((d.children ? d : d.parent).key);
+        })
+        .on("click", click);
+
+      function click(d) {
+        x.domain([d.x, d.x + d.dx]);
+        y.domain([d.y, 1]).range([d.y ? 20 : 0, h]);
+
+        rect.transition()
+          .duration(750)
+          .attr("x", function(d) {
+            return x(d.x);
+          })
+          .attr("y", function(d) {
+            return y(d.y);
+          })
+          .attr("width", function(d) {
+            return x(d.x + d.dx) - x(d.x);
+          })
+          .attr("height", function(d) {
+            return y(d.y + d.dy) - y(d.y);
+          });
+      }
+    }
+  </script>
+</body>
+
+</html>
