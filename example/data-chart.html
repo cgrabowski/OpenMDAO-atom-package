@@ -22,8 +22,11 @@
 
       var ww = window.innerWidth;
       var wh = window.innerHeight;
-      var x = d3.scale.linear().range([0, ww]);
-      var y = d3.scale.linear().range([0, wh]);
+      var numLeaves = countLeaves(data);
+      var cw = ww * 0.9;
+      var ch = wh * 0.9;
+      var x = d3.scale.linear().range([0, cw]);
+      var y = d3.scale.linear().range([0, ch]);
 
       var color = d3.scale.ordinal()
         .range([
@@ -39,8 +42,8 @@
         ]);
 
       var vis = d3.select("#chart").append("svg:svg")
-        .attr("width", ww)
-        .attr("height", wh);
+        .attr("width", cw)
+        .attr("height", ch);
 
       var partition = d3.layout.partition()
         .children(getChildren)
@@ -64,7 +67,8 @@
         .attr("x", deltaX)
         .attr("y", deltaY)
         .attr('font-size', deltaText)
-        .text(getText);
+        .text(getText)
+        .each(hideTinyText);
 
       var allTags = vis.selectAll('g, rect, text');
       allTags.on('click', click);
@@ -73,7 +77,7 @@
         var wh = window.innerHeight;
 
         x.domain([d.x, d.x + d.dx]);
-        y.domain([d.y, 1]).range([d.y ? 20 : 0, wh]);
+        y.domain([d.y, 1]).range([d.y ? 20 : 0, ch]);
 
         allTags.transition()
           .duration(750)
@@ -82,7 +86,8 @@
           .attr("width", deltaWidth)
           .attr("height", deltaHeight)
           .filter('text')
-          .attrTween('font-size', interpolateText);
+          .attrTween('font-size', interpolateText)
+          .each('end', hideTinyText);
       }
 
       function deltaX(d) {
@@ -102,12 +107,13 @@
       }
 
       function deltaText(d) {
+        d.value
         var wh = window.innerHeight;
         return 32 * wh / (wh + 2 * y(d.y));
       }
 
       function getValue(d) {
-        return d.value;
+        return 1;
       }
 
       function getText(d) {
@@ -120,15 +126,33 @@
         return d3.interpolate(attrValue, newSize);
       }
 
+      function hideTinyText(d, i, attrValue) {
+        var y = parseInt(this.getAttribute('y'));
+        this.style.visibility = (y > 500) ? 'hidden' : 'visible';
+      }
+
       function fill(d) {
-        //console.log(d);
         return color((d.children ? d : d.parent).key);
       }
 
       function getChildren(d) {
-        // If value is not a plain object, then it is treated as a leaf.
         return d.value.constructor.name === 'Object' ? d3.entries(d.value) : null;
       }
+
+      function countLeaves(obj, count) {
+        count = count || 0;
+
+        for (var key in obj) {
+          if (obj[key].constructor.name === 'Object') {
+            count = countLeaves(obj[key], count);
+          } else {
+            ++count;
+          }
+        }
+
+        return count;
+      }
+
     }
 
     var data = {
@@ -308,6 +332,7 @@
             }
           }
         },
+        /*
         "init_prod": {
           "init_prod:init_prod_amounts": {
             "shape": [3],
@@ -316,15 +341,15 @@
             "size": 3
           }
         },
-        //"temp": {
-        //  "temp:T": {
-        //    "units": "degK",
-        //    "shape": 1,
-        //    "relative_name": "T",
-        //    "val": 4000.0,
-        //    "size": 1
-        //  }
-        //},
+        "temp": {
+          "temp:T": {
+            "units": "degK",
+            "shape": 1,
+            "relative_name": "T",
+            "val": 4000.0,
+            "size": 1
+          }
+        },
         "pressure": {
           "pressure:P": {
             "shape": 1,
@@ -342,6 +367,7 @@
             "size": 1
           }
         }
+        */
       }
     };
   </script>
