@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <meta charset="utf-8">
+  <meta charset='utf-8'>
   <style>
     div {
       text-align: center;
@@ -15,35 +15,34 @@
 </head>
 
 <body>
-  <div id="chart"></div>
-  <script src="d3.min.js"></script>
+  <div id='chart'></div>
+  <script src='d3.min.js'></script>
   <script>
     window.onload = function() {
 
       var ww = window.innerWidth;
       var wh = window.innerHeight;
       var numLeaves = countLeaves(data);
-      var cw = ww * 0.9;
-      var ch = wh * 0.9;
+      var cw = ww * 0.97;
+      var ch = wh * 0.97;
       var x = d3.scale.linear().range([0, cw]);
       var y = d3.scale.linear().range([0, ch]);
 
       var color = d3.scale.ordinal()
         .range([
-          "rgb(255,247,236)",
-          "rgb(254,232,200)",
-          "rgb(253,212,158)",
-          "rgb(253,187,132)",
-          "rgb(252,141,89)",
-          "rgb(239,101,72)",
-          "rgb(215,48,31)",
-          "rgb(179,0,0)",
-          "rgb(127,0,0)"
+          'rgb(254,232,200)',
+          'rgb(253,212,158)',
+          'rgb(253,187,132)',
+          'rgb(252,141,89)',
+          'rgb(239,101,72)',
+          'rgb(215,48,31)',
+          'rgb(179,0,0)',
+          'rgb(127,0,0)'
         ]);
 
-      var vis = d3.select("#chart").append("svg:svg")
-        .attr("width", cw)
-        .attr("height", ch);
+      var vis = d3.select('#chart').append('svg:svg')
+        .attr('width', cw)
+        .attr('height', ch);
 
       var partition = d3.layout.partition()
         .children(getChildren)
@@ -51,23 +50,25 @@
 
       var groups = vis.selectAll('g').data(partition(d3.entries(data)[0]))
         .enter().append('svg:g')
-        .attr("x", deltaX)
-        .attr("y", deltaY)
-        .attr("width", deltaWidth)
-        .attr("height", deltaHeight);
+        .attr('x', deltaX)
+        .attr('y', deltaY)
+        .attr('width', deltaWidth)
+        .attr('height', deltaHeight);
 
       var rects = groups.append('svg:rect')
-        .attr("x", deltaX)
-        .attr("y", deltaY)
-        .attr("width", deltaWidth)
-        .attr("height", deltaHeight)
-        .attr("fill", fill);
+        .attr('x', deltaX)
+        .attr('y', deltaY)
+        .attr('width', deltaWidth)
+        .attr('height', deltaHeight)
+        .attr('fill', fill);
 
       var texts = groups.append('svg:text')
-        .attr("x", deltaX)
-        .attr("y", deltaY)
         .attr('font-size', deltaText)
         .text(getText)
+        // x and y attrs must be last so they run
+        // after the bouding box has been computed
+        .attr('x', deltaX)
+        .attr('y', deltaY)
         .each(hideTinyText);
 
       var allTags = vis.selectAll('g, rect, text');
@@ -81,21 +82,51 @@
 
         allTags.transition()
           .duration(750)
-          .attr("x", deltaX)
-          .attr("y", deltaY)
-          .attr("width", deltaWidth)
-          .attr("height", deltaHeight)
+          .attr('x', deltaX)
+          .attr('y', deltaY)
+          .attr('width', deltaWidth)
+          .attr('height', deltaHeight)
           .filter('text')
           .attrTween('font-size', interpolateText)
           .each('end', hideTinyText);
+
       }
 
       function deltaX(d) {
-        return x(d.x);
+        var newX = 0;
+        var xform = this.getAttribute('transform');
+
+        if (this.nodeName === 'text' && xform != null && xform === 'rotate(90)') {
+          newX = x(d.x);
+
+        } else if (this.nodeName === 'text') {
+          var bb = this.getBBox();
+          //console.log(bb.width);
+          newX = x(d.x) + deltaWidth(d) / 2 - bb.width / 2;
+
+        } else {
+          newX = x(d.x);
+        }
+
+        return newX;
       }
 
       function deltaY(d) {
-        return y(d.y);
+        var newY = 0;
+        var xform = this.getAttribute('transform');
+
+        if (this.nodeName === 'text' && xform != null && xform === 'rotate(90)') {
+          newY = y(d.y);
+
+        } else if (this.nodeName === 'text') {
+          var bb = this.getBBox();
+          newY = y(d.y) + bb.height;
+
+        } else {
+          newY = y(d.y);
+        }
+
+        return newY;
       }
 
       function deltaWidth(d) {
@@ -123,12 +154,24 @@
       function interpolateText(d, i, attrValue) {
         var wh = window.innerHeight;
         var newSize = deltaText(d);
+        var xform = this.getAttribute('transform');
+
         return d3.interpolate(attrValue, newSize);
       }
 
       function hideTinyText(d, i, attrValue) {
+        var x = parseInt(this.getAttribute('x'));
         var y = parseInt(this.getAttribute('y'));
-        this.style.visibility = (y > 500) ? 'hidden' : 'visible';
+
+        if (y > 400) {
+          this.setAttribute('x', 0);
+          this.setAttribute('y', 0);
+          this.setAttribute('transform', (y > 400) ? 'rotate(90)' : 'rotate(0)');
+          this.setAttribute('x', y);
+          this.setAttribute('y', -x);
+        } else {
+          this.setAttribute('transform', 'rotate(0)');
+        }
       }
 
       function fill(d) {
@@ -157,214 +200,214 @@
 
     var data = {
       'root': {
-        "chem_eq": {
-          "n2ls": {
-            "chem_eq:n2ls:rhs": {
-              "relative_name": "rhs",
-              "shape": [3],
-              "size": 3,
-              "val": [0.0, 0.0, 0.0],
-              "desc": "Right-hand side of resulting system"
+        'chem_eq': {
+          'n2ls': {
+            'chem_eq:n2ls:rhs': {
+              'relative_name': 'rhs',
+              'shape': [3],
+              'size': 3,
+              'val': [0.0, 0.0, 0.0],
+              'desc': 'Right-hand side of resulting system'
             },
-            "chem_eq:n2ls:mu": {
-              "val": [0.0, 0.0, 0.0],
-              "relative_name": "mu",
-              "shape": [3],
-              "units": "cal/(g*mol)",
-              "desc": "Chemical Potential per Kilogram-mole of species j",
-              "size": 3
+            'chem_eq:n2ls:mu': {
+              'val': [0.0, 0.0, 0.0],
+              'relative_name': 'mu',
+              'shape': [3],
+              'units': 'cal/(g*mol)',
+              'desc': 'Chemical Potential per Kilogram-mole of species j',
+              'size': 3
             },
-            "chem_eq:n2ls:ch": {
-              "relative_name": "ch",
-              "shape": [3, 3],
-              "size": 9,
-              "val": [
+            'chem_eq:n2ls:ch': {
+              'relative_name': 'ch',
+              'shape': [3, 3],
+              'size': 9,
+              'val': [
                 [0.0, 0.0, 0.0],
                 [0.0, 0.0, 0.0],
                 [0.0, 0.0, 0.0]
               ],
-              "desc": "Left-hand side of resulting system"
+              'desc': 'Left-hand side of resulting system'
             },
-            "chem_eq:n2ls:b": {
-              "relative_name": "b",
-              "shape": [2],
-              "size": 2,
-              "val": [0.0, 0.0],
-              "desc": "assigned kg-atoms of element i per total kg of reactant"
+            'chem_eq:n2ls:b': {
+              'relative_name': 'b',
+              'shape': [2],
+              'size': 2,
+              'val': [0.0, 0.0],
+              'desc': 'assigned kg-atoms of element i per total kg of reactant'
             },
-            "chem_eq:n2ls:b0": {
-              "relative_name": "b0",
-              "shape": [2],
-              "size": 2,
-              "val": [0.0, 0.0],
-              "desc": "assigned kg-atoms of element i per total kg of reactant for the initial prod amounts"
+            'chem_eq:n2ls:b0': {
+              'relative_name': 'b0',
+              'shape': [2],
+              'size': 2,
+              'val': [0.0, 0.0],
+              'desc': 'assigned kg-atoms of element i per total kg of reactant for the initial prod amounts'
             }
           },
-          "ls2pi": {
-            "chem_eq:ls2pi:x": {
-              "shape": [3],
-              "relative_name": "x",
-              "state": true,
-              "val": [0.0, 0.0, 0.0],
-              "size": 3
+          'ls2pi': {
+            'chem_eq:ls2pi:x': {
+              'shape': [3],
+              'relative_name': 'x',
+              'state': true,
+              'val': [0.0, 0.0, 0.0],
+              'size': 3
             }
           },
-          "pi2n": {
-            "chem_eq:pi2n:dLn": {
-              "relative_name": "dLn",
-              "shape": [4],
-              "size": 4,
-              "val": [0.0, 0.0, 0.0, 0.0],
-              "desc": "Kilogram-moles of species j per kg mixture last element:             Kilogram-moles of mixture per unit mass"
+          'pi2n': {
+            'chem_eq:pi2n:dLn': {
+              'relative_name': 'dLn',
+              'shape': [4],
+              'size': 4,
+              'val': [0.0, 0.0, 0.0, 0.0],
+              'desc': 'Kilogram-moles of species j per kg mixture last element:             Kilogram-moles of mixture per unit mass'
             }
           },
-          "next_n": {
-            "chem_eq:next_n:lambdaf": {
-              "relative_name": "lambdaf",
-              "shape": 1,
-              "size": 1,
-              "val": 1.0,
-              "desc": "adaptive under-relaxation factor"
+          'next_n': {
+            'chem_eq:next_n:lambdaf': {
+              'relative_name': 'lambdaf',
+              'shape': 1,
+              'size': 1,
+              'val': 1.0,
+              'desc': 'adaptive under-relaxation factor'
             },
-            "chem_eq:next_n:n": {
-              "val": [0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.1],
-              "state": true,
-              "relative_name": "n",
-              "shape": [4],
-              "desc": "computed value of the next iterate for n",
-              "size": 4
+            'chem_eq:next_n:n': {
+              'val': [0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.1],
+              'state': true,
+              'relative_name': 'n',
+              'shape': [4],
+              'desc': 'computed value of the next iterate for n',
+              'size': 4
             }
           }
         },
-        "props": {
-          "TP2ls": {
-            "props:TP2ls:rhs_T": {
-              "relative_name": "rhs_T",
-              "shape": [3],
-              "size": 3,
-              "val": [0.0, 0.0, 0.0],
-              "desc": "rhs for the T solve"
+        'props': {
+          'TP2ls': {
+            'props:TP2ls:rhs_T': {
+              'relative_name': 'rhs_T',
+              'shape': [3],
+              'size': 3,
+              'val': [0.0, 0.0, 0.0],
+              'desc': 'rhs for the T solve'
             },
-            "props:TP2ls:rhs_P": {
-              "relative_name": "rhs_P",
-              "shape": [3],
-              "size": 3,
-              "val": [0.0, 0.0, 0.0],
-              "desc": "rhs for the P solve"
+            'props:TP2ls:rhs_P': {
+              'relative_name': 'rhs_P',
+              'shape': [3],
+              'size': 3,
+              'val': [0.0, 0.0, 0.0],
+              'desc': 'rhs for the P solve'
             },
-            "props:TP2ls:lhs_TP": {
-              "relative_name": "lhs_TP",
-              "shape": [3, 3],
-              "size": 9,
-              "val": [
+            'props:TP2ls:lhs_TP': {
+              'relative_name': 'lhs_TP',
+              'shape': [3, 3],
+              'size': 9,
+              'val': [
                 [0.0, 0.0, 0.0],
                 [0.0, 0.0, 0.0],
                 [0.0, 0.0, 0.0]
               ],
-              "desc": "A matrix for the totals linear solve"
+              'desc': 'A matrix for the totals linear solve'
             }
           },
-          "ls2t": {
-            "props:ls2t:x": {
-              "shape": [3],
-              "relative_name": "x",
-              "state": true,
-              "val": [0.0, 0.0, 0.0],
-              "size": 3
+          'ls2t': {
+            'props:ls2t:x': {
+              'shape': [3],
+              'relative_name': 'x',
+              'state': true,
+              'val': [0.0, 0.0, 0.0],
+              'size': 3
             }
           },
-          "ls2p": {
-            "props:ls2p:x": {
-              "shape": [3],
-              "relative_name": "x",
-              "state": true,
-              "val": [0.0, 0.0, 0.0],
-              "size": 3
+          'ls2p': {
+            'props:ls2p:x': {
+              'shape': [3],
+              'relative_name': 'x',
+              'state': true,
+              'val': [0.0, 0.0, 0.0],
+              'size': 3
             }
           },
-          "tp2tot": {
-            "props:tp2tot:h": {
-              "val": 0.0,
-              "relative_name": "h",
-              "shape": 1,
-              "units": "cal/g",
-              "desc": "enthalpy",
-              "size": 1
+          'tp2tot': {
+            'props:tp2tot:h': {
+              'val': 0.0,
+              'relative_name': 'h',
+              'shape': 1,
+              'units': 'cal/g',
+              'desc': 'enthalpy',
+              'size': 1
             },
-            "props:tp2tot:S": {
-              "val": 0.0,
-              "relative_name": "S",
-              "shape": 1,
-              "units": "cal/(g*degK)",
-              "desc": "entropy",
-              "size": 1
+            'props:tp2tot:S': {
+              'val': 0.0,
+              'relative_name': 'S',
+              'shape': 1,
+              'units': 'cal/(g*degK)',
+              'desc': 'entropy',
+              'size': 1
             },
-            "props:tp2tot:gamma": {
-              "relative_name": "gamma",
-              "shape": 1,
-              "size": 1,
-              "val": 0.0,
-              "desc": "ratio of specific heats"
+            'props:tp2tot:gamma': {
+              'relative_name': 'gamma',
+              'shape': 1,
+              'size': 1,
+              'val': 0.0,
+              'desc': 'ratio of specific heats'
             },
-            "props:tp2tot:Cp": {
-              "val": 0.0,
-              "relative_name": "Cp",
-              "shape": 1,
-              "units": "cal/(g*degK)",
-              "desc": "Specific heat at constant pressure",
-              "size": 1
+            'props:tp2tot:Cp': {
+              'val': 0.0,
+              'relative_name': 'Cp',
+              'shape': 1,
+              'units': 'cal/(g*degK)',
+              'desc': 'Specific heat at constant pressure',
+              'size': 1
             },
-            "props:tp2tot:Cv": {
-              "val": 0.0,
-              "relative_name": "Cv",
-              "shape": 1,
-              "units": "cal/(g*degK)",
-              "desc": "Specific heat at constant volume",
-              "size": 1
+            'props:tp2tot:Cv': {
+              'val': 0.0,
+              'relative_name': 'Cv',
+              'shape': 1,
+              'units': 'cal/(g*degK)',
+              'desc': 'Specific heat at constant volume',
+              'size': 1
             },
-            "props:tp2tot:rho": {
-              "val": 0.0,
-              "relative_name": "rho",
-              "shape": 1,
-              "units": "g/cm**3",
-              "desc": "density",
-              "size": 1
+            'props:tp2tot:rho': {
+              'val': 0.0,
+              'relative_name': 'rho',
+              'shape': 1,
+              'units': 'g/cm**3',
+              'desc': 'density',
+              'size': 1
             }
           }
         },
         /*
-        "init_prod": {
-          "init_prod:init_prod_amounts": {
-            "shape": [3],
-            "relative_name": "init_prod_amounts",
-            "val": [0.022722108611679163, 0.0, 0.0],
-            "size": 3
+        'init_prod': {
+          'init_prod:init_prod_amounts': {
+            'shape': [3],
+            'relative_name': 'init_prod_amounts',
+            'val': [0.022722108611679163, 0.0, 0.0],
+            'size': 3
           }
         },
-        "temp": {
-          "temp:T": {
-            "units": "degK",
-            "shape": 1,
-            "relative_name": "T",
-            "val": 4000.0,
-            "size": 1
+        'temp': {
+          'temp:T': {
+            'units': 'degK',
+            'shape': 1,
+            'relative_name': 'T',
+            'val': 4000.0,
+            'size': 1
           }
         },
-        "pressure": {
-          "pressure:P": {
-            "shape": 1,
-            "relative_name": "P",
-            "val": 1.03421,
-            "size": 1
+        'pressure': {
+          'pressure:P': {
+            'shape': 1,
+            'relative_name': 'P',
+            'val': 1.03421,
+            'size': 1
           }
         },
-        "stupid_english_units": {
-          "stupid_english_units:T_eng": {
-            "units": "degR",
-            "shape": 1,
-            "relative_name": "T_eng",
-            "val": 0.0,
-            "size": 1
+        'stupid_english_units': {
+          'stupid_english_units:T_eng': {
+            'units': 'degR',
+            'shape': 1,
+            'relative_name': 'T_eng',
+            'val': 0.0,
+            'size': 1
           }
         }
         */
