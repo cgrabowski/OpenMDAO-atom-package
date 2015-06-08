@@ -20,107 +20,114 @@
   <script>
     window.onload = function() {
 
-      var w = window.innerWidth,
-        h = window.innerHeight,
-        x = d3.scale.linear().range([0, w]),
-        y = d3.scale.linear().range([0, h]),
-        color = d3.scale.ordinal().range(["rgb(255,247,236)", "rgb(254,232,200)", "rgb(253,212,158)", "rgb(253,187,132)", "rgb(252,141,89)", "rgb(239,101,72)", "rgb(215,48,31)", "rgb(179,0,0)", "rgb(127,0,0)"]);
+      var ww = window.innerWidth;
+      var wh = window.innerHeight;
+      var x = d3.scale.linear().range([0, ww]);
+      var y = d3.scale.linear().range([0, wh]);
+
+      var color = d3.scale.ordinal()
+        .range([
+          "rgb(255,247,236)",
+          "rgb(254,232,200)",
+          "rgb(253,212,158)",
+          "rgb(253,187,132)",
+          "rgb(252,141,89)",
+          "rgb(239,101,72)",
+          "rgb(215,48,31)",
+          "rgb(179,0,0)",
+          "rgb(127,0,0)"
+        ]);
 
       var vis = d3.select("#chart").append("svg:svg")
-        .attr("width", w)
-        .attr("height", h);
+        .attr("width", ww)
+        .attr("height", wh);
 
       var partition = d3.layout.partition()
-        .children(function(d) {
-          // If value is not a plain object, then it is treated as a leaf.
-          return d.value.constructor.name === 'Object' ? d3.entries(d.value) : null;
-        })
-        .value(function(d) {
-          return d.value;
-        });
+        .children(getChildren)
+        .value(getValue);
 
-      var g = vis.selectAll('g').data(partition(d3.entries(data)[0]))
+      var groups = vis.selectAll('g').data(partition(d3.entries(data)[0]))
         .enter().append('svg:g')
-        .attr("x", function(d) {
-          return x(d.x);
-        })
-        .attr("y", function(d) {
-          return y(d.y);
-        })
-        .attr("width", function(d) {
-          //console.log(x(d.dx));
-          return x(d.dx);
-        })
-        .attr("height", function(d) {
-          return y(d.dy);
-        });
+        .attr("x", deltaX)
+        .attr("y", deltaY)
+        .attr("width", deltaWidth)
+        .attr("height", deltaHeight);
 
-      var rect = g.append('svg:rect')
-        .attr("x", function(d) {
-          return x(d.x);
-        })
-        .attr("y", function(d) {
-          return y(d.y);
-        })
-        .attr("width", function(d) {
-          //console.log(x(d.dx));
-          return x(d.dx);
-        })
-        .attr("height", function(d) {
-          return y(d.dy);
-        })
-        .attr("fill", function(d) {
-          //console.log(d);
-          return color((d.children ? d : d.parent).key);
-        });
+      var rects = groups.append('svg:rect')
+        .attr("x", deltaX)
+        .attr("y", deltaY)
+        .attr("width", deltaWidth)
+        .attr("height", deltaHeight)
+        .attr("fill", fill);
 
-      var text = g.append('svg:text')
-        .attr("x", function(d) {
-          return x(d.x + 0.003);
-        })
-        .attr("y", function(d) {
-          return y(d.y + 0.03);
-        })
-        .attr('font-size', function(d) {
-          var wh = window.innerHeight;
-          return 32 * wh / (wh + 2.0 * y(d.y));
-        })
-        .text(function(d) {
-          return d.key;
-        });
+      var texts = groups.append('svg:text')
+        .attr("x", deltaX)
+        .attr("y", deltaY)
+        .attr('font-size', deltaText)
+        .text(getText);
 
       var allTags = vis.selectAll('g, rect, text');
       allTags.on('click', click);
 
-      //console.log(allTags);
-
       function click(d) {
+        var wh = window.innerHeight;
+
         x.domain([d.x, d.x + d.dx]);
-        y.domain([d.y, 1]).range([d.y ? 20 : 0, h]);
+        y.domain([d.y, 1]).range([d.y ? 20 : 0, wh]);
 
         allTags.transition()
           .duration(750)
-          .attr("x", function(d) {
-            return x(d.x);
-          })
-          .attr("y", function(d) {
-            return y(d.y);
-          })
-          .attr("width", function(d) {
-            return x(d.x + d.dx) - x(d.x);
-          })
-          .attr("height", function(d) {
-            return y(d.y + d.dy) - y(d.y);
-          })
-          //.filter('text')
-          .attrTween('font-size', function(d, i, attrValue) {
-            var wh = window.innerHeight;
-            var newSize = 32 * wh / (wh + 2 * y(d.y));
-            return d3.interpolate(attrValue, newSize);
-          }).each('end', function(d) {
-            //this.setAttribute('font-size', (window.innerHeight - this.getAttribute('y')) / 20);
-          });
+          .attr("x", deltaX)
+          .attr("y", deltaY)
+          .attr("width", deltaWidth)
+          .attr("height", deltaHeight)
+          .filter('text')
+          .attrTween('font-size', interpolateText);
+      }
 
+      function deltaX(d) {
+        return x(d.x);
+      }
+
+      function deltaY(d) {
+        return y(d.y);
+      }
+
+      function deltaWidth(d) {
+        return x(d.x + d.dx) - x(d.x);
+      }
+
+      function deltaHeight(d) {
+        return y(d.y + d.dy) - y(d.y);
+      }
+
+      function deltaText(d) {
+        var wh = window.innerHeight;
+        return 32 * wh / (wh + 2 * y(d.y));
+      }
+
+      function getValue(d) {
+        return d.value;
+      }
+
+      function getText(d) {
+        return d.key;
+      }
+
+      function interpolateText(d, i, attrValue) {
+        var wh = window.innerHeight;
+        var newSize = deltaText(d);
+        return d3.interpolate(attrValue, newSize);
+      }
+
+      function fill(d) {
+        //console.log(d);
+        return color((d.children ? d : d.parent).key);
+      }
+
+      function getChildren(d) {
+        // If value is not a plain object, then it is treated as a leaf.
+        return d.value.constructor.name === 'Object' ? d3.entries(d.value) : null;
       }
     }
 
