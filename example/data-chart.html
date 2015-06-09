@@ -68,8 +68,7 @@
         // x and y attrs must be last so they run
         // after the bouding box has been computed
         .attr('x', deltaX)
-        .attr('y', deltaY)
-        //.each(rotateTinyText);
+        .attr('y', deltaY);
 
       var allTags = vis.selectAll('g, rect, text');
       allTags.on('click', click);
@@ -86,9 +85,7 @@
           .attr('y', deltaY)
           .attr('width', deltaWidth)
           .attr('height', deltaHeight)
-          .filter('text')
-          //.attrTween('font-size', interpolateText)
-          //.each('end', rotateTinyText);
+          .filter('text');
       }
 
       function deltaX(d) {
@@ -143,35 +140,14 @@
         return d.key;
       }
 
-      function interpolateText(d, i, attrValue) {
-        var wh = window.innerHeight;
-        var newSize = deltaText(d);
-        var xform = this.getAttribute('transform');
-
-        return d3.interpolate(attrValue, newSize);
-      }
-
-      function rotateTinyText(d, i, attrValue) {
-        var x = parseInt(this.getAttribute('x'));
-        var y = parseInt(this.getAttribute('y'));
-
-        if (y > 400) {
-          this.setAttribute('x', 0);
-          this.setAttribute('y', 0);
-          this.setAttribute('transform', (y > 400) ? 'rotate(90)' : 'rotate(0)');
-          this.setAttribute('x', y);
-          this.setAttribute('y', -x);
-        } else {
-          this.setAttribute('transform', 'rotate(0)');
-        }
-      }
-
       function fill(d) {
         return color((d.children ? d : d.parent).key);
       }
 
       function getChildren(d) {
-        return d.value.constructor.name === 'Object' ? d3.entries(d.value) : null;
+        return d3.entries(d.value).filter(function(ele, i, arr){
+          return ele.value.constructor.name === 'Object';
+        });
       }
 
       function countLeaves(obj, count) {
