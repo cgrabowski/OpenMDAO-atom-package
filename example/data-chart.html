@@ -18,27 +18,27 @@
   <div id='chart'></div>
   <script src='d3.min.js'></script>
   <script>
+    var ww = window.innerWidth;
+    var wh = window.innerHeight;
+    var numLeaves = countLeaves(data);
+    var cw = ww * 0.97;
+    var ch = wh * 0.97;
+    var rangeX = d3.scale.linear().range([0, cw]);
+    var rangeY = d3.scale.linear().range([0, ch]);
+
+    var color = d3.scale.ordinal()
+      .range([
+        'rgb(254,232,200)',
+        'rgb(253,212,158)',
+        'rgb(253,187,132)',
+        'rgb(252,141,89)',
+        'rgb(239,101,72)',
+        'rgb(215,48,31)',
+        'rgb(179,0,0)',
+        'rgb(127,0,0)'
+      ]);
+
     window.onload = function() {
-
-      var ww = window.innerWidth;
-      var wh = window.innerHeight;
-      var numLeaves = countLeaves(data);
-      var cw = ww * 0.97;
-      var ch = wh * 0.97;
-      var rangeX = d3.scale.linear().range([0, cw]);
-      var rangeY = d3.scale.linear().range([0, ch]);
-
-      var color = d3.scale.ordinal()
-        .range([
-          'rgb(254,232,200)',
-          'rgb(253,212,158)',
-          'rgb(253,187,132)',
-          'rgb(252,141,89)',
-          'rgb(239,101,72)',
-          'rgb(215,48,31)',
-          'rgb(179,0,0)',
-          'rgb(127,0,0)'
-        ]);
 
       var vis = d3.select('#chart').append('svg:svg')
         .attr('width', cw)
@@ -74,108 +74,110 @@
       var allTags = vis.selectAll('g, rect, text');
       allTags.on('click', click);
 
-      function click(d) {
-        var wh = window.innerHeight;
+    }
 
-        rangeX.domain([d.x, d.x + d.dx]);
-        rangeY.domain([d.y, 1]).range([d.y ? 20 : 0, ch]);
+    function click(d) {
+      var wh = window.innerHeight;
 
-        allTags.transition()
-          .duration(750)
-          .attr('x', deltaX)
-          .attr('y', deltaY)
-          .attr('width', deltaWidth)
-          .attr('height', deltaHeight)
-          .filter('text')
-          .each('end', hideOverflowingText);
+      rangeX.domain([d.x, d.x + d.dx]);
+      rangeY.domain([d.y, 1]).range([d.y ? 20 : 0, ch]);
+
+      allTags.transition()
+        .duration(750)
+        .attr('x', deltaX)
+        .attr('y', deltaY)
+        .attr('width', deltaWidth)
+        .attr('height', deltaHeight)
+        .filter('text')
+        .each('end', hideOverflowingText);
+
+      return false;
+    }
+
+    function deltaX(d) {
+      var newX = 0;
+      var xform = this.getAttribute('transform');
+
+      if (this.nodeName === 'text') {
+        var bb = this.getBBox();
+        //console.log(bb.width);
+        newX = rangeX(d.x) + deltaWidth(d) / 2 - bb.width / 2;
+
+      } else {
+        newX = rangeX(d.x);
       }
 
-      function deltaX(d) {
-        var newX = 0;
-        var xform = this.getAttribute('transform');
+      return newX;
+    }
 
-        if (this.nodeName === 'text') {
-          var bb = this.getBBox();
-          //console.log(bb.width);
-          newX = rangeX(d.x) + deltaWidth(d) / 2 - bb.width / 2;
+    function deltaY(d) {
+      var newY = 0;
 
+      if (this.nodeName === 'text') {
+        var bb = this.getBBox();
+        newY = rangeY(d.y) + bb.height;
+
+      } else {
+        newY = rangeY(d.y);
+      }
+
+      return newY;
+    }
+
+    function deltaWidth(d) {
+      return rangeX(d.x + d.dx) - rangeX(d.x);
+    }
+
+    function deltaHeight(d) {
+      return rangeY(d.y + d.dy) - rangeY(d.y);
+    }
+
+    function deltaText(d) {
+      var wh = window.innerHeight;
+      return 32 * wh / (wh + rangeY(d.y));
+    }
+
+    function getValue(d) {
+      return 1;
+    }
+
+    function getText(d) {
+      return d.key;
+    }
+
+    function hideOverflowingText(d) {
+      var gw = this.parentNode.getAttribute('width');
+      var tw = this.getBBox().width;
+
+      if (tw > gw - 10) {
+        this.style.visibility = 'hidden';
+      } else {
+        this.style.visibility = 'visible';
+      }
+    }
+
+    function fill(d) {
+      return color((d.children ? d : d.parent).key);
+    }
+
+    function getChildren(d) {
+      return d3.entries(d.value).filter(function(ele, i, arr) {
+        return ele.value.constructor.name === 'Object';
+      });
+    }
+
+    function countLeaves(obj, count) {
+      count = count || 0;
+
+      for (var key in obj) {
+        if (obj[key].constructor.name === 'Object') {
+          count = countLeaves(obj[key], count);
         } else {
-          newX = rangeX(d.x);
-        }
-
-        return newX;
-      }
-
-      function deltaY(d) {
-        var newY = 0;
-
-        if (this.nodeName === 'text') {
-          var bb = this.getBBox();
-          newY = rangeY(d.y) + bb.height;
-
-        } else {
-          newY = rangeY(d.y);
-        }
-
-        return newY;
-      }
-
-      function deltaWidth(d) {
-        return rangeX(d.x + d.dx) - rangeX(d.x);
-      }
-
-      function deltaHeight(d) {
-        return rangeY(d.y + d.dy) - rangeY(d.y);
-      }
-
-      function deltaText(d) {
-        var wh = window.innerHeight;
-        return 32 * wh / (wh + rangeY(d.y));
-      }
-
-      function getValue(d) {
-        return 1;
-      }
-
-      function getText(d) {
-        return d.key;
-      }
-
-      function hideOverflowingText(d) {
-        var gw = this.parentNode.getAttribute('width');
-        var tw = this.getBBox().width;
-
-        if (tw > gw - 10) {
-          this.style.visibility = 'hidden';
-        } else {
-          this.style.visibility = 'visible';
+          ++count;
         }
       }
 
-      function fill(d) {
-        return color((d.children ? d : d.parent).key);
-      }
-
-      function getChildren(d) {
-        return d3.entries(d.value).filter(function(ele, i, arr) {
-          return ele.value.constructor.name === 'Object';
-        });
-      }
-
-      function countLeaves(obj, count) {
-        count = count || 0;
-
-        for (var key in obj) {
-          if (obj[key].constructor.name === 'Object') {
-            count = countLeaves(obj[key], count);
-          } else {
-            ++count;
-          }
-        }
-
-        return count;
-      }
-
+      return count;
     }
 
     var data = {
