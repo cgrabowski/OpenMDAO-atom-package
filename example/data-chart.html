@@ -69,7 +69,7 @@
         // after the bouding box has been computed
         .attr('x', deltaX)
         .attr('y', deltaY)
-        .each(hideTinyText);
+        //.each(rotateTinyText);
 
       var allTags = vis.selectAll('g, rect, text');
       allTags.on('click', click);
@@ -87,19 +87,15 @@
           .attr('width', deltaWidth)
           .attr('height', deltaHeight)
           .filter('text')
-          .attrTween('font-size', interpolateText)
-          .each('end', hideTinyText);
-
+          //.attrTween('font-size', interpolateText)
+          //.each('end', rotateTinyText);
       }
 
       function deltaX(d) {
         var newX = 0;
         var xform = this.getAttribute('transform');
 
-        if (this.nodeName === 'text' && xform != null && xform === 'rotate(90)') {
-          newX = x(d.x);
-
-        } else if (this.nodeName === 'text') {
+        if (this.nodeName === 'text') {
           var bb = this.getBBox();
           //console.log(bb.width);
           newX = x(d.x) + deltaWidth(d) / 2 - bb.width / 2;
@@ -113,12 +109,8 @@
 
       function deltaY(d) {
         var newY = 0;
-        var xform = this.getAttribute('transform');
 
-        if (this.nodeName === 'text' && xform != null && xform === 'rotate(90)') {
-          newY = y(d.y);
-
-        } else if (this.nodeName === 'text') {
+        if (this.nodeName === 'text') {
           var bb = this.getBBox();
           newY = y(d.y) + bb.height;
 
@@ -159,7 +151,7 @@
         return d3.interpolate(attrValue, newSize);
       }
 
-      function hideTinyText(d, i, attrValue) {
+      function rotateTinyText(d, i, attrValue) {
         var x = parseInt(this.getAttribute('x'));
         var y = parseInt(this.getAttribute('y'));
 
