@@ -74,8 +74,8 @@
         .attr('y', deltaY)
         .each(hideOverflowingText);
 
-      svg.selectAll('g, rect, text').on('click', click);
-      svg.selectAll('g, rect, text').on('focus', focus);
+      svg.selectAll('g').on('click', click);
+      svg.selectAll('g').on('focus', focus);
     };
 
     function focus(d) {
@@ -88,14 +88,20 @@
       wh = window.innerHeight;
       cw = ww * CHART_SIZE_RATIO;
       ch = wh * CHART_SIZE_RATIO;
-      rangeX = d3.scale.linear().range([0, cw]);
-      rangeY = d3.scale.linear().range([0, ch]);
+      rangeX.range([0, cw]);
+      rangeY.range([0, ch]);
 
       changeView(1, focusedData);
     };
 
     function click(d) {
-      changeView(750, d);
+      var button = d3.event.button;
+      if (button === 0) {
+        changeView(750, d);
+
+      } else if (button === 1) {
+        console.log(d);
+      }
     }
 
     function changeView(duration, focusedData) {
