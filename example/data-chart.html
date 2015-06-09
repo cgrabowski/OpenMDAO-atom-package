@@ -68,7 +68,8 @@
         // x and y attrs must be last so they run
         // after the bouding box has been computed
         .attr('x', deltaX)
-        .attr('y', deltaY);
+        .attr('y', deltaY)
+        .each(hideOverflowingText);
 
       var allTags = vis.selectAll('g, rect, text');
       allTags.on('click', click);
@@ -85,7 +86,8 @@
           .attr('y', deltaY)
           .attr('width', deltaWidth)
           .attr('height', deltaHeight)
-          .filter('text');
+          .filter('text')
+          .each('end', hideOverflowingText);
       }
 
       function deltaX(d) {
@@ -127,9 +129,8 @@
       }
 
       function deltaText(d) {
-        d.value
         var wh = window.innerHeight;
-        return 32 * wh / (wh + 2 * y(d.y));
+        return 32 * wh / (wh + y(d.y));
       }
 
       function getValue(d) {
@@ -140,12 +141,23 @@
         return d.key;
       }
 
+      function hideOverflowingText(d) {
+        var gw = this.parentNode.getAttribute('width');
+        var tw = this.getBBox().width;
+
+        if (tw > gw - 10) {
+          this.style.visibility = 'hidden';
+        } else {
+          this.style.visibility = 'visible';
+        }
+      }
+
       function fill(d) {
         return color((d.children ? d : d.parent).key);
       }
 
       function getChildren(d) {
-        return d3.entries(d.value).filter(function(ele, i, arr){
+        return d3.entries(d.value).filter(function(ele, i, arr) {
           return ele.value.constructor.name === 'Object';
         });
       }
