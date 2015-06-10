@@ -82,9 +82,9 @@
         svg.selectAll('g').on('click', click);
         svg.selectAll('g').on('focus', focus);
 
-        groups.each(function(d){
-          if(d.key === 'root') {
-            console.log(d);
+        groups.each(function(d) {
+          if (d.key === 'root') {
+            //console.log(d);
           }
         });
       };
@@ -112,36 +112,101 @@
           changeView(750, datum);
 
         } else if (button === 1) {
-          var collapsing = d3.select(this);
-          collapsing.datumChildrenElements(datum);
-          collapsing.datumDescendantElements(datum);
+          var collapsing = d3.select(this)
+            .datumChildrenElements(datum)
+            .datumDescendantElements(datum)
+            .attr('class', 'collapsed');
 
-          collapsing.attr('class', 'collapsed');
+          var expanding = d3.selectAll('g').filter(function(d) {
+            return !this.classList.contains('collapsed');
+          });
 
-          datum.parent.children.forEach(function(d, i, arr) {
-            if (d !== datum) {
-              //collapsing[0].push(d.element);
-              //collapsing[0] = datumChildrenElements(d.element, collapsing[0]);
-              //collapsing[0] = datumDescendantElements(d, collapsing[0]);
+          //expanding.each(function(d) {
+          //  console.log(d);
+          //});
+
+          collapsing.each(function(d) {
+            if (this.nodeName === 'text') {
+              this.style.visibility = 'hidden';
+            }
+
+            d.dx = (d === datum) ? 10 / cw : 0;
+            var parent = datum;
+            while (parent.children != null) {
+              parent.children[0].dx = 10 / cw;
+              parent = parent.children[0];
+            }
+
+            d.x = datum.x;
+          });
+
+          var leaves = getDataLeaves();
+          var numExpandedLeaves = 0;
+          var numCollapsedAreas = 0;
+
+          leaves.forEach(function(d) {
+            if (d.element.classList.contains('collapsed')) {
+              if (d.dx !== 0) {
+                ++numCollapsedAreas;
+              }
+            } else {
+              ++numExpandedLeaves;
             }
           });
 
-          collapsing
-            .each(function(d) {
-              if (this.nodeName === 'text') {
-                this.style.visibility = 'hidden';
-              }
-            })
-            .transition()
-            .duration(750)
-            .attr('width', function(d) {
-              if (this.classList.contains('collapsed')) {
-                return 10;
-              } else {
+          var uncollapsedArea = cw - numCollapsedAreas * 10 / cw;
+          var leafdx = uncollapsedArea / numExpandedLeaves / uncollapsedArea;
 
-              }
-            })
-            .attr('x', datum.element.getAttribute('x'));
+          console.log(leafdx);
+
+          expanding.each(function(d) {
+            if (d.parent == null) {
+              return;
+            }
+            var len = getDataLeaves(d).length;
+            var numDescendantLeaves = (len > 0) ? len : 1;
+
+            d.dx = leafdx * numDescendantLeaves;
+
+          });
+
+          d3.selectAll('g').each(function(d) {
+            if (d.parent == null) {
+              return;
+            }
+            var laterals = getDataByDepth(d.depth);
+
+            laterals.sort(function(a, b) {
+              return a.x - b.x;
+            });
+            d.newX = 0;
+            var pos = laterals.indexOf(d);
+            for (var i = 0; i < pos; ++i) {
+              d.newX += laterals[i].dx;
+            }
+          }).each(function(d){
+            if(d.parent == null) {
+              return;
+            }
+            d.x = d.newX;
+            delete d.newX;
+            console.log(d);
+          });
+
+          svg.selectAll('g').each(function(d) {
+            if (d.key === 'root') {
+              //console.log(d);
+            }
+          });
+
+          svg.selectAll('g, rect, text').transition()
+            .duration(750)
+            .attr('x', deltaX)
+            .attr('y', deltaY)
+            .attr('width', deltaWidth)
+            .attr('height', deltaHeight)
+            .filter('text')
+            .each('end', hideOverflowingText);
         }
       }
 
@@ -191,10 +256,23 @@
         return this;
       }
 
-      function changeView(duration, focusedData) {
+      d3.selection.prototype.datumSiblingElements = function(datum) {
 
-        if (focusedData != null) {
-          var d = focusedData;
+        if (datum.parent != null) {
+          datum.parent.children.forEach(function(d, i, arr) {
+            if (d.element !== datum.element) {
+              this[0].push(d.element);
+            }
+          }, this);
+        }
+
+        return this;
+      }
+
+      function changeView(duration, focusedDatum) {
+
+        if (focusedDatum != null) {
+          var d = focusedDatum;
           rangeX.domain([d.x, d.x + d.dx]);
           rangeY.domain([d.y, 1]).range([d.y ? 20 : 0, ch]);
         }
@@ -281,18 +359,40 @@
         });
       }
 
-      function countLeaves(obj, count) {
-        count = count || 0;
+      function getDataByDepth(depth) {
+        var data = [];
 
-        for (var key in obj) {
-          if (obj[key].constructor.name === 'Object') {
-            count = countLeaves(obj[key], count);
-          } else {
-            ++count;
+        d3.selectAll('g').each(function(d) {
+          if (d.depth === depth) {
+            data.push(d);
           }
+        });
+
+        return data;
+      }
+
+      function getDataLeaves(datum) {
+        var leaves = [];
+        var selection;
+
+        if (datum == null) {
+          selection = d3.selectAll('g');
+
+        } else {
+          selection = d3.select(datum.element);
+          selection = selection.datumDescendantElements(datum)
+            .filter(function(d) {
+              return this.nodeName === 'g';
+            });
         }
 
-        return count;
+        selection.each(function(d) {
+          if (d.children == null) {
+            leaves.push(d);
+          }
+        });
+
+        return leaves;
       }
 
       var data = {
