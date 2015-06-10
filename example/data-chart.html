@@ -30,6 +30,7 @@
       var rangeY = d3.scale.linear().range([0, ch]);
       var focusedData = null;
       var svg;
+      var rootDatum;
 
       var color = d3.scale.ordinal()
         .range([
@@ -79,19 +80,29 @@
           .attr('y', deltaY)
           .each(hideOverflowingText);
 
-        svg.selectAll('g').on('click', click);
-        svg.selectAll('g').on('focus', focus);
-
         groups.each(function(d) {
           if (d.key === 'root') {
-            //console.log(d);
+            rootDatum = d;
           }
         });
-      };
 
-      function focus(d) {
-        focusedData = d;
-      }
+        var depth = 1;
+        var row = getDataByDepth(depth);
+        while (row.length > 0) {
+          row.sort(function(a, b) {
+              return a.x - b.x;
+            })
+            .forEach(function(ele, i, arr) {
+              ele.rowOrder = i;
+            });
+          row = getDataByDepth(++depth);
+        }
+
+        console.log(rootDatum);
+
+        svg.selectAll('g').on('focus', focus);
+        svg.selectAll('g').on('click', click);
+      };
 
       window.onresize = function() {
 
@@ -104,111 +115,6 @@
 
         changeView(1, focusedData);
       };
-
-      function click(datum) {
-        var button = d3.event.button;
-
-        if (button === 0) {
-          changeView(750, datum);
-
-        } else if (button === 1) {
-          var collapsing = d3.select(this)
-            .datumChildrenElements(datum)
-            .datumDescendantElements(datum)
-            .attr('class', 'collapsed');
-
-          var expanding = d3.selectAll('g').filter(function(d) {
-            return !this.classList.contains('collapsed');
-          });
-
-          //expanding.each(function(d) {
-          //  console.log(d);
-          //});
-
-          collapsing.each(function(d) {
-            if (this.nodeName === 'text') {
-              this.style.visibility = 'hidden';
-            }
-
-            d.dx = (d === datum) ? 10 / cw : 0;
-            var parent = datum;
-            while (parent.children != null) {
-              parent.children[0].dx = 10 / cw;
-              parent = parent.children[0];
-            }
-
-            d.x = datum.x;
-          });
-
-          var leaves = getDataLeaves();
-          var numExpandedLeaves = 0;
-          var numCollapsedAreas = 0;
-
-          leaves.forEach(function(d) {
-            if (d.element.classList.contains('collapsed')) {
-              if (d.dx !== 0) {
-                ++numCollapsedAreas;
-              }
-            } else {
-              ++numExpandedLeaves;
-            }
-          });
-
-          var uncollapsedArea = cw - numCollapsedAreas * 10 / cw;
-          var leafdx = uncollapsedArea / numExpandedLeaves / uncollapsedArea;
-
-          console.log(leafdx);
-
-          expanding.each(function(d) {
-            if (d.parent == null) {
-              return;
-            }
-            var len = getDataLeaves(d).length;
-            var numDescendantLeaves = (len > 0) ? len : 1;
-
-            d.dx = leafdx * numDescendantLeaves;
-
-          });
-
-          d3.selectAll('g').each(function(d) {
-            if (d.parent == null) {
-              return;
-            }
-            var laterals = getDataByDepth(d.depth);
-
-            laterals.sort(function(a, b) {
-              return a.x - b.x;
-            });
-            d.newX = 0;
-            var pos = laterals.indexOf(d);
-            for (var i = 0; i < pos; ++i) {
-              d.newX += laterals[i].dx;
-            }
-          }).each(function(d){
-            if(d.parent == null) {
-              return;
-            }
-            d.x = d.newX;
-            delete d.newX;
-            console.log(d);
-          });
-
-          svg.selectAll('g').each(function(d) {
-            if (d.key === 'root') {
-              //console.log(d);
-            }
-          });
-
-          svg.selectAll('g, rect, text').transition()
-            .duration(750)
-            .attr('x', deltaX)
-            .attr('y', deltaY)
-            .attr('width', deltaWidth)
-            .attr('height', deltaHeight)
-            .filter('text')
-            .each('end', hideOverflowingText);
-        }
-      }
 
       d3.selection.prototype.datumChildrenElements = function(datum) {
         var children = datum.element.children;
@@ -267,6 +173,200 @@
         }
 
         return this;
+      }
+
+      function click(datum) {
+        var button = d3.event.button;
+
+        if (button === 0) {
+          changeView(750, datum);
+
+        } else if (button === 1) {
+          if (this.classList.contains('collapsed')) {
+            expand(datum);
+          } else {
+            collapse(datum);
+          }
+        }
+      }
+
+      function focus(d) {
+        focusedData = d;
+      }
+
+      function expand(datum) {
+        var element = datum.element;
+        d3.select(element)
+          .datumChildrenElements(datum)
+          .datumDescendantElements(datum)
+          .classed('collapsed', false);
+
+        var expanding = d3.selectAll('g').filter(function(d) {
+          return !this.classList.contains('collapsed');
+        });
+
+        var leaves = getDataLeaves();
+        var numExpandedLeaves = 0;
+        var numCollapsedAreas = 0;
+
+        leaves.forEach(function(d) {
+          if (d.element.classList.contains('collapsed')) {
+            if (d.dx !== 0) {
+              ++numCollapsedAreas;
+            }
+          } else {
+            ++numExpandedLeaves;
+          }
+        });
+
+        var uncollapsedArea = cw - numCollapsedAreas * 10 / cw;
+        var leafdx = 1 / numExpandedLeaves;
+
+        expanding.each(function(d) {
+          if (d.parent == null) {
+            return;
+          }
+          var len = getDataLeaves(d).length;
+          var numDescendantLeaves = (len > 0) ? len : 1;
+
+          d.dx = leafdx * numDescendantLeaves;
+          //console.log(d);
+        });
+
+        d3.selectAll('g').each(function(d) {
+          if (d.parent == null) {
+            return;
+          }
+          var laterals = getDataByDepth(d.depth);
+
+          d.newX = 0;
+          var pos = laterals.indexOf(d);
+          for (var i = 0; i < pos; ++i) {
+            d.newX += laterals[i].dx;
+          }
+        }).each(function(d) {
+          if (d.parent == null) {
+            return;
+          }
+          d.x = d.newX;
+          delete d.newX;
+        });
+
+        svg.selectAll('g, rect, text').transition()
+          .duration(750)
+          .attr('x', deltaX)
+          .attr('y', deltaY)
+          .attr('width', deltaWidth)
+          .attr('height', deltaHeight)
+          .filter('text')
+          .each('end', hideOverflowingText);
+      }
+
+      function collapse(datum) {
+        if (datum === rootDatum) {
+          return;
+        }
+
+        var element = datum.element;
+        var collapsing = d3.select(element)
+          .datumDescendantElements(datum)
+          .attr('class', 'collapsed');
+
+        var expanding = d3.selectAll('g').filter(function(d) {
+          var isExpanding = true;
+          if (this.classList.contains('collapsed')) {
+            isExpanding = false;
+          }
+
+          return isExpanding;
+        });
+
+        collapsing.each(function(d) {
+          if (this.nodeName === 'text') {
+            this.style.visibility = 'hidden';
+          }
+          var ind = datum.children.indexOf(d);
+          d.dx = (d === datum) ? 10 / cw : 0;
+          d.x = datum.x;
+        });
+
+        var parent = datum;
+        while (parent.children != null) {
+          parent.children.forEach(function(ele, i, arr) {
+            ele.dx = (i === 0) ? 10 / cw : 0;
+          });
+          parent = parent.children[0];
+        }
+
+        var leaves = getDataLeaves();
+        var numExpandedLeaves = 0;
+        var numCollapsedAreas = 0;
+
+        leaves.forEach(function(d) {
+          if (d.element.classList.contains('collapsed')) {
+            if (d.dx !== 0) {
+              ++numCollapsedAreas;
+            }
+          } else {
+            ++numExpandedLeaves;
+          }
+        });
+
+        var uncollapsedArea = cw - numCollapsedAreas * 10 / cw;
+        var leafdx = 1 / numExpandedLeaves;
+
+        expanding.each(function(d) {
+          if (d.parent == null) {
+            return;
+          }
+
+          var leaves = getDataLeaves(d);
+          var numExpandedLeaves = leaves.filter(function(d, i, arr) {
+            return !d.element.classList.contains('collapsed');
+          }).length;
+
+          var numCollapsedAreas = 0;
+          if (d.children != null) {
+            numCollapsedAreas = d.children.filter(function(d, i, arr) {
+              return d.element.classList.contains('collapsed');
+            }).length;
+          }
+
+          console.log(d);
+          console.log(numExpandedLeaves + ', ' + numCollapsedAreas);
+          d.dx = leafdx * numExpandedLeaves + numCollapsedAreas * 10 / cw;
+        });
+
+        d3.selectAll('g').each(function(d) {
+          if (d.parent == null) {
+            return;
+          }
+          var laterals = getDataByDepth(d.depth);
+
+          laterals.sort(function(a, b) {
+            return a.x - b.x;
+          });
+          d.newX = 0;
+          var pos = laterals.indexOf(d);
+          for (var i = 0; i < pos; ++i) {
+            d.newX += laterals[i].dx;
+          }
+        }).each(function(d) {
+          if (d.parent == null) {
+            return;
+          }
+          d.x = d.newX;
+          delete d.newX;
+        });
+
+        svg.selectAll('g, rect, text').transition()
+          .duration(750)
+          .attr('x', deltaX)
+          .attr('y', deltaY)
+          .attr('width', deltaWidth)
+          .attr('height', deltaHeight)
+          .filter('text')
+          .each('end', hideOverflowingText);
       }
 
       function changeView(duration, focusedDatum) {
@@ -359,6 +459,18 @@
         });
       }
 
+      function sortData(datum, comparator) {
+        if (datum.children == null) {
+          return;
+        } else {
+          datum.children.sort(comparator)
+            .forEach(function(ele, i, arr) {
+              sortData(ele, comparator);
+            });
+        }
+      }
+
+      // returns all data at a particular depth in rowOrder
       function getDataByDepth(depth) {
         var data = [];
 
@@ -366,6 +478,8 @@
           if (d.depth === depth) {
             data.push(d);
           }
+        }).sort(function(a, b) {
+          return a.rowOrder - b.rowOrder;
         });
 
         return data;
