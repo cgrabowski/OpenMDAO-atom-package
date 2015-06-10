@@ -59,7 +59,7 @@
           .attr('y', deltaY)
           .attr('width', deltaWidth)
           .attr('height', deltaHeight)
-          .each(function(d){
+          .each(function(d) {
             d.element = this;
           });
 
@@ -81,6 +81,12 @@
 
         svg.selectAll('g').on('click', click);
         svg.selectAll('g').on('focus', focus);
+
+        groups.each(function(d){
+          if(d.key === 'root') {
+            console.log(d);
+          }
+        });
       };
 
       function focus(d) {
@@ -99,20 +105,96 @@
         changeView(1, focusedData);
       };
 
-      function click(d) {
+      function click(datum) {
         var button = d3.event.button;
+
         if (button === 0) {
-          changeView(750, d);
+          changeView(750, datum);
 
         } else if (button === 1) {
-          console.log(d);
+          var collapsing = d3.select(this);
+          collapsing.datumChildrenElements(datum);
+          collapsing.datumDescendantElements(datum);
+
+          collapsing.attr('class', 'collapsed');
+
+          datum.parent.children.forEach(function(d, i, arr) {
+            if (d !== datum) {
+              //collapsing[0].push(d.element);
+              //collapsing[0] = datumChildrenElements(d.element, collapsing[0]);
+              //collapsing[0] = datumDescendantElements(d, collapsing[0]);
+            }
+          });
+
+          collapsing
+            .each(function(d) {
+              if (this.nodeName === 'text') {
+                this.style.visibility = 'hidden';
+              }
+            })
+            .transition()
+            .duration(750)
+            .attr('width', function(d) {
+              if (this.classList.contains('collapsed')) {
+                return 10;
+              } else {
+
+              }
+            })
+            .attr('x', datum.element.getAttribute('x'));
         }
+      }
+
+      d3.selection.prototype.datumChildrenElements = function(datum) {
+        var children = datum.element.children;
+
+        if (children != null) {
+          for (var i = 0; i < children.length; ++i) {
+            this[0].push(children.item(i));
+          }
+        }
+
+        return this;
+      }
+
+      d3.selection.prototype.datumAncestorElements = function(datum) {
+        while (datum.parent != null) {
+          this[0].push(datum.parent.element);
+          datum = datum.parent;
+        }
+
+        return this;
+      }
+
+      d3.selection.prototype.datumDescendantElements = function(datum) {
+        var children = datum.children;
+
+        if (children != null) {
+          for (var i = 0; i < children.length; ++i) {
+            _pushd.call(this, children[i]);
+          }
+        }
+
+        function _pushd(datum) {
+          var children = datum.children;
+
+          this[0].push(datum.element);
+          this.datumChildrenElements(datum);
+
+          if (children != null) {
+            for (var i = 0; i < children.length; ++i) {
+              _pushd.call(this, children[i]);
+            }
+          }
+        }
+
+        return this;
       }
 
       function changeView(duration, focusedData) {
 
         if (focusedData != null) {
-          var d = focusedData || null;
+          var d = focusedData;
           rangeX.domain([d.x, d.x + d.dx]);
           rangeY.domain([d.y, 1]).range([d.y ? 20 : 0, ch]);
         }
