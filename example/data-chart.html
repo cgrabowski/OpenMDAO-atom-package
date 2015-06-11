@@ -18,9 +18,13 @@
   <div id='chart'></div>
   <script src='d3.min.js'></script>
   <script>
+    /*
+     * System hierarchy partition chart
+     */
     (function(d3, undefined) {
 
-      var CHART_SIZE_RATIO = 0.97;
+      var CHART_SIZE_RATIO = 0.97; // chart to window width/height ratio
+      var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
 
       var ww = window.innerWidth;
       var wh = window.innerHeight;
@@ -45,25 +49,32 @@
         ]);
 
       window.onload = function() {
-
+        // create an svg element and append to the container div
         svg = d3.select('#chart').append('svg:svg')
           .attr('width', cw)
           .attr('height', ch);
 
+        // create a partition layout and set the getChildren and getValue funcs
         var partition = d3.layout.partition()
           .children(getChildren)
           .value(getValue);
 
+        // create svg group elements that correspond to the data nodes
+        // and append them to the svg.
         var groups = svg.selectAll('g').data(partition(d3.entries(data)[0]))
           .enter().append('svg:g')
+          // set the functions that handle resizing and repositioning partitions
+          // for zooming, expading, and collapsing
           .attr('x', deltaX)
           .attr('y', deltaY)
           .attr('width', deltaWidth)
           .attr('height', deltaHeight)
+          // give each data node a reference to its corresponding svg group
           .each(function(d) {
             d.element = this;
           });
 
+        // create and append a visible rect for each svg group
         var rects = groups.append('svg:rect')
           .attr('x', deltaX)
           .attr('y', deltaY)
@@ -71,6 +82,7 @@
           .attr('height', deltaHeight)
           .attr('fill', fill);
 
+        // create and append a svg text element for each group
         var texts = groups.append('svg:text')
           .attr('font-size', deltaText)
           .text(getText)
@@ -80,12 +92,14 @@
           .attr('y', deltaY)
           .each(hideOverflowingText);
 
+        // set the rootDatum variable
         groups.each(function(d) {
           if (d.key === 'root') {
             rootDatum = d;
           }
         });
 
+        // set row order of data nodes by their screen x position
         var depth = 1;
         var row = getDataByDepth(depth);
         while (row.length > 0) {
@@ -98,25 +112,28 @@
           row = getDataByDepth(++depth);
         }
 
-        console.log(rootDatum);
-
+        // set event handlers
         svg.selectAll('g').on('focus', focus);
         svg.selectAll('g').on('click', click);
         svg.selectAll('g').on('contextmenu', click);
       };
 
+      // resize svg on window resize
       window.onresize = function() {
-
         ww = window.innerWidth;
         wh = window.innerHeight;
         cw = ww * CHART_SIZE_RATIO;
         ch = wh * CHART_SIZE_RATIO;
         rangeX.range([0, cw]);
         rangeY.range([0, ch]);
-
         transitionAll(1);
       };
 
+      /*
+       * extend the d3.selection prototype with some selection methods
+       */
+
+      // Adds svg elements of a datum's children to the selection
       d3.selection.prototype.datumChildrenElements = function(datum) {
         var children = datum.element.children;
 
@@ -129,6 +146,7 @@
         return this;
       }
 
+      // adds svg elements of a datum's ancestors to the selection
       d3.selection.prototype.datumAncestorElements = function(datum) {
         while (datum.parent != null) {
           this[0].push(datum.parent.element);
@@ -138,6 +156,7 @@
         return this;
       }
 
+      // adds svg elements of a datum's descendants to the selection
       d3.selection.prototype.datumDescendantElements = function(datum) {
         var children = datum.children;
 
@@ -163,6 +182,7 @@
         return this;
       }
 
+      // adds svg elements of a datum's siblings to the selection
       d3.selection.prototype.datumSiblingElements = function(datum) {
 
         if (datum.parent != null) {
@@ -176,10 +196,12 @@
         return this;
       }
 
+      // sets focusedDatum variable to the datum whose svg element has focus
       function focus(d) {
         focusedDatum = d;
       }
 
+      // initiates zooming, collapsing, and expanding
       function click(datum) {
         var button = d3.event.button;
 
@@ -191,16 +213,18 @@
           }
           transitionAll();
 
-        } else if (button === 1) {
+        } else if (button > 0) {
           if (this.classList.contains('collapsed')) {
             expand(datum);
           } else {
             collapse(datum);
           }
         }
-        //d3.event.preventDefault();
+        d3.event.preventDefault();
       }
 
+      // determines which elements need to be expanded and expands them
+      // repositions the rest of the elements as necessary
       function expand(datum) {
         d3.select(datum.element)
           .datumChildrenElements(datum)
@@ -230,6 +254,8 @@
         transitionAll();
       }
 
+      // determines which elements need to be collapsed and collapses them
+      // repositions the rest of the elements as necessary
       function collapse(datum) {
         if (datum === rootDatum) {
           return;
@@ -238,8 +264,6 @@
         var numNotCollapsed = getDataByDepth(datum.depth).filter(function(d, i, arr) {
           return !d.element.classList.contains('collapsed');
         }).length;
-
-        //console.log(numNotCollapsed);
 
         if (numNotCollapsed === 1) {
           return;
@@ -273,8 +297,8 @@
 
           d.dx = 0;
           var parent = datum;
-          while(parent.element.classList.contains('collapsed')) {
-            parent.dx = 10 / cw;
+          while (parent.element.classList.contains('collapsed')) {
+            parent.dx = COLLAPSED_SIZE_PIXELS / cw;
             parent = parent.parent;
           }
 
@@ -284,7 +308,7 @@
         var parent = datum;
         while (parent.children != null) {
           parent.children.forEach(function(ele, i, arr) {
-            ele.dx = (i === 0) ? 10 / cw : 0;
+            ele.dx = (i === 0) ? COLLAPSED_SIZE_PIXELS / cw : 0;
           });
           parent = parent.children[0];
         }
@@ -294,6 +318,7 @@
         transitionAll();
       }
 
+      // Set the new size of expanding or resizing elements
       function setExpandingDx() {
         var expanding = d3.selectAll('g').filter(function(d) {
           return !this.classList.contains('collapsed');
@@ -312,7 +337,7 @@
           }
         });
 
-        var unCollapsedArea = cw - numCollapsedAreas * 10;
+        var unCollapsedArea = cw - numCollapsedAreas * COLLAPSED_SIZE_PIXELS;
         var leafdx = 1 / numExpandedLeaves * unCollapsedArea / cw;
 
         expanding.each(function(d) {
@@ -342,10 +367,11 @@
             }
           }(d));
 
-          d.dx = leafdx * numExpandedLeaves + numCollapsedAreas * 10 / cw;
+          d.dx = leafdx * numExpandedLeaves + numCollapsedAreas * COLLAPSED_SIZE_PIXELS / cw;
         });
       }
 
+      // sets the x position of all elements
       function setAllRowPositions() {
         d3.selectAll('g').each(function(d) {
           if (d.parent == null) {
@@ -367,6 +393,7 @@
         });
       }
 
+      // triggers a transition to new sizes and positions
       function transitionAll(duration) {
         duration = duration || 500;
 
@@ -380,6 +407,7 @@
           .each('end', hideOverflowingText);
       }
 
+      // calculates a change in x position
       function deltaX(d) {
         var newX = 0;
         var xform = this.getAttribute('transform');
@@ -396,6 +424,7 @@
         return newX;
       }
 
+      // calculates a change in y position
       function deltaY(d) {
         var newY = 0;
 
@@ -410,27 +439,35 @@
         return newY;
       }
 
+      // calculates a change in width
       function deltaWidth(d) {
         return rangeX(d.x + d.dx) - rangeX(d.x);
       }
 
+      // calculates a change in height
       function deltaHeight(d) {
         return rangeY(d.y + d.dy) - rangeY(d.y);
       }
 
+      // calculates a change in font size
       function deltaText(d) {
         var wh = window.innerHeight;
         return 32 * wh / (wh + rangeY(d.y));
       }
 
+      // calculates weighted width of a leaf
+      // always return 1 so the leaves are all the same size
       function getValue(d) {
         return 1;
       }
 
+      // gets the text of a text elementproperty of a data node
+      // returns the key
       function getText(d) {
         return d.key;
       }
 
+      // hides a text element that is larger than the rect it lives on
       function hideOverflowingText(d) {
         var gw = this.parentNode.getAttribute('width');
         var tw = this.getBBox().width;
@@ -442,28 +479,20 @@
         }
       }
 
+      // colors rects
       function fill(d) {
         return color((d.children ? d : d.parent).key);
       }
 
+      // algorithm that populates the data graph
+      // openmdao system variables are not included in the graph
       function getChildren(d) {
-        return d3.entries(d.value).filter(function(ele, i, arr) {
-          return ele.value.constructor.name === 'Object';
+        return d3.entries(d.value).filter(function(d, i, arr) {
+          return d.value.constructor.name === 'Object';
         });
       }
 
-      function sortData(datum, comparator) {
-        if (datum.children == null) {
-          return;
-        } else {
-          datum.children.sort(comparator)
-            .forEach(function(ele, i, arr) {
-              sortData(ele, comparator);
-            });
-        }
-      }
-
-      // returns all data at a particular depth in rowOrder
+      // returns all data at a particular depth in row order by screen x position
       function getDataByDepth(depth) {
         var data = [];
 
@@ -478,6 +507,7 @@
         return data;
       }
 
+      // gets all leaves that are decendants of datum
       function getDataLeaves(datum) {
         var leaves = [];
         var selection;
@@ -502,6 +532,7 @@
         return leaves;
       }
 
+      // the text data in JSON format
       var data = {
         'root': {
           'chem_eq': {
