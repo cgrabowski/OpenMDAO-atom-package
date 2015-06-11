@@ -262,7 +262,7 @@
         transitionAll();
       }
 
-      // determines which elements need to be collapsed and collapses them
+      // determines which elements need to be collapsed and collapses them.
       // repositions the rest of the elements as necessary
       function collapse(datum) {
         if (datum === rootDatum) {
@@ -290,6 +290,9 @@
           if (numExpandedChildren === 0) {
             d3.select(parent.element).classed('collapsed', true);
             collapsing[0].push(parent.element);
+            // if parent has no more expanded children, then it becomes the
+            // root of the collapse
+            datum = parent;
           }
 
           parent = parent.parent;
@@ -310,10 +313,19 @@
           d.x = datum.x;
         });
 
-        var parent = datum;
+        parent = datum;
+        console.log(parent.key);
         while (parent.children != null) {
-          parent.children.forEach(function(ele, i, arr) {
-            ele.dx = (i === 0) ? COLLAPSED_SIZE_PIXELS / cw : 0;
+          parent.children.forEach(function(d, i, arr) {
+            if (i === 0) {
+              d.dx = COLLAPSED_SIZE_PIXELS / cw;
+            } else {
+
+              d.dx = 0;
+              d3.select(d.element).datumDescendantElements(d).each(function(d) {
+                d.dx = 0;
+              });
+            }
           });
           parent = parent.children[0];
         }
