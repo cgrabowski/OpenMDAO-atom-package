@@ -208,8 +208,20 @@
           .classed('collapsed', false);
 
         var parent = datum.parent;
-        while(parent != null) {
+        while (parent != null) {
           d3.select(parent.element).classed('collapsed', false);
+
+          var numExpandedChildren = parent.children.filter(function(d, i, arr) {
+            return !d.element.classList.contains('collapsed');
+          }).length;
+
+          if (numExpandedChildren === 1) {
+            parent.children.forEach(function(d, i, arr) {
+              d3.select(d.element).datumDescendantElements(d)
+                .classed('collapsed', false);
+            });
+          }
+
           parent = parent.parent;
         }
 
@@ -223,23 +235,49 @@
           return;
         }
 
-        var numNotCollapsed = getDataByDepth(datum.depth).filter(function(d, i, arr){
+        var numNotCollapsed = getDataByDepth(datum.depth).filter(function(d, i, arr) {
           return !d.element.classList.contains('collapsed');
         }).length;
 
-        if(numNotCollapsed === 1){
+        //console.log(numNotCollapsed);
+
+        if (numNotCollapsed === 1) {
           return;
         }
 
         var collapsing = d3.select(datum.element)
           .datumDescendantElements(datum)
-          .attr('class', 'collapsed');
+          .classed('collapsed', true);
+
+        var parent = datum.parent;
+        while (parent != null) {
+          var numExpandedChildren = parent.children.filter(function(d, i, arr) {
+            return !d.element.classList.contains('collapsed');
+          }).length;
+
+          console.log(parent.key);
+          console.log(numExpandedChildren);
+
+          if (numExpandedChildren === 0) {
+            d3.select(parent.element).classed('collapsed', true);
+            collapsing[0].push(parent.element);
+          }
+
+          parent = parent.parent;
+        }
 
         collapsing.each(function(d) {
           if (this.nodeName === 'text') {
             this.style.visibility = 'hidden';
           }
-          d.dx = (d === datum) ? 10 / cw : 0;
+
+          d.dx = 0;
+          var parent = datum;
+          while(parent.element.classList.contains('collapsed')) {
+            parent.dx = 10 / cw;
+            parent = parent.parent;
+          }
+
           d.x = datum.x;
         });
 
