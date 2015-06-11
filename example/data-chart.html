@@ -28,7 +28,7 @@
       var ch = wh * CHART_SIZE_RATIO;
       var rangeX = d3.scale.linear().range([0, cw]);
       var rangeY = d3.scale.linear().range([0, ch]);
-      var focusedData = null;
+      var focusedDatum = null;
       var svg;
       var rootDatum;
 
@@ -102,6 +102,7 @@
 
         svg.selectAll('g').on('focus', focus);
         svg.selectAll('g').on('click', click);
+        svg.selectAll('g').on('contextmenu', click);
       };
 
       window.onresize = function() {
@@ -113,7 +114,7 @@
         rangeX.range([0, cw]);
         rangeY.range([0, ch]);
 
-        changeView(1, focusedData);
+        transitionAll(1);
       };
 
       d3.selection.prototype.datumChildrenElements = function(datum) {
@@ -175,11 +176,20 @@
         return this;
       }
 
+      function focus(d) {
+        focusedDatum = d;
+      }
+
       function click(datum) {
         var button = d3.event.button;
 
         if (button === 0) {
-          changeView(750, datum);
+          if (focusedDatum != null) {
+            var d = focusedDatum;
+            rangeX.domain([d.x, d.x + d.dx]);
+            rangeY.domain([d.y, 1]).range([d.y ? 20 : 0, ch]);
+          }
+          transitionAll();
 
         } else if (button === 1) {
           if (this.classList.contains('collapsed')) {
@@ -188,78 +198,24 @@
             collapse(datum);
           }
         }
-      }
-
-      function focus(d) {
-        focusedData = d;
+        //d3.event.preventDefault();
       }
 
       function expand(datum) {
-        var element = datum.element;
-        d3.select(element)
+        d3.select(datum.element)
           .datumChildrenElements(datum)
           .datumDescendantElements(datum)
           .classed('collapsed', false);
 
-        var expanding = d3.selectAll('g').filter(function(d) {
-          return !this.classList.contains('collapsed');
-        });
+        var parent = datum.parent;
+        while(parent != null) {
+          d3.select(parent.element).classed('collapsed', false);
+          parent = parent.parent;
+        }
 
-        var leaves = getDataLeaves();
-        var numExpandedLeaves = 0;
-        var numCollapsedAreas = 0;
-
-        leaves.forEach(function(d) {
-          if (d.element.classList.contains('collapsed')) {
-            if (d.dx !== 0) {
-              ++numCollapsedAreas;
-            }
-          } else {
-            ++numExpandedLeaves;
-          }
-        });
-
-        var uncollapsedArea = cw - numCollapsedAreas * 10 / cw;
-        var leafdx = 1 / numExpandedLeaves;
-
-        expanding.each(function(d) {
-          if (d.parent == null) {
-            return;
-          }
-          var len = getDataLeaves(d).length;
-          var numDescendantLeaves = (len > 0) ? len : 1;
-
-          d.dx = leafdx * numDescendantLeaves;
-          //console.log(d);
-        });
-
-        d3.selectAll('g').each(function(d) {
-          if (d.parent == null) {
-            return;
-          }
-          var laterals = getDataByDepth(d.depth);
-
-          d.newX = 0;
-          var pos = laterals.indexOf(d);
-          for (var i = 0; i < pos; ++i) {
-            d.newX += laterals[i].dx;
-          }
-        }).each(function(d) {
-          if (d.parent == null) {
-            return;
-          }
-          d.x = d.newX;
-          delete d.newX;
-        });
-
-        svg.selectAll('g, rect, text').transition()
-          .duration(750)
-          .attr('x', deltaX)
-          .attr('y', deltaY)
-          .attr('width', deltaWidth)
-          .attr('height', deltaHeight)
-          .filter('text')
-          .each('end', hideOverflowingText);
+        setExpandingDx();
+        setAllRowPositions();
+        transitionAll();
       }
 
       function collapse(datum) {
@@ -267,25 +223,22 @@
           return;
         }
 
-        var element = datum.element;
-        var collapsing = d3.select(element)
+        var numNotCollapsed = getDataByDepth(datum.depth).filter(function(d, i, arr){
+          return !d.element.classList.contains('collapsed');
+        }).length;
+
+        if(numNotCollapsed === 1){
+          return;
+        }
+
+        var collapsing = d3.select(datum.element)
           .datumDescendantElements(datum)
           .attr('class', 'collapsed');
-
-        var expanding = d3.selectAll('g').filter(function(d) {
-          var isExpanding = true;
-          if (this.classList.contains('collapsed')) {
-            isExpanding = false;
-          }
-
-          return isExpanding;
-        });
 
         collapsing.each(function(d) {
           if (this.nodeName === 'text') {
             this.style.visibility = 'hidden';
           }
-          var ind = datum.children.indexOf(d);
           d.dx = (d === datum) ? 10 / cw : 0;
           d.x = datum.x;
         });
@@ -298,6 +251,15 @@
           parent = parent.children[0];
         }
 
+        setExpandingDx();
+        setAllRowPositions();
+        transitionAll();
+      }
+
+      function setExpandingDx() {
+        var expanding = d3.selectAll('g').filter(function(d) {
+          return !this.classList.contains('collapsed');
+        });
         var leaves = getDataLeaves();
         var numExpandedLeaves = 0;
         var numCollapsedAreas = 0;
@@ -312,8 +274,8 @@
           }
         });
 
-        var uncollapsedArea = cw - numCollapsedAreas * 10 / cw;
-        var leafdx = 1 / numExpandedLeaves;
+        var unCollapsedArea = cw - numCollapsedAreas * 10;
+        var leafdx = 1 / numExpandedLeaves * unCollapsedArea / cw;
 
         expanding.each(function(d) {
           if (d.parent == null) {
@@ -326,26 +288,33 @@
           }).length;
 
           var numCollapsedAreas = 0;
-          if (d.children != null) {
-            numCollapsedAreas = d.children.filter(function(d, i, arr) {
-              return d.element.classList.contains('collapsed');
-            }).length;
-          }
 
-          console.log(d);
-          console.log(numExpandedLeaves + ', ' + numCollapsedAreas);
+          (function findHighestCollapsedDescendants(d) {
+            var children = d.children;
+            if (d.children == null) {
+              return;
+            } else {
+              children.forEach(function(child, i, arr) {
+                if (child.element.classList.contains('collapsed')) {
+                  ++numCollapsedAreas;
+                } else {
+                  findHighestCollapsedDescendants(child);
+                }
+              });
+            }
+          }(d));
+
           d.dx = leafdx * numExpandedLeaves + numCollapsedAreas * 10 / cw;
         });
+      }
 
+      function setAllRowPositions() {
         d3.selectAll('g').each(function(d) {
           if (d.parent == null) {
             return;
           }
           var laterals = getDataByDepth(d.depth);
 
-          laterals.sort(function(a, b) {
-            return a.x - b.x;
-          });
           d.newX = 0;
           var pos = laterals.indexOf(d);
           for (var i = 0; i < pos; ++i) {
@@ -358,24 +327,10 @@
           d.x = d.newX;
           delete d.newX;
         });
-
-        svg.selectAll('g, rect, text').transition()
-          .duration(750)
-          .attr('x', deltaX)
-          .attr('y', deltaY)
-          .attr('width', deltaWidth)
-          .attr('height', deltaHeight)
-          .filter('text')
-          .each('end', hideOverflowingText);
       }
 
-      function changeView(duration, focusedDatum) {
-
-        if (focusedDatum != null) {
-          var d = focusedDatum;
-          rangeX.domain([d.x, d.x + d.dx]);
-          rangeY.domain([d.y, 1]).range([d.y ? 20 : 0, ch]);
-        }
+      function transitionAll(duration) {
+        duration = duration || 500;
 
         svg.selectAll('g, rect, text').transition()
           .duration(duration)
