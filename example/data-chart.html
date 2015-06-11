@@ -5,8 +5,9 @@
   <meta charset='utf-8'>
   <style>
     /* don't outline focused elements */
+
     * {
-      outline:none;
+      outline: none;
     }
 
     div {
@@ -54,6 +55,7 @@
         ]);
 
       window.onload = function() {
+
         // create an svg element and append to the container div
         svg = d3.select('#chart').append('svg:svg')
           .attr('width', cw)
@@ -61,6 +63,7 @@
 
         // create a partition layout and set the getChildren and getValue funcs
         var partition = d3.layout.partition()
+          .sort(sortSiblings)
           .children(getChildren)
           .value(getValue);
 
@@ -457,6 +460,10 @@
         return 32 * wh / (wh + rangeY(d.y));
       }
 
+      function sortSiblings(a, b) {
+        return a.siblingOrder - b.siblingOrder;
+      }
+
       // calculates weighted width of a leaf
       // always return 1 so the leaves are all the same size
       function getValue(d) {
@@ -489,7 +496,13 @@
       // algorithm that populates the data graph
       // openmdao system variables are not included in the graph
       function getChildren(d) {
-        return d3.entries(d.value).filter(function(d, i, arr) {
+        var vals = d3.entries(d.value);
+
+        vals.forEach(function(ele, i, arr) {
+          ele.siblingOrder = i;
+        });
+
+        return vals.filter(function(d, i, arr) {
           return d.value.constructor.name === 'Object';
         });
       }
