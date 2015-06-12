@@ -172,7 +172,7 @@
           // gets the text of a text elementproperty of a data node
           // returns the key
           .text(function(d) {
-            return d.key;
+            return /\w*$/.exec(d.key);
           })
           // x and y attrs must be last so they run
           // after the bouding box has been computed
