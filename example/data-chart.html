@@ -17,11 +17,72 @@
     rect {
       stroke: #fff;
     }
+
+    text {
+      cursor: default;
+    }
+
+    #help-icon-background {}
+
+    #help-icon-paths {}
+
+    #help {
+      text-align: left;
+      background-color: white;
+      border: 1px solid black;
+      display: none;
+      position: fixed;
+      margin: none;
+      padding: 15px;
+      left: 15px;
+      top: 15px;
+    }
+
+    #close-help-button {
+      cursor: pointer;
+      font-family: "sans-serif";
+      padding-left: 3px;
+      padding-right: 2px;
+      position: absolute;
+      top: 0px;
+      right: 0px;
+      border-left: 2px solid black;
+      border-bottom: 2px solid black;
+      margin: none;
+    }
+
+    .help-icon {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      cursor: pointer;
+    }
   </style>
 </head>
 
 <body>
   <div id='chart'></div>
+  <svg id='help-icon-background' class='help-icon' height="48" viewBox="0 0 48 48" width='48' xmlns="http://www.w3.org/2000/svg">
+    <circle fill='#ffffff' cx='18' cy='18' r='18' />
+  </svg>
+  <svg id='help-icon-paths' class='help-icon' fill="#000000" height="48" viewBox="0 0 48 48" width="48" xmlns="http://www.w3.org/2000/svg">
+    <g transform='scale(1.5, 1.5)'>
+      <path d="M0 0h24v24H0z" fill="none" />
+      <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"
+      />
+    </g>
+  </svg>
+  <div id='help'>
+    <h3>OpenMDAO System Hierarchy Partition Chart</h3>
+    <p>
+      <strong>left mouse button</strong>: zoom in and out
+      <br /> note: click the very top of the screen to zoom out.
+    </p>
+    <p>
+      <strong>center and right mouse buttons</strong>: collapse and expand partitions
+    </p>
+    <div id='close-help-button'><strong>X</strong></div>
+  </div>
   <script src='d3.min.js'></script>
   <script>
     /*
@@ -141,6 +202,28 @@
         svg.selectAll('g').on('focus', function(d) {
           focusedDatum = d;
         });
+
+        var helpIconElements = document.getElementsByClassName('help-icon');
+        var helpDiv = document.getElementById('help');
+        var closeHelpButton = document.getElementById('close-help-button');
+
+
+        for (var i = 0; i < helpIconElements.length; ++i) {
+          helpIconElements.item(i).onclick = function(event) {
+            helpDiv.style.display = 'inline-block';
+            for (var i = 0; i < helpIconElements.length; ++i) {
+              helpIconElements.item(i).style.display = 'none';
+            }
+            return false;
+          };
+        }
+        closeHelpButton.onclick = function(event) {
+          for (var i = 0; i < helpIconElements.length; ++i) {
+            helpIconElements.item(i).style.display = 'block';
+          }
+          helpDiv.style.display = 'none';
+          return false;
+        };
       };
 
       // resize svg on window resize
@@ -158,7 +241,7 @@
        * extend the d3.selection prototype with some selection methods
        */
 
-      // Adds svg elements of a datum's children to the selection
+      // Adds svg elements of a datum's childrewindow.outerWidthn to the selection
       d3.selection.prototype.datumChildrenElements = function(datum) {
         var children = datum.element.children;
 
@@ -341,7 +424,7 @@
 
       // Set the new size of expanding or resizing elements
       function setExpandingDx() {
-        var expanding = d3.selectAll('g').filter(function(d) {
+        var expanding = svg.selectAll('g').filter(function(d) {
           return !this.classList.contains('collapsed');
         });
         var leaves = getDataLeaves();
@@ -396,7 +479,7 @@
 
       // sets the x position of all elements
       function setAllRowPositions() {
-        d3.selectAll('g').each(function(d) {
+        svg.selectAll('g').each(function(d) {
           if (d.parent == null) {
             return;
           }
@@ -508,7 +591,7 @@
       function getDataByDepth(depth) {
         var data = [];
 
-        d3.selectAll('g').each(function(d) {
+        svg.selectAll('g').each(function(d) {
           if (d.depth === depth) {
             data.push(d);
           }
@@ -525,7 +608,7 @@
         var selection;
 
         if (datum == null) {
-          selection = d3.selectAll('g');
+          selection = svg.selectAll('g');
 
         } else {
           selection = d3.select(datum.element);
