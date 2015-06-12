@@ -81,7 +81,9 @@
     <p>
       <strong>center and right mouse buttons</strong>: collapse and expand partitions
     </p>
-    <div id='close-help-button'><strong>X</strong></div>
+    <div id='close-help-button'>
+      <strong>X</strong>
+    </div>
   </div>
   <script src='d3.min.js'></script>
   <script>
@@ -161,6 +163,9 @@
             return color((d.children ? d : d.parent).key);
           });
 
+        // create and append tooltip popup elements
+        var titles = groups.append('svg:title');
+
         // create and append a svg text element for each group
         var texts = groups.append('svg:text')
           .attr('font-size', deltaText)
@@ -173,7 +178,7 @@
           // after the bouding box has been computed
           .attr('x', deltaX)
           .attr('y', deltaY)
-          .each(hideOverflowingText);
+          .each(handleTextAndTooltips);
 
         // set the rootDatum variable
         groups.each(function(d) {
@@ -510,7 +515,7 @@
           .attr('width', deltaWidth)
           .attr('height', deltaHeight)
           .filter('text')
-          .each('end', hideOverflowingText);
+          .each('end', handleTextAndTooltips);
       }
 
       // calculates a change in x position
@@ -562,14 +567,28 @@
       }
 
       // hides a text element that is larger than the rect it lives on
-      function hideOverflowingText(d) {
+      function handleTextAndTooltips(d) {
         var gw = this.parentNode.getAttribute('width');
         var tw = this.getBBox().width;
+        var siblings = this.parentNode.childNodes;
+        var tooltip;
+        for (var i = 0; i < siblings.length; ++i) {
+          if (siblings.item(i).nodeName === 'title') {
+            tooltip = siblings.item(i);
+            break;
+          }
+        }
 
         if (tw > gw - 10) {
           this.style.visibility = 'hidden';
+          if (!this.parentNode.classList.contains('collapsed')) {
+            tooltip.innerHTML = d.key;
+          } else {
+            tooltip.innerHTML = '';
+          }
         } else {
           this.style.visibility = 'visible';
+          tooltip.innerHTML = '';
         }
       }
 
