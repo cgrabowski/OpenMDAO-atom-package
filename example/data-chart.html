@@ -31,6 +31,7 @@
 
       var CHART_SIZE_RATIO = 0.97; // chart to window width/height ratio
       var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
+      var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
 
       var ww = window.innerWidth;
       var wh = window.innerHeight;
@@ -63,9 +64,15 @@
 
         // create a partition layout and set the getChildren and getValue funcs
         var partition = d3.layout.partition()
-          .sort(sortSiblings)
           .children(getChildren)
-          .value(getValue);
+          .sort(function(a, b) {
+            return a.siblingOrder - b.siblingOrder;
+          })
+          // calculates weighted width of a leaf
+          // always return 1 so the leaves are all the same size
+          .value(function(d) {
+            return 1;
+          });
 
         // create svg group elements that correspond to the data nodes
         // and append them to the svg.
@@ -88,12 +95,19 @@
           .attr('y', deltaY)
           .attr('width', deltaWidth)
           .attr('height', deltaHeight)
-          .attr('fill', fill);
+          // colors rects
+          .attr('fill', function(d) {
+            return color((d.children ? d : d.parent).key);
+          });
 
         // create and append a svg text element for each group
         var texts = groups.append('svg:text')
           .attr('font-size', deltaText)
-          .text(getText)
+          // gets the text of a text elementproperty of a data node
+          // returns the key
+          .text(function(d) {
+            return d.key;
+          })
           // x and y attrs must be last so they run
           // after the bouding box has been computed
           .attr('x', deltaX)
@@ -121,9 +135,12 @@
         }
 
         // set event handlers
-        svg.selectAll('g').on('focus', focus);
         svg.selectAll('g').on('click', click);
         svg.selectAll('g').on('contextmenu', click);
+        // sets focusedDatum variable to the datum whose svg element has focus
+        svg.selectAll('g').on('focus', function(d) {
+          focusedDatum = d;
+        });
       };
 
       // resize svg on window resize
@@ -166,33 +183,22 @@
 
       // adds svg elements of a datum's descendants to the selection
       d3.selection.prototype.datumDescendantElements = function(datum) {
-        var children = datum.children;
-
-        if (children != null) {
-          for (var i = 0; i < children.length; ++i) {
-            _pushd.call(this, children[i]);
-          }
-        }
-
-        function _pushd(datum) {
-          var children = datum.children;
-
-          this[0].push(datum.element);
-          this.datumChildrenElements(datum);
+        (function _pushd(d) {
+          var children = d.children;
 
           if (children != null) {
             for (var i = 0; i < children.length; ++i) {
+              this[0].push(children[i].element);
               _pushd.call(this, children[i]);
             }
           }
-        }
+        }).call(this, datum);
 
         return this;
       }
 
       // adds svg elements of a datum's siblings to the selection
       d3.selection.prototype.datumSiblingElements = function(datum) {
-
         if (datum.parent != null) {
           datum.parent.children.forEach(function(d, i, arr) {
             if (d.element !== datum.element) {
@@ -201,12 +207,10 @@
           }, this);
         }
 
+        function focus(d) {
+          focusedDatum = d;
+        }
         return this;
-      }
-
-      // sets focusedDatum variable to the datum whose svg element has focus
-      function focus(d) {
-        focusedDatum = d;
       }
 
       // initiates zooming, collapsing, and expanding
@@ -369,16 +373,18 @@
 
           var numCollapsedAreas = 0;
 
-          (function findHighestCollapsedDescendants(d) {
+          (function findCollapsedDescendantAreas(d) {
             var children = d.children;
+
             if (d.children == null) {
               return;
+
             } else {
               children.forEach(function(child, i, arr) {
                 if (child.element.classList.contains('collapsed')) {
                   ++numCollapsedAreas;
                 } else {
-                  findHighestCollapsedDescendants(child);
+                  findCollapsedDescendantAreas(child);
                 }
               });
             }
@@ -412,7 +418,7 @@
 
       // triggers a transition to new sizes and positions
       function transitionAll(duration) {
-        duration = duration || 500;
+        duration = duration || DEFAULT_TRANSITION_DURATION;
 
         svg.selectAll('g, rect, text').transition()
           .duration(duration)
@@ -472,22 +478,6 @@
         return 32 * wh / (wh + rangeY(d.y));
       }
 
-      function sortSiblings(a, b) {
-        return a.siblingOrder - b.siblingOrder;
-      }
-
-      // calculates weighted width of a leaf
-      // always return 1 so the leaves are all the same size
-      function getValue(d) {
-        return 1;
-      }
-
-      // gets the text of a text elementproperty of a data node
-      // returns the key
-      function getText(d) {
-        return d.key;
-      }
-
       // hides a text element that is larger than the rect it lives on
       function hideOverflowingText(d) {
         var gw = this.parentNode.getAttribute('width');
@@ -498,11 +488,6 @@
         } else {
           this.style.visibility = 'visible';
         }
-      }
-
-      // colors rects
-      function fill(d) {
-        return color((d.children ? d : d.parent).key);
       }
 
       // algorithm that populates the data graph
