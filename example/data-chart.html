@@ -166,13 +166,16 @@
         // create and append tooltip popup elements
         var titles = groups.append('svg:title');
 
+        // matches only the last string containing only alphanumeric characters
+        // and the underscore character
+        var removeParentNamesRegex = /\w*$/;
         // create and append a svg text element for each group
         var texts = groups.append('svg:text')
           .attr('font-size', deltaText)
           // gets the text of a text elementproperty of a data node
           // returns the key
           .text(function(d) {
-            return /\w*$/.exec(d.key);
+            return removeParentNamesRegex.exec(d.key);
           })
           // x and y attrs must be last so they run
           // after the bouding box has been computed
