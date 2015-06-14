@@ -3,9 +3,8 @@
 
 <head>
   <meta charset='utf-8'>
+  <title>System Hierarchy</title>
   <style>
-    /* don't outline focused elements */
-
     * {
       outline: none;
     }
@@ -22,20 +21,24 @@
       cursor: default;
     }
 
-    #help-icon-background {}
-
-    #help-icon-paths {}
+    #help,
+    .help-icon {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+    }
 
     #help {
       text-align: left;
       background-color: white;
       border: 1px solid black;
       display: none;
-      position: fixed;
       margin: none;
       padding: 15px;
-      left: 15px;
-      top: 15px;
+    }
+
+    .help-icon {
+      cursor: pointer;
     }
 
     #close-help-button {
@@ -49,13 +52,6 @@
       border-left: 2px solid black;
       border-bottom: 2px solid black;
       margin: none;
-    }
-
-    .help-icon {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      cursor: pointer;
     }
   </style>
 </head>
@@ -88,7 +84,7 @@
   <script src='d3.min.js'></script>
   <script>
     /*
-     * System hierarchy partition chart
+     * System Hierarchy Partition Chart
      */
     (function(d3, undefined) {
 
@@ -102,6 +98,11 @@
       var ch = wh * CHART_SIZE_RATIO;
       var rangeX = d3.scale.linear().range([0, cw]);
       var rangeY = d3.scale.linear().range([0, ch]);
+      // matches only a trailin string of alphanumeric characters
+      // (includng the underscore character)
+      var removeParentNamesRegex = /\w*$/;
+      // matches trailing elipsis
+      var elipsisRegex = /\.\.\.$/;
       var focusedDatum = null;
       var svg;
       var rootDatum;
@@ -166,9 +167,6 @@
         // create and append tooltip popup elements
         var titles = groups.append('svg:title');
 
-        // matches only the last string containing only alphanumeric characters
-        // and the underscore character
-        var removeParentNamesRegex = /\w*$/;
         // create and append a svg text element for each group
         var texts = groups.append('svg:text')
           .attr('font-size', deltaText)
@@ -186,7 +184,7 @@
         // set the rootDatum variable
         groups.filter(function(d) {
           return d.parent == null;
-        }).each(function(d){
+        }).each(function(d) {
           rootDatum = d;
         });
 
@@ -214,7 +212,6 @@
         var helpIconElements = document.getElementsByClassName('help-icon');
         var helpDiv = document.getElementById('help');
         var closeHelpButton = document.getElementById('close-help-button');
-
 
         for (var i = 0; i < helpIconElements.length; ++i) {
           helpIconElements.item(i).onclick = function(event) {
@@ -409,7 +406,6 @@
         });
 
         parent = datum;
-        console.log(parent.key);
         while (parent.children != null) {
           parent.children.forEach(function(d, i, arr) {
             if (i === 0) {
@@ -524,11 +520,9 @@
       // calculates a change in x position
       function deltaX(d) {
         var newX = 0;
-        var xform = this.getAttribute('transform');
 
         if (this.nodeName === 'text') {
           var bb = this.getBBox();
-          //console.log(bb.width);
           newX = rangeX(d.x) + deltaWidth(d) / 2 - bb.width / 2;
 
         } else {
@@ -571,6 +565,8 @@
 
       // hides a text element that is larger than the rect it lives on
       function handleTextAndTooltips(d) {
+        this.innerHTML = removeParentNamesRegex.exec(d.key);
+
         var gw = this.parentNode.getAttribute('width');
         var tw = this.getBBox().width;
         var siblings = this.parentNode.childNodes;
@@ -583,15 +579,54 @@
         }
 
         if (tw > gw - 10) {
-          this.style.visibility = 'hidden';
-          if (!this.parentNode.classList.contains('collapsed')) {
+          if (this.parentNode.classList.contains('collapsed')) {
+            this.style.visibility = 'hidden';
             tooltip.innerHTML = d.key;
           } else {
+            this.style.visibility = 'visible';
             tooltip.innerHTML = '';
+
+            if (elipsisRegex.test(this.innerHTML) === false) {
+              this.innerHTML += '...';
+            }
+
+            var textLength = this.innerHTML.length - 3;
+            while (this.getBBox().width > parseInt(this.parentNode.getAttribute('width')) - 10) {
+              if (textLength < 1) {
+                this.innerHTML = '...';
+                break;
+              } else {
+                this.innerHTML = this.innerHTML.substr(0, --textLength) + '...';
+              }
+            }
+
+            if (this.innerHTML.length < 3) {
+              this.innerHTML = '';
+            }
+            var px = parseInt(this.parentNode.getAttribute('x'));
+            var pw = parseInt(this.parentNode.getAttribute('width'));
+            tw = this.getBBox().width;
+
+            this.setAttribute('x', px + (pw / 2 - tw / 2));
           }
         } else {
-          this.style.visibility = 'visible';
-          tooltip.innerHTML = '';
+          if (this.parentNode.classList.contains('collapsed')) {
+            this.style.visibility = 'hidden';
+            tooltip.innerHTML = d.key;
+          } else {
+            this.style.visibility = 'visible';
+            tooltip.innerHTML = '';
+          }
+
+          if (elipsisRegex.test(this.innerHTML) === true) {
+            this.innerHTML = removeParentNamesRegex.exec(d.key);
+          }
+
+          var px = parseInt(this.parentNode.getAttribute('x'));
+          var pw = parseInt(this.parentNode.getAttribute('width'));
+          tw = this.getBBox().width;
+
+          this.setAttribute('x', px + (pw / 2 - tw / 2));
         }
       }
 
