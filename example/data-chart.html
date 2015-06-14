@@ -184,10 +184,10 @@
           .each(handleTextAndTooltips);
 
         // set the rootDatum variable
-        groups.each(function(d) {
-          if (d.key === 'root') {
-            rootDatum = d;
-          }
+        groups.filter(function(d) {
+          return d.parent == null;
+        }).each(function(d){
+          rootDatum = d;
         });
 
         // set row order of data nodes by their screen x position
