@@ -7,6 +7,7 @@ module.exports =
   class SystemHierarchyModel extends Model
 
     constructor: (@lastActiveItem) ->
+      console.log(@lastActiveItem)
 
     getViewClass: ->
       console.log('get view class called')
@@ -19,6 +20,7 @@ module.exports =
 
       self.view.find('.openmdao-chart-container')
         .append("<webview style='height:100%;' src='" + path + "'></webview>")
+        .on('contextmenu', -> false)
 
     getTitle: ->
       "System Hierarchy"

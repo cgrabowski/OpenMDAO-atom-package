@@ -31,16 +31,21 @@ head = '''
       outline: none;
     }
 
+    body,
+    #chart {
+      background-color: #20242a;
+    }
+
+    #chart {
+      text-align: center;
+    }
+
     rect {
       stroke: #fff;
     }
 
     text {
       cursor: default;
-    }
-
-    #chart {
-      text-align: center;
     }
 
     #help,
