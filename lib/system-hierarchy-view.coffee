@@ -1,15 +1,20 @@
 {View} = require 'atom-space-pen-views'
-{Emitter} = require 'atom'
+{CompositeDisposable} = require 'atom'
 
 module.exports =
-class SystemHierarchyView  extends View
+class SystemHierarchyView extends View
 
   @content: ->
     @div =>
       @h1 'System Hierarchy'
       @canvas style: 'background: #622'
 
-  constructor: -> super
+  constructor: ->
+    @subscriptions = new CompositeDisposable
+    super
 
-  initialize: (@editor) ->
-    @emitter = new Emitter
+  setModel: (@model) ->
+    @model.view = @
+
+  getTitle: ->
+    "System Hierarchy"

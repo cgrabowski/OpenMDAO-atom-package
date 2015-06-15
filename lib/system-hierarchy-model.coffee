@@ -1,15 +1,16 @@
 {TextEditor} = require 'atom'
+{Model} = require 'theorist'
 
 module.exports =
-  class SystemHierarchyModel
+  class SystemHierarchyModel extends Model
 
-    constructor: ->
-      console.log 'woot!'
+    constructor: (@lastActiveItem) ->
+      #console.log(@lastActiveItem.buffer.getText())
+      console.log(@)
 
     getViewClass: ->
+      console.log('get view class called')
       require './system-hierarchy-view'
 
     getTitle: ->
       "System Hierarchy"
-
-SystemHierarchyModel::getViewClass = -> require './system-hierarchy-view'
