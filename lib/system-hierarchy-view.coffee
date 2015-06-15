@@ -2,11 +2,11 @@
 {Emitter} = require 'atom'
 
 module.exports =
-class CanvasEditorView  extends View
+class SystemHierarchyView  extends View
 
   @content: ->
     @div =>
-      @h1 'OpenMDAO Visualize'
+      @h1 'System Hierarchy'
       @canvas style: 'background: #622'
 
   constructor: -> super

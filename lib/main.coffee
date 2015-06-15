@@ -1,7 +1,5 @@
-CanvasEditor = require './canvas-editor'
-CanvasEditorView = require './canvas-editor-view'
-
-{TextEditor} = require 'atom'
+SystemHierarchyModel = require './system-hierarchy-model'
+SystemHierarchyView = require './system-hierarchy-view'
 
 module.exports =
 
@@ -11,4 +9,4 @@ module.exports =
     })
 
   create: () ->
-    atom.workspace.getActivePane().addItem(new CanvasEditor)
+    atom.workspace.getActivePane().addItem(new SystemHierarchyModel)
