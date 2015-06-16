@@ -25,7 +25,7 @@ module.exports =
         if error
           console.log('error: ' + error.message)
         else
-          console.log('no error')
+          console.log('chart generation successful. No error.')
 
         webview = "<webview style='height:100%;' src='data:text/html;base64,"
         webview += window.btoa(stdout) + "'></webview>"

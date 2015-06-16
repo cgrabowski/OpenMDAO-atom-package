@@ -1,0 +1,25 @@
+'menu': [
+  {
+    'label': 'View'
+    'submenu': [
+      {'label': 'MDAO Visual', 'command': 'openmdao-atom:createSysChartFromActiveEditor'}
+    ]
+  }
+  {
+    'label': 'Packages'
+    'submenu': [
+      'label': 'OpenMDAO'
+      'submenu':[
+        {'label': 'MDAO Visual', 'command': 'openmdao-atom:createSysChartFromActiveEditor'}
+      ]
+    ]
+  }
+]
+'context-menu':
+  'atom-text-editor': [
+    {'label': 'MDAO Visual', 'command': 'openmdao-atom:createSysChartFromActiveEditor'}
+  ]
+  '.tree-view.full-menu': [
+    {'type': 'separator'}
+    {'label': 'MDAO Visualize', 'command': 'openmdao-atom:createSysChartFromTreeFileContextMenu'}
+  ]
