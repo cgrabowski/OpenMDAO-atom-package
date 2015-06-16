@@ -3,7 +3,7 @@
     'label': 'View'
     'submenu': [
       {
-        'label': 'MDAO Visual', 'command': 'openmdao-atom:create'
+        'label': 'MDAO Visual', 'command': 'openmdao-atom:createSysChartFromMenu'
       }
     ]
   }

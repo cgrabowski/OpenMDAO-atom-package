@@ -8,12 +8,12 @@ module.exports =
       modelConstructor: SystemHierarchyModel
       viewConstructor: SystemHierarchyView
     atom.commands.add('atom-workspace', {
-      'openmdao-atom:create': => @create()
+      'openmdao-atom:createSysChartFromMenu': => @createSysChartFromMenu()
     })
 
-  create: () ->
+  createSysChartFromMenu: () ->
     activePane = atom.workspace.getActivePane()
     activeItem = activePane.getActiveItem()
-    model = new SystemHierarchyModel(activeItem)
+    model = new SystemHierarchyModel(activeItem.buffer.file.path)
     view = atom.views.getView(model)
     activePane.addItem(view)
