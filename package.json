@@ -1,9 +1,9 @@
 {
   "name": "openmdao-atom",
   "main": "./lib/main.coffee",
-  "version": "0.0.1",
+  "version": "0.2.1",
   "description": "OpenMDAO Atom package",
-  "repository": "https://github.com/cgrabowski/openmdao-atom",
+  "repository": "https://github.com/swryan/openmdao-atom",
   "license": "MIT",
   "engines": {
     "atom": ">=0.174.0 <2.0.0"

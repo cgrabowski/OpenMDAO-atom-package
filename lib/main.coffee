@@ -7,12 +7,12 @@ module.exports =
       modelConstructor: SystemHierarchyModel
       viewConstructor: SystemHierarchyView
     atom.commands.add('atom-workspace', {
-      'openmdao-atom:createSysChartFromActiveEditor': (event) ->
-        createSysChartFromActiveEditor(event)
+      'openmdao-atom:createSysChartFromActiveEditor':
+        createSysChartFromActiveEditor
     })
     atom.commands.add('.tree-view.full-menu', {
-      'openmdao-atom:createSysChartFromTreeFileContextMenu': (event) ->
-        createSysChartFromTreeFileContextMenu(event)
+      'openmdao-atom:createSysChartFromTreeFileContextMenu':
+        createSysChartFromTreeFileContextMenu
     })
 
 createSysChartFromActiveEditor = (event) ->

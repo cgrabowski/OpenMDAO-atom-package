@@ -7,9 +7,6 @@ class SystemHierarchyView extends View
     @div =>
       @div class:'openmdao-chart-container', style:'height:100%', =>
 
-  constructor: ->
-    super
-
   setModel: (@model) ->
     @model.initView(@)
 

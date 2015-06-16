@@ -1,17 +1,12 @@
-{TextEditor} = require 'atom'
 {Model} = require 'theorist'
-fs = require('fs')
-path = require('path')
 childProcess = require('child_process')
 
 module.exports =
   class SystemHierarchyModel extends Model
 
     constructor: (@path) ->
-      console.log(@path)
 
     getViewClass: ->
-      console.log('get view class called')
       require './system-hierarchy-view'
 
     initView: (@view) ->
@@ -23,7 +18,7 @@ module.exports =
 
       childProcess.exec(command, (error, stdout, stderr) ->
         if error
-          console.log('error: ' + error.message)
+          console.log('chart generation failure. error: ' + error.message)
         else
           console.log('chart generation successful. No error.')
 
