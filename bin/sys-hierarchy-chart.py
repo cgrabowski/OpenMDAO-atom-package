@@ -1,23 +1,29 @@
 #!/usr/bin/python
 
 import argparse
+import sys
 
 desc = 'Create a HTML partition chart from JSON representing a system hierarchy.'
 parser = argparse.ArgumentParser(description=desc)
-parser.add_argument('-f', '--file', type=str)
-parser.add_argument('-o', '--out', type=str, default='system-hierarchy.html')
+fileHelp = 'The input json file of system hierarchy data.'
+parser.add_argument('json_file', type=str, nargs='?', default=None, help=fileHelp)
+outHelp = 'The output HTML file. Default is stdout.'
+parser.add_argument('-o', '--out', type=str, default=None, metavar='html_out', help=outHelp)
 args = parser.parse_args()
 
-fin = open(args.file, 'r')
-fout = open(args.out , 'w')
+if args.json_file is None:
+    parser.print_help()
+    sys.exit(1)
 
-json = fin.read()
-
-#called at the end of the file
-def write_and_close(fin, fout, head, d3, body, json, foot):
-  fout.write(head + d3 + body + json + foot)
-  fin.close()
-  fout.close()
+# called at the end of the file
+def write_and_close(args, head, d3, body, foot):
+  with open(args.json_file, 'r') as fin:
+    json = fin.read()
+  if args.out is None:
+    sys.stdout.write(head + d3 + body + json + foot)
+  else:
+    with open(args.out, 'w') as fout:
+      fout.write(head + d3 + body + json + foot)
 
 head = '''
 <!DOCTYPE html>
@@ -739,4 +745,4 @@ foot = '''
 </html>
 '''
 
-write_and_close(fin, fout, head, d3, body, json, foot)
+write_and_close(args, head, d3, body, foot)

@@ -19,7 +19,7 @@ module.exports =
       packageRoot = atom.packages.resolvePackagePath('openmdao-atom')
       scriptPath = '/bin/sys-hierarchy-chart.py'
       outPath = packageRoot + '/bin/chart.html'
-      command = 'python ' + packageRoot + scriptPath + ' -f ' + @path + ' -o ' + outPath
+      command = 'python ' + packageRoot + scriptPath + ' ' + @path + ' -o ' + outPath
 
       childProcess.exec(command, (error, stdout, stderr) ->
         console.log(command)
