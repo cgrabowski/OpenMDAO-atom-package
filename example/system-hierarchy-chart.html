@@ -102,7 +102,7 @@
       var ww = window.innerWidth;
       var wh = window.innerHeight;
       var cw = ww * CHART_SIZE_RATIO;
-      var ch = wh * CHART_SIZE_RATIO;
+      var ch = wh * CHART_SIZE_RATIO / 3;
       var rangeX = d3.scale.linear().range([0, cw]);
       var rangeY = d3.scale.linear().range([0, ch]);
       // matches only a trailin string of alphanumeric characters
@@ -243,7 +243,7 @@
         ww = window.innerWidth;
         wh = window.innerHeight;
         cw = ww * CHART_SIZE_RATIO;
-        ch = wh * CHART_SIZE_RATIO;
+        ch = wh * CHART_SIZE_RATIO / 3;
         rangeX.range([0, cw]);
         rangeY.range([0, ch]);
         transitionAll(100);

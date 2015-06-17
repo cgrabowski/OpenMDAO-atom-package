@@ -1,5 +1,5 @@
 {Model} = require 'theorist'
-childProcess = require('child_process')
+childProcess = require 'child_process'
 
 module.exports =
   class SystemHierarchyModel extends Model
@@ -10,13 +10,12 @@ module.exports =
       require './system-hierarchy-view'
 
     initView: (@view) ->
-      self = @
       packageRoot = atom.packages.resolvePackagePath('openmdao-atom')
       scriptPath = '/bin/sys-hierarchy-chart.py'
       outPath = packageRoot + '/bin/chart.html'
       command = 'python ' + packageRoot + scriptPath + ' ' + @path
 
-      childProcess.exec(command, (error, stdout, stderr) ->
+      childProcess.exec command, (error, stdout, stderr) =>
         if error
           console.log('chart generation failure. error: ' + error.message)
         else
@@ -25,12 +24,10 @@ module.exports =
         webview = "<webview style='height:100%;' src='data:text/html;base64,"
         webview += window.btoa(stdout) + "'></webview>"
 
-        self.view.find('.openmdao-chart-container')
+        @view.find('.openmdao-chart-container')
           .append(webview)
           .on('contextmenu', -> false)
-
           atom.workspace.getActivePane().activateNextItem()
-        )
 
     getTitle: ->
       "System Hierarchy"
