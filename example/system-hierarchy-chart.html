@@ -187,9 +187,9 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
   var rootDatum;
   var colors = [
     'rgb(240, 190, 190)', // root
-    'rgb(240, 180, 180)', // depth 2
-    'rgb(180, 180, 240)', // dpeth 3
-    'rgb(210, 210, 250)', // depth 4
+    'rgb(240, 180, 180)', // group
+    'rgb(180, 180, 240)', // component
+    'rgb(210, 210, 225)', // variable
     'rgb(210, 240, 180)' // state var and its parent
   ];
   var color = d3.scale.ordinal()
@@ -266,20 +266,31 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
       .attr('height', deltaHeight)
       // colors rects
       .attr('fill', function(d) {
-        var index = d.depth;
+        // root color index is 0 and group color index is 1
+        var index = (d.depth === 1) ? 0 : 1;
+
+        // component color index is 2
         if (d.children != null && d.children[0].children == null) {
-          index = colors.length - 3;
+          index = 2;
         }
+
+        // variable color index is 3
+        if(d.children == null) {
+          index = 3;
+        }
+
+        // state vars and components with state vars color index is 4
         if (d.state != null) {
-          index = colors.length - 1;
+          index = 4;
         }
         if (d.children != null) {
           d.children.forEach(function(d, i, arr) {
             if (d.state != null) {
-              index = colors.length - 1;
+              index = 4;
             }
           });
         }
+
         return color(index);
       });
 
