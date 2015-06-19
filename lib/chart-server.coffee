@@ -1,35 +1,43 @@
-net = require('net')
+ipc = require('node-ipc')
 os = require('os')
 path = require('path')
 child_process = require('child_process')
+fs = require('fs')
 
 module.exports =
+  onStart: (callback) ->
+    @onStartListeners ?= []
+    @onStartListeners.push(callback)
 
   deactivate: ->
-    child_process.exec('rm ' + @sockPath)
-    @server.close (err) ->
-      refreshMessage =
-        if err?
-          'server close err: ' + err.toString()
-        else
-          'chart server closed successfuly'
-      localStorage.setItem('openmdao', refreshMessage)
+    if @ownsSock
+      child_process.exec('rm ' + @sockPath)
 
   activate: ->
+    ipc.config.id = 'openmdao-chart-server'
+    ipc.config.retry = 1000
+    ipc.config.silent = true
 
+    @ownsSock = true
+    @onStartListeners ?= []
     @sockPath =
       if process.platform is 'win32'
         "\\\\.\\pipe\\openmdao-chart-sock"
       else
         path.join(os.tmpdir(), "openmdao-chart-#{process.env.USER}.sock")
 
-    @server = net.createServer (connection) ->
-      console.log(process.pid.toString() + ' chart sock server started')
-      connection.on 'data', (data) ->
-        connection.write(data.toString())
+    if fs.existsSync(@sockPath)
+      console.log('sock fle exists. not starting server.')
+      callback() for callback in @onStartListeners
+      @ownsSock = false
+      return
 
-    @server.listen @sockPath
 
-    @server.on 'error', (err) =>
-      console.log('chart server error : ' + err.toString())
-      child_process.exec('rm ' + @sockPath)
+    ipc.serve @sockPath, () =>
+      console.log('started chart server')
+      ipc.server.on 'message', (data, socket) =>
+        #console.log('server got a message: ' + data)
+        ipc.server.broadcast('message', data)
+      callback() for callback in @onStartListeners
+
+    ipc.server.start()

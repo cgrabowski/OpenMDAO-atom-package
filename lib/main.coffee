@@ -12,16 +12,18 @@ module.exports =
   activate: ->
     #console.log(localStorage.getItem('openmdao'))
 
+    chart_server.onStart () ->
+      chart_client.activate()
+      chart_client.onData (data) ->
+        #console.log('onData listener: ' + data)
+        packageRoot = atom.packages.resolvePackagePath('openmdao-atom')
+        cwd = packageRoot + '/bin'
+        child_process.exec './build-scripts.py', {cwd: cwd}, (err) ->
+          #console.log(err ?= 'scripts rebuilt successfully.')
+          for path, model of SystemHierarchyModel.models
+            model.resetView()
+
     chart_server.activate()
-    chart_client.activate()
-    chart_client.onData (data) ->
-      #console.log('onData listener: ' + data)
-      packageRoot = atom.packages.resolvePackagePath('openmdao-atom')
-      cwd = packageRoot + '/bin'
-      child_process.exec './build-scripts.py', {cwd: cwd}, (err) ->
-        #console.log(err ?= 'scripts rebuilt successfully.')
-        for path, model of SystemHierarchyModel.models
-          model.resetView()
 
     isChartFileRegex = /\/lib\/.*\.js|\/views\//
     atom.workspace.observeTextEditors (editor) ->
