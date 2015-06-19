@@ -92,7 +92,7 @@ head = '''<!DOCTYPE html>
 </head>
 
 <body>
-  <div id='chart'></div>
+  <div id='system-hierarchy-chart'></div>
   <svg id='help-icon-background' class='help-icon' height="48" viewBox="0 0 48 48" width='48' xmlns="http://www.w3.org/2000/svg">
     <circle fill='#20242a' cx='18' cy='18' r='18' />
   </svg>
@@ -212,23 +212,20 @@ body = '''</script>
   var focusedDatum = null;
   var svg;
   var rootDatum;
-
+  var colors = [
+    'rgb(240, 190, 190)', // root
+    'rgb(240, 180, 180)', // group
+    'rgb(180, 180, 240)', // component
+    'rgb(210, 210, 225)', // variable
+    'rgb(210, 240, 180)' // state var and its parent
+  ];
   var color = d3.scale.ordinal()
-    .range([
-      'rgb(254,232,200)',
-      'rgb(253,212,158)',
-      'rgb(253,187,132)',
-      'rgb(252,141,89)',
-      'rgb(239,101,72)',
-      'rgb(215,48,31)',
-      'rgb(179,0,0)',
-      'rgb(127,0,0)'
-    ]);
+    .range(colors);
 
   window.addEventListener('load', function() {
 
     // create an svg element and append to the container div
-    svg = d3.select('#chart').append('svg:svg')
+    svg = d3.select('#system-hierarchy-chart').append('svg:svg')
       .attr('width', cw)
       .attr('height', ch);
 
@@ -259,6 +256,35 @@ body = '''</script>
         d.element = this;
       });
 
+    // set the rootDatum variable
+    groups.filter(function(d) {
+      return d.parent == null;
+    }).each(function(d) {
+      rootDatum = d;
+    });
+
+    var jsonLowestPlainObjs = (function getLow(data, keyin, out) {
+      var hasChildObj = false;
+      for (var key in data) {
+        if (data[key].constructor.name === 'Object') {
+          out = getLow(data[key], key, out);
+          hasChildObj = true;
+        }
+      }
+      if (hasChildObj === false) {
+        out[keyin] = data;
+      }
+      return out;
+    }(data, 'root', {}));
+
+    // assign leaves their attribute values from json data
+    getDataLeaves(rootDatum).forEach(function(d, i, arr) {
+      for (var key in jsonLowestPlainObjs[d.key]) {
+        d[key] = jsonLowestPlainObjs[d.key][key];
+      }
+      //console.log(d);
+    });
+
     // create and append a visible rect for each svg group
     var rects = groups.append('svg:rect')
       .attr('x', deltaX)
@@ -267,7 +293,32 @@ body = '''</script>
       .attr('height', deltaHeight)
       // colors rects
       .attr('fill', function(d) {
-        return color((d.children ? d : d.parent).key);
+        // root color index is 0 and group color index is 1
+        var index = (d.depth === 1) ? 0 : 1;
+
+        // component color index is 2
+        if (d.children != null && d.children[0].children == null) {
+          index = 2;
+        }
+
+        // variable color index is 3
+        if(d.children == null) {
+          index = 3;
+        }
+
+        // state vars and components with state vars color index is 4
+        if (d.state != null) {
+          index = 4;
+        }
+        if (d.children != null) {
+          d.children.forEach(function(d, i, arr) {
+            if (d.state != null) {
+              index = 4;
+            }
+          });
+        }
+
+        return color(index);
       });
 
     // create and append tooltip popup elements
@@ -286,13 +337,6 @@ body = '''</script>
       .attr('x', deltaX)
       .attr('y', deltaY)
       .each(handleTextAndTooltips);
-
-    // set the rootDatum variable
-    groups.filter(function(d) {
-      return d.parent == null;
-    }).each(function(d) {
-      rootDatum = d;
-    });
 
     // set row order of data nodes by their screen x position
     var depth = 1;
@@ -352,7 +396,7 @@ body = '''</script>
   function click(datum) {
     var button = d3.event.button;
 
-    if (button === 0) {
+    if (button === 0 && !datum.element.classList.contains('collapsed')) {
       if (focusedDatum != null) {
         var d = focusedDatum;
         rangeX.domain([d.x, d.x + d.dx]);
@@ -454,17 +498,28 @@ body = '''</script>
 
     parent = datum;
     while (parent.children != null) {
-      parent.children.forEach(function(d, i, arr) {
-        if (i === 0) {
-          d.dx = COLLAPSED_SIZE_PIXELS / cw;
-        } else {
+      var stateVar = null;
 
+      for (var i = 0, len = parent.children.length; i < len; ++i) {
+        if (parent.children[i].state != null) {
+          stateVar = parent.children[i];
+          stateVar.dx = COLLAPSED_SIZE_PIXELS / cw;
+          break;
+        }
+      }
+
+      parent.children.forEach(function(d, i, arr) {
+        if (stateVar == null && i === 0) {
+          d.dx = COLLAPSED_SIZE_PIXELS / cw;
+
+        } else if (d !== stateVar) {
           d.dx = 0;
           d3.select(d.element).datumDescendantElements(d).each(function(d) {
             d.dx = 0;
           });
         }
       });
+
       parent = parent.children[0];
     }
 
@@ -731,48 +786,6 @@ body = '''</script>
     return leaves;
   }
 }(d3));
-
-</script>
-<script>
-/*
- * Dependency Matrix Chart
- */
-(function(d3, undefined)) {
-  var CHART_SIZE_RATIO = 0.97; // chart to window width/height ratio
-  var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
-  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
-
-  var ww = window.innerWidth;
-  var wh = window.innerHeight;
-  var cw = ww * CHART_SIZE_RATIO;
-  var ch = wh * CHART_SIZE_RATIO;
-
-  // matches only a trailing string of alphanumeric characters
-  // (includng the underscore character)
-  var removeParentNamesRegex = /\w*$/;
-  // matches trailing elipsis
-  var elipsisRegex = /\.\.\.$/;
-  var focusedDatum = null;
-  var svg;
-  var rootDatum;
-
-  window.addEventListener('load', function() {
-
-  });
-
-  // resize svg on window resize
-  window.addEventListener('resize', function() {
-    ww = window.innerWidth;
-    wh = window.innerHeight;
-    cw = ww * CHART_SIZE_RATIO;
-    ch = wh * CHART_SIZE_RATIO;
-    //transitionAll(100);
-  });
-
-  function click() {
-
-  }
-})(d3);
 
 </script>
 <script>

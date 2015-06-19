@@ -10,7 +10,7 @@ desc = 'Create a dependency matrix in JSON format.'
 parser = argparse.ArgumentParser(description=desc)
 file_help = 'The input JSON file of system hierarchy data.'
 parser.add_argument('input_file', type=str, nargs='?', default=None, help=file_help)
-matrix_help = 'The multidimensional list of dependencies.'
+matrix_help = 'The multidimensional list of dependency relationships.'
 parser.add_argument('dep_matrix', type=list, nargs='?', default=None, help=matrix_help)
 out_help = 'The output dependency matrix JSON file.'
 parser.add_argument(

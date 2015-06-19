@@ -56,8 +56,8 @@ with open('sys-hierarchy-chart.py', 'w') as fout:
   with open('../lib/sys-hierarchy-chart.js', 'r') as fin:
     sys_chart_js = fin.read()
 
-  with open('../lib/dependency-matrix-chart.js', 'r') as fin:
-    dep_chart_js = fin.read()
+  #with open('../lib/dependency-matrix-chart.js', 'r') as fin:
+  #  dep_chart_js = fin.read()
 
   fout.write(sys_chart_script_head)
   fout.write("head = '''" + sys_chart_html_parts[0] + "\n<!-- d3 library -->\n<script>'''\n\n")
@@ -65,7 +65,7 @@ with open('sys-hierarchy-chart.py', 'w') as fout:
   fout.write("body = '''</script>\n")
   fout.write("<script>\n" + d3_extensions_js + "\n</script>\n")
   fout.write("<script>\n" + sys_chart_js + "\n</script>\n")
-  fout.write("<script>\n" + dep_chart_js + "\n</script>\n")
+  #fout.write("<script>\n" + dep_chart_js + "\n</script>\n")
   fout.write("<script>\nvar data = { 'root':\n'''\n\n")
   fout.write("foot = '''\n};\n</script>\n" + sys_chart_html_parts[1] + "\n")
   fout.write(sys_chart_html_parts[2] + "'''\n")
