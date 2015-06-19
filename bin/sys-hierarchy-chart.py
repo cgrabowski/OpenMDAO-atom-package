@@ -131,6 +131,66 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
 body = '''</script>
 <script>
 /*
+ * d3 extensions
+ */
+(function(d3, undefined) {
+
+  // Adds svg elements of a datum's childrewindow.outerWidthn to the selection
+  d3.selection.prototype.datumChildrenElements = function(datum) {
+    var children = datum.element.children;
+
+    if (children != null) {
+      for (var i = 0; i < children.length; ++i) {
+        this[0].push(children.item(i));
+      }
+    }
+
+    return this;
+  };
+
+  // adds svg elements of a datum's ancestors to the selection
+  d3.selection.prototype.datumAncestorElements = function(datum) {
+    while (datum.parent != null) {
+      this[0].push(datum.parent.element);
+      datum = datum.parent;
+    }
+
+    return this;
+  };
+
+  // adds svg elements of a datum's descendants to the selection
+  d3.selection.prototype.datumDescendantElements = function(datum) {
+    (function _pushd(d) {
+      var children = d.children;
+
+      if (children != null) {
+        for (var i = 0; i < children.length; ++i) {
+          this[0].push(children[i].element);
+          _pushd.call(this, children[i]);
+        }
+      }
+    }).call(this, datum);
+
+    return this;
+  };
+
+  // adds svg elements of a datum's siblings to the selection
+  d3.selection.prototype.datumSiblingElements = function(datum) {
+    if (datum.parent != null) {
+      datum.parent.children.forEach(function(d, i, arr) {
+        if (d.element !== datum.element) {
+          this[0].push(d.element);
+        }
+      }, this);
+    }
+    return this;
+  };
+
+}(d3));
+
+</script>
+<script>
+/*
  * System Hierarchy Partition Chart
  */
 (function(d3, undefined) {
@@ -165,7 +225,7 @@ body = '''</script>
       'rgb(127,0,0)'
     ]);
 
-  window.onload = function() {
+  window.addEventListener('load', function() {
 
     // create an svg element and append to the container div
     svg = d3.select('#chart').append('svg:svg')
@@ -275,10 +335,10 @@ body = '''</script>
       helpDiv.style.display = 'none';
       return false;
     };
-  };
+  });
 
   // resize svg on window resize
-  window.onresize = function() {
+  window.addEventListener('resize', function() {
     ww = window.innerWidth;
     wh = window.innerHeight;
     cw = ww * CHART_SIZE_RATIO;
@@ -286,66 +346,7 @@ body = '''</script>
     rangeX.range([0, cw]);
     rangeY.range([0, ch]);
     transitionAll(100);
-  };
-
-  /*
-   * extend the d3.selection prototype with some selection methods
-   */
-
-  // Adds svg elements of a datum's childrewindow.outerWidthn to the selection
-  d3.selection.prototype.datumChildrenElements = function(datum) {
-    var children = datum.element.children;
-
-    if (children != null) {
-      for (var i = 0; i < children.length; ++i) {
-        this[0].push(children.item(i));
-      }
-    }
-
-    return this;
-  }
-
-  // adds svg elements of a datum's ancestors to the selection
-  d3.selection.prototype.datumAncestorElements = function(datum) {
-    while (datum.parent != null) {
-      this[0].push(datum.parent.element);
-      datum = datum.parent;
-    }
-
-    return this;
-  }
-
-  // adds svg elements of a datum's descendants to the selection
-  d3.selection.prototype.datumDescendantElements = function(datum) {
-    (function _pushd(d) {
-      var children = d.children;
-
-      if (children != null) {
-        for (var i = 0; i < children.length; ++i) {
-          this[0].push(children[i].element);
-          _pushd.call(this, children[i]);
-        }
-      }
-    }).call(this, datum);
-
-    return this;
-  }
-
-  // adds svg elements of a datum's siblings to the selection
-  d3.selection.prototype.datumSiblingElements = function(datum) {
-    if (datum.parent != null) {
-      datum.parent.children.forEach(function(d, i, arr) {
-        if (d.element !== datum.element) {
-          this[0].push(d.element);
-        }
-      }, this);
-    }
-
-    function focus(d) {
-      focusedDatum = d;
-    }
-    return this;
-  }
+  });
 
   // initiates zooming, collapsing, and expanding
   function click(datum) {
@@ -730,6 +731,48 @@ body = '''</script>
     return leaves;
   }
 }(d3));
+
+</script>
+<script>
+/*
+ * Dependency Matrix Chart
+ */
+(function(d3, undefined)) {
+  var CHART_SIZE_RATIO = 0.97; // chart to window width/height ratio
+  var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
+  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
+
+  var ww = window.innerWidth;
+  var wh = window.innerHeight;
+  var cw = ww * CHART_SIZE_RATIO;
+  var ch = wh * CHART_SIZE_RATIO;
+
+  // matches only a trailing string of alphanumeric characters
+  // (includng the underscore character)
+  var removeParentNamesRegex = /\w*$/;
+  // matches trailing elipsis
+  var elipsisRegex = /\.\.\.$/;
+  var focusedDatum = null;
+  var svg;
+  var rootDatum;
+
+  window.addEventListener('load', function() {
+
+  });
+
+  // resize svg on window resize
+  window.addEventListener('resize', function() {
+    ww = window.innerWidth;
+    wh = window.innerHeight;
+    cw = ww * CHART_SIZE_RATIO;
+    ch = wh * CHART_SIZE_RATIO;
+    //transitionAll(100);
+  });
+
+  function click() {
+
+  }
+})(d3);
 
 </script>
 <script>

@@ -8,7 +8,19 @@ class SystemHierarchyView extends View
       @div class:'openmdao-chart-container', style:'height:100%', =>
 
   setModel: (@model) ->
-    @model.initView(@)
+    @model.setUpView(@)
+
+  removeWebview: ->
+    @.find('.openmdao-chart-webview').remove()
+    
+  setWebView: (base64Source) ->
+    @webview = "<webview class='openmdao-chart-webview' style='height:100%;' "
+    @webview += "src='data:text/html;base64," + base64Source + "'></webview>"
+
+    @.find('.openmdao-chart-container')
+      .append(@webview)
+      .on('contextmenu', -> false)
+      atom.workspace.getActivePane().activateNextItem()
 
   getTitle: ->
     "System Hierarchy"

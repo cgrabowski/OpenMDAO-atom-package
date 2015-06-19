@@ -1,18 +1,34 @@
 child_process = require 'child_process'
-pty = require 'pty.js'
 SystemHierarchyModel = require './system-hierarchy-model'
 SystemHierarchyView = require './system-hierarchy-view'
+chart_server = require './chart-server'
+chart_client = require './chart-client'
 
 module.exports =
+  deactivate: ->
+    chart_client.deactivate()
+    chart_server.deactivate()
+
   activate: ->
-    # run auto-build.bash if entr is installed
-    child_process.exec 'which entr', (err, stdout, stderr) ->
-      if stdout.toString().length > 0
-        packageRoot = atom.packages.resolvePackagePath('openmdao-atom')
-        command = packageRoot + '/bin/auto-build.bash'
-        term = pty.spawn(command, [packageRoot], {cwd: packageRoot + '/bin'})
-        term.on 'error', (err) ->
-          console.log('auto build error: ' + err)
+    #console.log(localStorage.getItem('openmdao'))
+
+    chart_server.activate()
+    chart_client.activate()
+    chart_client.onData (data) ->
+      #console.log('onData listener: ' + data)
+      packageRoot = atom.packages.resolvePackagePath('openmdao-atom')
+      cwd = packageRoot + '/bin'
+      child_process.exec './build-scripts.py', {cwd: cwd}, (err) ->
+        #console.log(err ?= 'scripts rebuilt successfully.')
+        for path, model of SystemHierarchyModel.models
+          model.resetView()
+
+    isChartFileRegex = /\/lib\/.*\.js|\/views\//
+    atom.workspace.observeTextEditors (editor) ->
+      filePath = editor.buffer.file.path;
+      if isChartFileRegex.test(filePath)
+        editor.onDidSave (event) ->
+          chart_client.write('chart file saved to ' + filePath)
 
     atom.views.addViewProvider {
       modelConstructor: SystemHierarchyModel
