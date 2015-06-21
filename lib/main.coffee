@@ -2,7 +2,7 @@ remote = require 'remote'
 dialog = remote.require 'dialog'
 BrowserWindow = remote.require 'browser-window'
 child_process = require 'child_process'
-SystemHierarchyModel = require './system-hierarchy-model'
+ChartModelFactory = require './chart-model-factory'
 SystemHierarchyView = require './system-hierarchy-view'
 chart_server = require './chart-server'
 chart_client = require './chart-client'
@@ -23,7 +23,7 @@ module.exports = openmdao =
         cwd = packageRoot + '/bin'
         child_process.exec './build-scripts.py', {cwd: cwd}, (err) ->
           #console.log(err ?= 'scripts rebuilt successfully.')
-          for path, model of SystemHierarchyModel.models
+          for path, model of ChartModelFactory.models
             model.resetView()
 
     chart_server.activate()
@@ -35,9 +35,10 @@ module.exports = openmdao =
         editor.onDidSave (event) ->
           chart_client.write('chart file saved to ' + filePath)
 
-    atom.views.addViewProvider
-      modelConstructor: SystemHierarchyModel
-      viewConstructor: SystemHierarchyView
+    for key, constructor of ChartModelFactory.constructors
+      atom.views.addViewProvider
+        modelConstructor: constructor
+        viewConstructor: SystemHierarchyView
 
     atom.commands.add 'atom-workspace',
       'openmdao-atom:createChartFromFile': createChartFromFile
@@ -46,10 +47,7 @@ module.exports = openmdao =
     atom.commands.add '.tree-view.full-menu',
       'openmdao-atom:createChartFromTree': createChartFromTree
 
-createChart = (path) ->
-  model = new SystemHierarchyModel(path)
-  view = atom.views.getView(model)
-  atom.workspace.getActivePane().addItem(view)
+createChart = (path) -> ChartModelFactory.create(path)
 
 createChartFromEditor = ->
   createChart(atom.workspace.getActivePane().getActiveItem().buffer.file.path)
