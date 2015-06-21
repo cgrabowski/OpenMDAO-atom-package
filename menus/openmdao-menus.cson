@@ -1,25 +1,19 @@
 'menu': [
   {
-    'label': 'View'
-    'submenu': [
-      {'label': 'MDAO Visual', 'command': 'openmdao-atom:createSysChartFromActiveEditor'}
-    ]
-  }
-  {
     'label': 'Packages'
     'submenu': [
       'label': 'OpenMDAO'
       'submenu':[
-        {'label': 'MDAO Visual', 'command': 'openmdao-atom:createSysChartFromActiveEditor'}
+        {'label': 'Create MDAO Chart', 'command': 'openmdao-atom:createChartFromFile'}
       ]
     ]
   }
 ]
 'context-menu':
   'atom-text-editor': [
-    {'label': 'MDAO Visual', 'command': 'openmdao-atom:createSysChartFromActiveEditor'}
+    {'label': 'Create MDAO Chart', 'command': 'openmdao-atom:createChartFromEditor'}
   ]
   '.tree-view.full-menu': [
     {'type': 'separator'}
-    {'label': 'MDAO Visualize', 'command': 'openmdao-atom:createSysChartFromTreeFileContextMenu'}
+    {'label': 'Create MDAO Chart', 'command': 'openmdao-atom:createChartFromTree'}
   ]

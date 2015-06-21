@@ -1,16 +1,19 @@
+remote = require 'remote'
+dialog = remote.require 'dialog'
+BrowserWindow = remote.require 'browser-window'
 child_process = require 'child_process'
 SystemHierarchyModel = require './system-hierarchy-model'
 SystemHierarchyView = require './system-hierarchy-view'
 chart_server = require './chart-server'
 chart_client = require './chart-client'
 
-module.exports =
+module.exports = openmdao =
+
   deactivate: ->
     chart_client.deactivate()
     chart_server.deactivate()
 
   activate: ->
-    #console.log(localStorage.getItem('openmdao'))
 
     chart_server.onStart () ->
       chart_client.activate()
@@ -32,28 +35,43 @@ module.exports =
         editor.onDidSave (event) ->
           chart_client.write('chart file saved to ' + filePath)
 
-    atom.views.addViewProvider {
+    atom.views.addViewProvider
       modelConstructor: SystemHierarchyModel
       viewConstructor: SystemHierarchyView
-    }
-    atom.commands.add 'atom-workspace', {
-      'openmdao-atom:createSysChartFromActiveEditor':
-        createSysChartFromActiveEditor
-    }
-    atom.commands.add '.tree-view.full-menu', {
-      'openmdao-atom:createSysChartFromTreeFileContextMenu':
-        createSysChartFromTreeFileContextMenu
-    }
 
-createSysChartFromActiveEditor = (event) ->
-  activePane = atom.workspace.getActivePane()
-  activeItem = activePane.getActiveItem()
-  model = new SystemHierarchyModel(activeItem.buffer.file.path)
-  view = atom.views.getView(model)
-  activePane.addItem(view)
+    atom.commands.add 'atom-workspace',
+      'openmdao-atom:createChartFromFile': createChartFromFile
+      'openmdao-atom:createChartFromEditor': createChartFromEditor
 
-createSysChartFromTreeFileContextMenu = (event) ->
-  activePane = atom.workspace.getActivePane()
-  model = new SystemHierarchyModel(event.target.getAttribute('data-path'))
+    atom.commands.add '.tree-view.full-menu',
+      'openmdao-atom:createChartFromTree': createChartFromTree
+
+createChart = (path) ->
+  model = new SystemHierarchyModel(path)
   view = atom.views.getView(model)
-  activePane.addItem(view)
+  atom.workspace.getActivePane().addItem(view)
+
+createChartFromEditor = ->
+  createChart(atom.workspace.getActivePane().getActiveItem().buffer.file.path)
+
+createChartFromTree = (event) ->
+  createChart(event.target.getAttribute('data-path'))
+
+createChartFromFile = ->
+  # Show the open dialog as child window on Windows and Linux, and as
+  # independent dialog on OS X. This matches most native apps.
+  parentWindow =
+    if process.platform is 'darwin'
+      null
+    else
+      BrowserWindow.getFocusedWindow()
+
+  openOptions =
+    properties: ['openFile']
+    title: 'Open'
+
+  if process.platform is 'linux'
+    if projectPath = @lastFocusedWindow?.projectPath
+      openOptions.defaultPath = projectPath
+
+  dialog.showOpenDialog(parentWindow, openOptions, (paths) -> createChart(paths[0]))
