@@ -303,7 +303,7 @@ body = '''</script>
         }
 
         // variable color index is 3
-        if(d.children == null) {
+        if (d.children == null) {
           index = 3;
         }
 
@@ -352,7 +352,8 @@ body = '''</script>
       row = getDataByDepth(++depth);
     }
 
-    // set event handlers
+    // Set event handlers. Events to communicate outside of system hierarchy chart
+    // are emitted from within the handlers.
     svg.selectAll('g').on('click', click);
     svg.selectAll('g').on('contextmenu', click);
     // sets focusedDatum variable to the datum whose svg element has focus
@@ -360,6 +361,7 @@ body = '''</script>
       focusedDatum = d;
     });
 
+    // Help items
     var helpIconElements = document.getElementsByClassName('help-icon');
     var helpDiv = document.getElementById('help');
     var closeHelpButton = document.getElementById('close-help-button');
@@ -394,25 +396,50 @@ body = '''</script>
   });
 
   // initiates zooming, collapsing, and expanding
+  // emmits the zoom, collapse, and expand events
   function click(datum) {
     var button = d3.event.button;
+    var targetDatum = null;
+    var eventType = '';
 
+    // zoom
     if (button === 0 && !datum.element.classList.contains('collapsed')) {
-      if (focusedDatum != null) {
-        var d = focusedDatum;
-        rangeX.domain([d.x, d.x + d.dx]);
-        rangeY.domain([d.y, 1]).range([d.y ? 20 : 0, ch]);
-      }
-      transitionAll();
+      targetDatum = zoom(datum);
+      eventType = 'zoom';
 
+      // expand/collapse
     } else if (button > 0) {
+
       if (this.classList.contains('collapsed')) {
-        expand(datum);
+        targetDatum = expand(datum);
+        eventType = 'expand';
+
       } else {
-        collapse(datum);
+        targetDatum = collapse(datum);
+        eventType = 'collapse';
       }
     }
+
+    // Trigger global event
+    if (targetDatum != null) {
+      var event = new CustomEvent(eventType, {
+        detail: {
+          datum: targetDatum,
+          element: targetDatum.element
+        },
+        bubbles: true
+      });
+      targetDatum.element.dispatchEvent(event);
+    }
+
     d3.event.preventDefault();
+  }
+
+  function zoom(datum) {
+    rangeX.domain([datum.x, datum.x + datum.dx]);
+    rangeY.domain([datum.y, 1]).range([datum.y ? 20 : 0, ch]);
+    transitionAll();
+    return datum;
   }
 
   // determines which elements need to be expanded and expands them
@@ -423,9 +450,15 @@ body = '''</script>
       .datumDescendantElements(datum)
       .classed('collapsed', false);
 
-    var parent = datum.parent;
-    while (parent != null) {
-      d3.select(parent.element).classed('collapsed', false);
+    var rootExpansionDatum = (function traverseAncestors(d) {
+      var parent = d.parent;
+      var parentSelection = d3.select(parent.element);
+
+      if (!parentSelection.classed('collapsed')) {
+        return d;
+      }
+
+      parentSelection.classed('collapsed', false);
 
       var numExpandedChildren = parent.children.filter(function(d, i, arr) {
         return !d.element.classList.contains('collapsed');
@@ -433,17 +466,18 @@ body = '''</script>
 
       if (numExpandedChildren === 1) {
         parent.children.forEach(function(d, i, arr) {
-          d3.select(d.element).datumDescendantElements(d)
-            .classed('collapsed', false);
+          d3.select(d.element).datumDescendantElements(d).classed('collapsed', false);
         });
       }
 
-      parent = parent.parent;
-    }
+      return traverseAncestors(parent);
+    }(datum));
 
     setExpandingDx();
     setAllRowPositions();
     transitionAll();
+
+    return rootExpansionDatum;
   }
 
   // determines which elements need to be collapsed and collapses them.
@@ -497,19 +531,19 @@ body = '''</script>
       d.x = datum.x;
     });
 
-    parent = datum;
-    while (parent.children != null) {
+    var child = datum;
+    while (child.children != null) {
       var stateVar = null;
 
-      for (var i = 0, len = parent.children.length; i < len; ++i) {
-        if (parent.children[i].state != null) {
-          stateVar = parent.children[i];
+      for (var i = 0, len = child.children.length; i < len; ++i) {
+        if (child.children[i].state != null) {
+          stateVar = child.children[i];
           stateVar.dx = COLLAPSED_SIZE_PIXELS / cw;
           break;
         }
       }
 
-      parent.children.forEach(function(d, i, arr) {
+      child.children.forEach(function(d, i, arr) {
         if (stateVar == null && i === 0) {
           d.dx = COLLAPSED_SIZE_PIXELS / cw;
 
@@ -521,12 +555,14 @@ body = '''</script>
         }
       });
 
-      parent = parent.children[0];
+      child = child.children[0];
     }
 
     setExpandingDx();
     setAllRowPositions();
     transitionAll();
+
+    return datum;
   }
 
   // Set the new size of expanding or resizing elements
