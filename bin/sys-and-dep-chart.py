@@ -959,7 +959,7 @@ body = '''</script>
   var range = d3.scale.linear().range([0, cl]);
   var focusedDatum = null;
   var svg;
-  var rootDatum;
+  var rootDatum = [];
   var colors = [
     'rgb(240, 190, 190)', // root
     'rgb(240, 180, 180)', // group
@@ -975,17 +975,15 @@ body = '''</script>
 
     var grid = d3.layout.grid()
       .bands()
-      .size([cl, cl])
-      .padding([0.05, 0.05]);
+      .size([cl, cl]);
 
     svg = d3.select('#dependency-matrix-chart').append('svg:svg')
       .attr('width', cl)
       .attr('height', cl)
-      .append('g');
-    //.attr("transform", "translate(70,70)");
+      .append('g')
+      .attr('id', 'dependency-matrix-root');
 
-    var rects = [];
-    var rect = svg.selectAll(".rect")
+    var rect = svg.selectAll('rect')
       .data(grid(data.depMatrix.reduce(function(acc, ele) {
         return acc.concat(ele.map(function(ele, i, arr) {
           return {
@@ -1003,8 +1001,45 @@ body = '''</script>
       })
       .attr('fill', function(d) {
         return (d.value === 1) ? colors[5] : colors[3];
+      })
+      .attr('stroke', 'white')
+      .attr('stroke-width', '1')
+      .each(function(d) {
+        d.element = this;
+        d.parent = rootDatum;
+        rootDatum.push(d);
       });
 
+    rootDatum.element = document.getElementById('dependency-matrix-root');
+
+    // put the chart data back in multidimensional array format and create index properties
+    // Also create the transpose of the chart data for fast column access
+    var len = data.depMatrix.length;
+    var transpose = [];
+    rootDatum = rootDatum.reduce(function(acc, ele, index) {
+      var i = ele.i = parseInt(index / len);
+      var j = ele.j = index % len;
+
+      if (j === 0) {
+        acc.push([ele]);
+      } else {
+        acc[i].push(ele);
+      }
+      transpose[j] = transpose[j] || [];
+      transpose[j][i] = ele;
+      return acc;
+    }, []);
+    rootDatum.transpose = transpose;
+    console.log(rootDatum);
+  });
+
+
+  window.addEventListener('expand', function(event) {
+    console.log(event); //
+  });
+
+  window.addEventListener('collapse', function(event) {
+    console.log(event);
   });
 
   function deltaX(d) {
