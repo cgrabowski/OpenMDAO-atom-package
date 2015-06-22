@@ -93,6 +93,7 @@ head = '''<!DOCTYPE html>
 
 <body>
   <div id='system-hierarchy-chart'></div>
+  <div id='dependency-matrix-chart'></div>
   <svg id='help-icon-background' class='help-icon' height="48" viewBox="0 0 48 48" width='48' xmlns="http://www.w3.org/2000/svg">
     <circle fill='#20242a' cx='18' cy='18' r='18' />
   </svg>
