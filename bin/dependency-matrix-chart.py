@@ -15,8 +15,8 @@ parser.add_argument('-o', '--out', type=str, default=None, metavar='html_out', h
 args = parser.parse_args()
 
 if args.json_file is None:
-    parser.print_help()
-    sys.exit(1)
+  parser.print_help()
+  sys.exit(1)
 
 # called at the end of the file
 def write_and_close(args, head, d3, body, foot):
@@ -193,7 +193,7 @@ body = '''</script>
 /*
  * Dependency Matrix Chart
  */
-(function(d3, undefined)) {
+(function(d3, undefined) {
   var CHART_SIZE_RATIO = 0.97; // chart to window width/height ratio
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
   var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
@@ -213,7 +213,6 @@ body = '''</script>
   var rootDatum;
 
   window.addEventListener('load', function() {
-
   });
 
   // resize svg on window resize
@@ -232,11 +231,10 @@ body = '''</script>
 
 </script>
 <script>
-var data = { 'root':
-'''
+var data = '''
 
 foot = '''
-};
+
 </script>
 </body>
 

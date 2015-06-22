@@ -3,7 +3,7 @@ dialog = remote.require 'dialog'
 BrowserWindow = remote.require 'browser-window'
 child_process = require 'child_process'
 ChartModelFactory = require './chart-model-factory'
-SystemHierarchyView = require './system-hierarchy-view'
+ChartView = require './chart-view'
 chart_server = require './chart-server'
 chart_client = require './chart-client'
 
@@ -38,7 +38,7 @@ module.exports = openmdao =
     for key, constructor of ChartModelFactory.constructors
       atom.views.addViewProvider
         modelConstructor: constructor
-        viewConstructor: SystemHierarchyView
+        viewConstructor: ChartView
 
     atom.commands.add 'atom-workspace',
       'openmdao-atom:createChartFromFile': createChartFromFile

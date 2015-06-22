@@ -15,8 +15,8 @@ parser.add_argument('-o', '--out', type=str, default=None, metavar='html_out', h
 args = parser.parse_args()
 
 if args.json_file is None:
-    parser.print_help()
-    sys.exit(1)
+  parser.print_help()
+  sys.exit(1)
 
 # called at the end of the file
 def write_and_close(args, head, d3, body, foot):
@@ -204,7 +204,7 @@ body = '''</script>
   var ch = wh * CHART_SIZE_RATIO;
   var rangeX = d3.scale.linear().range([0, cw]);
   var rangeY = d3.scale.linear().range([0, ch]);
-  // matches only a trailin string of alphanumeric characters
+  // matches only a trailing string of alphanumeric characters
   // (includng the underscore character)
   var removeParentNamesRegex = /\w*$/;
   // matches trailing elipsis
@@ -789,11 +789,10 @@ body = '''</script>
 
 </script>
 <script>
-var data = { 'root':
-'''
+var data = '''
 
 foot = '''
-};
+
 </script>
 </body>
 

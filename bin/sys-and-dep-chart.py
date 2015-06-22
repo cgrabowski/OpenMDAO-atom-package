@@ -8,17 +8,15 @@ import sys
 
 desc = 'Create a HTML chart representing a system hierarchy and dependency matrix.'
 parser = argparse.ArgumentParser(description=desc)
-sysFileHelp = 'The input json file of system hierarchy data.'
-parser.add_argument('-s', '--sys' type=str, nargs='?', default=None, help=sysFileHelp)
-depFileHelp = 'The input json file of dependency data.'
-parser.add_argument('-d', '--dep' type=str, nargs='?', default=None, help=depFileHelp)
+fileHelp = 'The input json file of combined system hierarchy and dependency matrix data.'
+parser.add_argument('json_file', type=str, nargs='?', default=None, help=fileHelp)
 outHelp = 'The output HTML file. Default is stdout.'
 parser.add_argument('-o', '--out', type=str, default=None, metavar='html_out', help=outHelp)
 args = parser.parse_args()
 
-if args.sys is None or args.dep is None:
-    parser.print_help()
-    sys.exit(1)
+if args.json_file is None:
+  parser.print_help()
+  sys.exit(1)
 
 # called at the end of the file
 def write_and_close(args, head, d3, body, foot):
@@ -206,7 +204,7 @@ body = '''</script>
   var ch = wh * CHART_SIZE_RATIO;
   var rangeX = d3.scale.linear().range([0, cw]);
   var rangeY = d3.scale.linear().range([0, ch]);
-  // matches only a trailin string of alphanumeric characters
+  // matches only a trailing string of alphanumeric characters
   // (includng the underscore character)
   var removeParentNamesRegex = /\w*$/;
   // matches trailing elipsis
@@ -794,7 +792,7 @@ body = '''</script>
 /*
  * Dependency Matrix Chart
  */
-(function(d3, undefined)) {
+(function(d3, undefined) {
   var CHART_SIZE_RATIO = 0.97; // chart to window width/height ratio
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
   var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
@@ -814,7 +812,6 @@ body = '''</script>
   var rootDatum;
 
   window.addEventListener('load', function() {
-
   });
 
   // resize svg on window resize
@@ -833,11 +830,10 @@ body = '''</script>
 
 </script>
 <script>
-var data = { 'root':
-'''
+var data = '''
 
 foot = '''
-};
+
 </script>
 </body>
 

@@ -7,18 +7,20 @@ class SystemHierarchyView extends View
     @div =>
       @div class:'openmdao-chart-container', style:'height:100%', =>
         @tag 'webview', class:'openmdao-chart-webview', style:'height:100%;', outlet:'htmlv'
+
   setModel: (@model) ->
-    @model.setUpView(@)
 
-  removeWebview: ->
-    @.find('.openmdao-chart-webview').remove()
+  #removeWebview: ->
+  #  @.find('.openmdao-chart-webview').remove()
 
-  setWebView: (base64Source) ->
+  init: (base64Source) ->
     @.find('.openmdao-chart-container')
       .on('contextmenu', -> false)
     @htmlv[0].addEventListener 'did-start-loading', =>
       @htmlv[0].openDevTools()
-    @htmlv.attr('src', 'data:text/html;base64,' + base64Source)
+    @setWebview(base64Source)
+
+  setWebview: (base64Source) -> @htmlv.attr('src', 'data:text/html;base64,' + base64Source)
 
   getTitle: ->
     "System Hierarchy"

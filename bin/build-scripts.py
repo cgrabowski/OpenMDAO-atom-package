@@ -16,17 +16,15 @@ import sys
 
 desc = 'Create a HTML chart representing a system hierarchy and dependency matrix.'
 parser = argparse.ArgumentParser(description=desc)
-sysFileHelp = 'The input json file of system hierarchy data.'
-parser.add_argument('-s', '--sys' type=str, nargs='?', default=None, help=sysFileHelp)
-depFileHelp = 'The input json file of dependency data.'
-parser.add_argument('-d', '--dep' type=str, nargs='?', default=None, help=depFileHelp)
+fileHelp = 'The input json file of combined system hierarchy and dependency matrix data.'
+parser.add_argument('json_file', type=str, nargs='?', default=None, help=fileHelp)
 outHelp = 'The output HTML file. Default is stdout.'
 parser.add_argument('-o', '--out', type=str, default=None, metavar='html_out', help=outHelp)
 args = parser.parse_args()
 
-if args.sys is None or args.dep is None:
-    parser.print_help()
-    sys.exit(1)
+if args.json_file is None:
+  parser.print_help()
+  sys.exit(1)
 
 # called at the end of the file
 def write_and_close(args, head, d3, body, foot):
@@ -58,8 +56,8 @@ parser.add_argument('-o', '--out', type=str, default=None, metavar='html_out', h
 args = parser.parse_args()
 
 if args.json_file is None:
-    parser.print_help()
-    sys.exit(1)
+  parser.print_help()
+  sys.exit(1)
 
 # called at the end of the file
 def write_and_close(args, head, d3, body, foot):
@@ -91,8 +89,8 @@ parser.add_argument('-o', '--out', type=str, default=None, metavar='html_out', h
 args = parser.parse_args()
 
 if args.json_file is None:
-    parser.print_help()
-    sys.exit(1)
+  parser.print_help()
+  sys.exit(1)
 
 # called at the end of the file
 def write_and_close(args, head, d3, body, foot):
@@ -133,8 +131,8 @@ with open('sys-and-dep-chart.py', 'w') as fout:
   fout.write("<script>\n" + d3_extensions_js + "\n</script>\n")
   fout.write("<script>\n" + sys_chart_js + "\n</script>\n")
   fout.write("<script>\n" + dep_chart_js + "\n</script>\n")
-  fout.write("<script>\nvar data = { 'root':\n'''\n\n")
-  fout.write("foot = '''\n};\n</script>\n" + sys_chart_html_parts[1] + "\n")
+  fout.write("<script>\nvar data = '''\n\n")
+  fout.write("foot = '''\n\n</script>\n" + sys_chart_html_parts[1] + "\n")
   fout.write(sys_chart_html_parts[2] + "'''\n")
   fout.write(script_tail)
 
@@ -145,8 +143,8 @@ with open('sys-hierarchy-chart.py', 'w') as fout:
   fout.write("body = '''</script>\n")
   fout.write("<script>\n" + d3_extensions_js + "\n</script>\n")
   fout.write("<script>\n" + sys_chart_js + "\n</script>\n")
-  fout.write("<script>\nvar data = { 'root':\n'''\n\n")
-  fout.write("foot = '''\n};\n</script>\n" + sys_chart_html_parts[1] + "\n")
+  fout.write("<script>\nvar data = '''\n\n")
+  fout.write("foot = '''\n\n</script>\n" + sys_chart_html_parts[1] + "\n")
   fout.write(sys_chart_html_parts[2] + "'''\n")
   fout.write(script_tail)
 
@@ -157,7 +155,7 @@ with open('dependency-matrix-chart.py', 'w') as fout:
   fout.write("body = '''</script>\n")
   fout.write("<script>\n" + d3_extensions_js + "\n</script>\n")
   fout.write("<script>\n" + dep_chart_js + "\n</script>\n")
-  fout.write("<script>\nvar data = { 'root':\n'''\n\n")
-  fout.write("foot = '''\n};\n</script>\n" + sys_chart_html_parts[1] + "\n")
+  fout.write("<script>\nvar data = '''\n\n")
+  fout.write("foot = '''\n\n</script>\n" + sys_chart_html_parts[1] + "\n")
   fout.write(sys_chart_html_parts[2] + "'''\n")
   fout.write(script_tail)
