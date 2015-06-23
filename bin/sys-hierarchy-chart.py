@@ -264,6 +264,8 @@ body = '''</script>
       rootDatum = d;
     });
 
+    console.log(rootDatum);
+
     var jsonLowestPlainObjs = (function getLow(data, keyin, out) {
       var hasChildObj = false;
       for (var key in data) {
@@ -283,7 +285,6 @@ body = '''</script>
       for (var key in jsonLowestPlainObjs[d.key]) {
         d[key] = jsonLowestPlainObjs[d.key][key];
       }
-      //console.log(d);
     });
 
     // create and append a visible rect for each svg group
@@ -361,6 +362,22 @@ body = '''</script>
       focusedDatum = d;
     });
 
+    window.addEventListener('zoom', function(event){
+      console.log(event);
+    });
+
+    window.addEventListener('collapse', function(event) {
+      var leaf = getDataLeaves(rootDatum)[event.detail.column];
+      d3.event.button = event.detail.button;
+      click.call(leaf.element, leaf, true);
+    });//
+
+    window.addEventListener('expand', function(event) {
+      var leaf = getDataLeaves(rootDatum)[event.detail.column];
+      d3.event.button = event.detail.button;
+      click.call(leaf.element, leaf, true);
+    });
+
     // Help items
     var helpIconElements = document.getElementsByClassName('help-icon');
     var helpDiv = document.getElementById('help');
@@ -375,13 +392,13 @@ body = '''</script>
         return false;
       };
     }
-    closeHelpButton.onclick = function(event) {
+    closeHelpButton.addEventListener('click', function(event) {
       for (var i = 0; i < helpIconElements.length; ++i) {
         helpIconElements.item(i).style.display = 'block';
       }
       helpDiv.style.display = 'none';
       return false;
-    };
+    });
   });
 
   // resize svg on window resize
@@ -397,7 +414,7 @@ body = '''</script>
 
   // initiates zooming, collapsing, and expanding
   // emmits the zoom, collapse, and expand events
-  function click(datum) {
+  function click(datum, isExternalEvent) {
     var button = d3.event.button;
     var targetDatum = null;
     var eventType = '';
@@ -421,7 +438,7 @@ body = '''</script>
     }
 
     // Trigger global event
-    if (targetDatum != null) {
+    if (targetDatum != null && isExternalEvent == null) {
       var event = new CustomEvent(eventType, {
         detail: {
           datum: targetDatum,

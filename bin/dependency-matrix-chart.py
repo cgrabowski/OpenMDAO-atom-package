@@ -336,8 +336,6 @@ body = '''</script>
   ];
 
   window.addEventListener('load', function() {
-    var nodeLen = cl / data.depMatrix.length;
-
     var grid = d3.layout.grid()
       .bands()
       .size([cl, cl]);
@@ -357,6 +355,7 @@ body = '''</script>
         }));
       }, [])));
 
+    var flatData = [];
     rect.enter().append('rect')
       .attr('width', grid.nodeSize()[0])
       .attr('height', grid.nodeSize()[0])
@@ -365,23 +364,25 @@ body = '''</script>
         return "translate(" + d.x + "," + (d.y + 30) + ")";
       })
       .attr('fill', function(d) {
-        return (d.value === 1) ? colors[5] : colors[3];
+        return (d.value === 1) ? colors[1] : colors[3];
       })
       .attr('stroke', 'white')
       .attr('stroke-width', '1')
       .each(function(d) {
         d.element = this;
         d.parent = rootDatum;
-        rootDatum.push(d);
+        d.dx = d.dy = 1 / data.depMatrix.length;
+        flatData.push(d);
       });
 
-    rootDatum.element = document.getElementById('dependency-matrix-root');
 
     // put the chart data back in multidimensional array format and create index properties
     // Also create the transpose of the chart data for fast column access
     var len = data.depMatrix.length;
-    var transpose = [];
-    rootDatum = rootDatum.reduce(function(acc, ele, index) {
+    var transpose = rootDatum.transpose = [];
+    rootDatum.element = document.getElementById('dependency-matrix-root');
+
+    rootDatum = flatData.reduce(function(acc, ele, index) {
       var i = ele.i = parseInt(index / len);
       var j = ele.j = index % len;
 
@@ -392,20 +393,76 @@ body = '''</script>
       }
       transpose[j] = transpose[j] || [];
       transpose[j][i] = ele;
+
       return acc;
-    }, []);
-    rootDatum.transpose = transpose;
+    }, rootDatum);
+
     console.log(rootDatum);
+
+    svg.selectAll('rect').on('click', click);
+    svg.selectAll('rect').on('contextmenu', click);
+    svg.selectAll('rect').on('focus', function(d){
+      focusedDatum = d;
+    });
+
   });
 
+  // initiates zooming, collapsing, and expanding
+  // emmits the zoom, collapse, and expand events
+  function click(datum) {
+    var button = d3.event.button;
+    var targetDatum = null;
+    var eventType = '';
 
-  window.addEventListener('expand', function(event) {
-    console.log(event); //
-  });
+    // zoom
+    if (button === 0 && !datum.element.classList.contains('collapsed')) {
+      targetDatum = zoom(datum);
+      eventType = 'zoom';
 
-  window.addEventListener('collapse', function(event) {
-    console.log(event);
-  });
+      // expand/collapse
+    } else if (button > 0) {
+
+      if (this.classList.contains('collapsed')) {
+        targetDatum = expand(datum);
+        eventType = 'expand';
+
+      } else {
+        targetDatum = collapse(datum);
+        eventType = 'collapse';
+      }
+    }
+
+    // Trigger global event
+    if (targetDatum != null) {
+      var event = new CustomEvent(eventType, {
+        detail: {
+          rootId: rootDatum.element.getAttribute('id'),
+          root: rootDatum,
+          datum: targetDatum,
+          element: targetDatum.element,
+          row: targetDatum.i,
+          column: targetDatum.j,
+          button: button
+        },
+        bubbles: true
+      });
+      targetDatum.element.dispatchEvent(event);
+    }
+
+    d3.event.preventDefault();
+  }
+
+  function zoom(datum) {
+    return datum;
+  }
+
+  function collapse(datum) {
+    return datum;
+  }
+
+  function expand(datum) {
+    return datum;
+  }
 
   function deltaX(d) {
     return range(d.x);
@@ -430,9 +487,6 @@ body = '''</script>
     //transitionAll(100);
   });
 
-  function click() {
-
-  }
 })(d3);
 
 </script>
