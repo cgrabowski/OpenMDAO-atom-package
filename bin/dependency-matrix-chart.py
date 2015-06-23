@@ -359,10 +359,16 @@ body = '''</script>
     rect.enter().append('rect')
       .attr('width', grid.nodeSize()[0])
       .attr('height', grid.nodeSize()[0])
-      .attr("transform", function(d) {
-        var yOffset = 2 * cl / data.depMatrix.length;
-        return "translate(" + d.x + "," + (d.y + 30) + ")";
+      .attr('x', function(d) {
+        return d.x;
       })
+      .attr('y', function(d) {
+        return d.y + 30;
+      })
+      //.attr("transform", function(d) {
+      //  var yOffset = 2 * cl / data.depMatrix.length;
+      // return "translate(" + 0 + "," + (d.y + 30) + ")";
+      //})
       .attr('fill', function(d) {
         return (d.value === 1) ? colors[1] : colors[3];
       })
@@ -401,7 +407,7 @@ body = '''</script>
 
     svg.selectAll('rect').on('click', click);
     svg.selectAll('rect').on('contextmenu', click);
-    svg.selectAll('rect').on('focus', function(d){
+    svg.selectAll('rect').on('focus', function(d) {
       focusedDatum = d;
     });
 
@@ -457,7 +463,68 @@ body = '''</script>
   }
 
   function collapse(datum) {
-    return datum;
+    var column = rootDatum.transpose[datum.j];
+
+    column.forEach(function(d, i, arr) {
+      d3.select(d.element).classed('collapsed', true);
+      d.dx = COLLAPSED_SIZE_PIXELS / cl;
+    });
+
+    setExpandingDx();
+    //setAllRowPositions();
+    transitionAll();
+
+    return datum; //
+  }
+
+  function setExpandingDx() {
+    var expanding = svg.selectAll('rect').filter(function(d) {
+      return !this.classList.contains('collapsed');
+    });
+    var numExpandedColumns = 0;
+    var numCollapsedColumns = 0;
+
+    rootDatum.forEach(function(ele, i, arr) {
+      if (ele[0].element.classList.contains('collapsed')) {
+        if (d.dx !== 0) {
+          ++numCollapsedColums;
+        }
+      } else {
+        ++numExpandedColumns; //
+      }
+    });
+
+    var unCollapsedArea = cl - numCollapsedColumns * COLLAPSED_SIZE_PIXELS;
+    var columndx = 1 / numExpandedColumns * unCollapsedArea / cl;
+    expanding.each(function(d) {
+      d.dx = columndx + numCollapsedColumns * COLLAPSED_SIZE_PIXELS / cl;
+    });
+  }
+
+  function setAllRowPositions() {
+    var row = rootDatum[0];
+
+    svg.selectAll('rect').each(function(d) {
+        d.newX = 0;
+        for (var j = 0, pos = d.j; j < pos; ++j) {//
+          d.newX += rootDatum[0][j].dx * cl;
+        }
+      })
+      .each(function(d) {
+        d.x = d.newX;
+        delete d.newX;
+      });
+  }
+
+  function transitionAll(duration) {
+    duration = duration || DEFAULT_TRANSITION_DURATION;
+
+    svg.selectAll('rect').transition()
+      .duration(duration)
+      .attr('x', deltaX)
+      .attr('y', deltaY)
+      .attr('width', deltaWidth)
+      .attr('height', deltaHeight); //
   }
 
   function expand(datum) {
@@ -465,11 +532,11 @@ body = '''</script>
   }
 
   function deltaX(d) {
-    return range(d.x);
+    return range(d.x / cl);
   }
 
   function deltaY(d) {
-    return range(d.y);
+    return range(d.y / cl) + 30;
   }
 
   function deltaWidth(d) {

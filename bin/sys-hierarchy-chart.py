@@ -646,10 +646,10 @@ body = '''</script>
       var laterals = getDataByDepth(d.depth);
 
       d.newX = 0;
-      var pos = laterals.indexOf(d);
-      for (var i = 0; i < pos; ++i) {
+      for (var i = 0, pos = laterals.indexOf(d); i < pos; ++i) {
         d.newX += laterals[i].dx;
       }
+      
     }).each(function(d) {
       if (d.parent == null) {
         return;
