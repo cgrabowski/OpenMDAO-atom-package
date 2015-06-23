@@ -649,7 +649,7 @@ body = '''</script>
       for (var i = 0, pos = laterals.indexOf(d); i < pos; ++i) {
         d.newX += laterals[i].dx;
       }
-      
+
     }).each(function(d) {
       if (d.parent == null) {
         return;
@@ -1045,12 +1045,20 @@ body = '''</script>
       var j = ele.j = index % len;
 
       if (j === 0) {
-        acc.push([ele]);
+        var row = [ele];
+        acc.push(row);
+        row.y = ele.y;
       } else {
         acc[i].push(ele);
       }
-      transpose[j] = transpose[j] || [];
-      transpose[j][i] = ele;
+
+      if (i === 0) {
+        var column = [ele];
+        transpose.push(column);
+        column.x = ele.x;
+      } else {
+        transpose[j].push(ele);
+      }
 
       return acc;
     }, rootDatum);
@@ -1088,7 +1096,7 @@ body = '''</script>
         targetDatum = collapse(datum);
         eventType = 'collapse';
       }
-    }
+    }///
 
     // Trigger global event
     if (targetDatum != null) {
@@ -1123,7 +1131,7 @@ body = '''</script>
     });
 
     setExpandingDx();
-    //setAllRowPositions();
+    setAllRowPositions();
     transitionAll();
 
     return datum; //
@@ -1156,16 +1164,14 @@ body = '''</script>
   function setAllRowPositions() {
     var row = rootDatum[0];
 
-    svg.selectAll('rect').each(function(d) {
-        d.newX = 0;
-        for (var j = 0, pos = d.j; j < pos; ++j) {//
-          d.newX += rootDatum[0][j].dx * cl;
-        }
-      })
-      .each(function(d) {
-        d.x = d.newX;
-        delete d.newX;
-      });
+    rootDatum.transpose.forEach(function(column, index, arr) {
+      if (index !== 0) {
+        column.x = arr[index - 1].x + column.dx;
+      }
+      column.forEach(function(ele, i, arr){
+        ele.x = arr.x;
+      });//
+    });
   }
 
   function transitionAll(duration) {

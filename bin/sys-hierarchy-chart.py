@@ -649,7 +649,7 @@ body = '''</script>
       for (var i = 0, pos = laterals.indexOf(d); i < pos; ++i) {
         d.newX += laterals[i].dx;
       }
-      
+
     }).each(function(d) {
       if (d.parent == null) {
         return;
