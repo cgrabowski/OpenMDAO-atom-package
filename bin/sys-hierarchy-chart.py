@@ -401,17 +401,21 @@ body = '''</script>
   });
 
   window.addEventListener('collapse', function(event) {
+    if (event.detail.secondary === true) {
+      return;
+    }
     var detail = event.detail;
     var datum;
-    if(detail.root === rootDatum) {
+
+    if (detail.root === rootDatum) {
       datum = detail.datum;
     } else {
-     var leaves = getDataLeaves(rootDatum);
-     console.log(detail.columns)
+      var leaves = getDataLeaves(rootDatum);
       datum = leaves[detail.columns[0]];
     }
 
     var parent = datum.parent;
+    var origDatum = datum;
     while (parent != null) {
       var numExpandedChildren = parent.children.filter(function(d, i, arr) {
         return !d.element.classList.contains('collapsed');
@@ -424,7 +428,30 @@ body = '''</script>
       }
       parent = parent.parent;
     }
-    console.log(datum);
+
+
+    // trigger secondary collapse event if root of the collapse has changed
+    if (datum !== origDatum) {
+      var leaves = getDataLeaves(rootDatum);
+      var datumLeaves = getDataLeaves(datum);
+      var startIndex = leaves.indexOf(datumLeaves[0]);
+      var lastIndex = startIndex + datumLeaves.length;
+      var columns = [startIndex, lastIndex];
+      var event = new CustomEvent('collapse', {
+        detail: {
+          rootId: svg[0][0].parentNode.getAttribute('id'),
+          root: rootDatum,
+          datum: datum,
+          element: datum.element,
+          rows: [datum.depth, datum.depth + 1],
+          columns: columns,
+          secondary: true
+        },
+        bubbles: true
+      });
+      datum.element.dispatchEvent(event);
+    }
+
     collapse(datum);
   });
 
@@ -501,7 +528,8 @@ body = '''</script>
         datum: datum,
         element: datum.element,
         rows: [datum.depth, datum.depth + 1],
-        columns: columns
+        columns: columns,
+        secondary: false
       },
       bubbles: true
     });

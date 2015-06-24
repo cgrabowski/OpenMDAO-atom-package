@@ -356,11 +356,12 @@ body = '''</script>
     var eventType = '';
 
     // zoom
-    if (button === 0 && !rootDatum.transpose[datum.j].isCollapsed) {
-      eventType = 'zoom';
+    //if (button === 0 && !rootDatum.transpose[datum.j].isCollapsed) {
+    //  eventType = 'zoom';
 
-      // expand/collapse
-    } else if (button > 0) {
+    // expand/collapse
+    //} else if (button > 0) {
+    if (button > 0) { //
       if (rootDatum.transpose[datum.j].isCollapsed) {
         eventType = 'expand';
       } else {
@@ -377,7 +378,8 @@ body = '''</script>
         element: datum.element,
         rows: [datum.i, datum.i + 1],
         columns: [datum.j, datum.j + 1],
-        button: button
+        button: button,
+        secondary: false
       },
       bubbles: true
     });
@@ -393,14 +395,25 @@ body = '''</script>
     var target = detail.element;
     var columns = resolveEventTargetColumns(event);
 
-    console.log(event);
+    var numCollapsedCols = rootDatum.transpose.reduce(function(acc, ele){
+      return (ele.isCollapsed) ? acc + 1 : acc;
+    }, 0);
+
+    if(numCollapsedCols === rootDatum.transpose.length - 1){
+      return;
+    }
+
     var collapseGroup = [];
     columns.forEach(function(col, i, arr) {
       collapseGroup.push(col);
       col.collapseGroup = collapseGroup;
-      col.width = (target.children != null && i !== 0) ? 0 : COLLAPSED_SIZE_PIXELS;
+      var c = COLLAPSED_SIZE_PIXELS;
+      col.width = ((target.children != null && i !== 0) || col.width === 0) ? 0 : c;
       col.isCollapsed = true;
     });
+
+    //console.log(event);
+    //console.log(columns);
 
     setExpandingDx();
     setAllRowPositions();
@@ -413,13 +426,12 @@ body = '''</script>
     var columns = resolveEventTargetColumns(event);
 
     columns.forEach(function(col, i, arr) {
-      if(col.collapseGroup != null) {
+      if (col.collapseGroup != null) {
         col.collapseGroup.forEach(function(c, i, arr) {
-          c.width = nodeLen;
+          c.isCollapsed = false;
           delete c.collapseGroup;
         });
       }
-      col.width = nodeLen;
       col.isCollapsed = false;
     });
 
