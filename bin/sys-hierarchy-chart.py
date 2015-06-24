@@ -362,18 +362,6 @@ body = '''</script>
       focusedDatum = d;
     });
 
-    window.addEventListener('zoom', function(event) {
-      zoom(event.detail.datum);
-    });
-
-    window.addEventListener('collapse', function(event) {
-      collapse(event.detail.datum);
-    });
-
-    window.addEventListener('expand', function(event) {
-      expand(event.detail.datum);
-    });
-
     // Help items
     var helpIconElements = document.getElementsByClassName('help-icon');
     var helpDiv = document.getElementById('help');
@@ -408,6 +396,54 @@ body = '''</script>
     transitionAll(100);
   });
 
+  window.addEventListener('zoom', function(event) {
+    zoom(event.detail.datum);
+  });
+
+  window.addEventListener('collapse', function(event) {
+    var detail = event.detail;
+    var datum;
+    if(detail.root === rootDatum) {
+      datum = detail.datum;
+    } else {
+     var leaves = getDataLeaves(rootDatum);
+     console.log(detail.columns)
+      datum = leaves[detail.columns[0]];
+    }
+
+    var parent = datum.parent;
+    while (parent != null) {
+      var numExpandedChildren = parent.children.filter(function(d, i, arr) {
+        return !d.element.classList.contains('collapsed');
+      }).length;
+
+      if (numExpandedChildren === 1) {
+        // if parent has no more expanded children, then it becomes the
+        // root of the collapse
+        datum = parent;
+      }
+      parent = parent.parent;
+    }
+    console.log(datum);
+    collapse(datum);
+  });
+
+  window.addEventListener('expand', function(event) {
+    var detail = event.detail;
+
+    if (event.detail.id === svg[0][0].parentNode.getAttribute('id')) {
+      expand(detail.datum);
+
+    } else {
+      var leaves = getDataLeaves(rootDatum);
+      var columns = detail.columns;
+
+      for (var i = columns[0]; i < columns[1]; ++i) {
+        expand(leaves[i]);
+      }
+    }
+  });
+
   // initiates zooming, collapsing, and expanding
   // emmits the zoom, collapse, and expand events
   function click(datum) {
@@ -422,8 +458,23 @@ body = '''</script>
     } else if (button > 0) {
       if (this.classList.contains('collapsed')) {
         eventType = 'expand';
-      } else { //
+
+      } else {
         eventType = 'collapse';
+
+        var parent = datum.parent;
+        while (parent != null) {
+          var numExpandedChildren = parent.children.filter(function(d, i, arr) {
+            return !d.element.classList.contains('collapsed');
+          }).length;
+
+          if (numExpandedChildren === 1) {
+            // if parent has no more expanded children, then it becomes the
+            // root of the collapse
+            datum = parent;
+          }
+          parent = parent.parent;
+        }
       }
     }
 
@@ -432,9 +483,15 @@ body = '''</script>
     var leaves = getDataLeaves(rootDatum);
     var eleLeaves = getDataLeaves(datum);
     if (eleLeaves.length === 1) {
-      columns = [leaves.indexOf(datum), leaves.indexOf(datum) + 1];
+      if (eleLeaves[0] === datum) {
+        columns = [leaves.indexOf(datum), leaves.indexOf(datum) + 1];
+      } else {
+        columns = [leaves.indexOf(datum.children[0]), leaves.indexOf(datum.children[0]) + 1];
+      }
     } else {
-      columns = [eleLeaves[0].rowOrder, eleLeaves[eleLeaves.length - 1].rowOrder + 1];
+      var startIndex = leaves.indexOf(eleLeaves[0]);
+      var endIndex = startIndex + eleLeaves.length;
+      columns = [startIndex, endIndex];
     }
 
     var event = new CustomEvent(eventType, {
@@ -460,44 +517,6 @@ body = '''</script>
     return datum;
   }
 
-  // determines which elements need to be expanded and expands them
-  // repositions the rest of the elements as necessary
-  function expand(datum) {
-    d3.select(datum.element)
-      .datumChildrenElements(datum)
-      .datumDescendantElements(datum)
-      .classed('collapsed', false);
-
-    var rootExpansionDatum = (function traverseAncestors(d) {
-      var parent = d.parent;
-      var parentSelection = d3.select(parent.element);
-
-      if (!parentSelection.classed('collapsed')) {
-        return d;
-      }
-
-      parentSelection.classed('collapsed', false);
-
-      var numExpandedChildren = parent.children.filter(function(d, i, arr) {
-        return !d.element.classList.contains('collapsed');
-      }).length;
-
-      if (numExpandedChildren === 1) {
-        parent.children.forEach(function(d, i, arr) {
-          d3.select(d.element).datumDescendantElements(d).classed('collapsed', false);
-        });
-      }
-
-      return traverseAncestors(parent);
-    }(datum));
-
-    setExpandingDx();
-    setAllRowPositions();
-    transitionAll();
-
-    return rootExpansionDatum;
-  }
-
   // determines which elements need to be collapsed and collapses them.
   // repositions the rest of the elements as necessary
   function collapse(datum) {
@@ -513,26 +532,10 @@ body = '''</script>
       return;
     }
 
+    datum.element.classList.add('collapsed');
     var collapsing = d3.select(datum.element)
       .datumDescendantElements(datum)
       .classed('collapsed', true);
-
-    var parent = datum.parent;
-    while (parent != null) {
-      var numExpandedChildren = parent.children.filter(function(d, i, arr) {
-        return !d.element.classList.contains('collapsed');
-      }).length;
-
-      if (numExpandedChildren === 0) {
-        d3.select(parent.element).classed('collapsed', true);
-        collapsing[0].push(parent.element);
-        // if parent has no more expanded children, then it becomes the
-        // root of the collapse
-        datum = parent;
-      }
-
-      parent = parent.parent;
-    }
 
     collapsing.each(function(d) {
       if (this.nodeName === 'text') {
@@ -581,6 +584,45 @@ body = '''</script>
     transitionAll();
 
     return datum;
+  }
+
+
+  // determines which elements need to be expanded and expands them
+  // repositions the rest of the elements as necessary
+  function expand(datum) {
+    d3.select(datum.element)
+      .datumChildrenElements(datum)
+      .datumDescendantElements(datum)
+      .classed('collapsed', false);
+
+    var rootExpansionDatum = (function traverseAncestors(d) {
+      var parent = d.parent;
+      var parentSelection = d3.select(parent.element);
+
+      if (!parentSelection.classed('collapsed')) {
+        return d;
+      }
+
+      parentSelection.classed('collapsed', false);
+
+      var numExpandedChildren = parent.children.filter(function(d, i, arr) {
+        return !d.element.classList.contains('collapsed');
+      }).length;
+
+      if (numExpandedChildren === 1) {
+        parent.children.forEach(function(d, i, arr) {
+          d3.select(d.element).datumDescendantElements(d).classed('collapsed', false);
+        });
+      }
+
+      return traverseAncestors(parent);
+    }(datum));
+
+    setExpandingDx();
+    setAllRowPositions();
+    transitionAll();
+
+    return rootExpansionDatum;
   }
 
   // Set the new size of expanding or resizing elements

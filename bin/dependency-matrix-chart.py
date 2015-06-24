@@ -251,7 +251,8 @@ body = '''</script>
       if (i === 0) {
         transpose.push([ele]);
         transpose[j].x = nodeLen * j;
-        transpose[j].width = nodeLen
+        transpose[j].width = nodeLen;
+        transpose[j].isCollapsed = false;
       } else {
         transpose[j].push(ele);
       }
@@ -298,6 +299,7 @@ body = '''</script>
 
       return acc;
     }, []);
+
     rootDatum.transpose = transpose;
 
     svg.selectAll('g').data(flat).enter()
@@ -331,7 +333,7 @@ body = '''</script>
   });
 
   window.addEventListener('expand', function(event) {
-    expand(event.detail.datum);
+    expand(event);
   });
 
   function resolveEventTargetColumns(event) {
@@ -339,6 +341,8 @@ body = '''</script>
     var eventColIndices = event.detail.columns;
 
     for (var i = eventColIndices[0]; i < eventColIndices[1]; ++i) {
+      //console.log(i);
+      //console.log(rootDatum.transpose[i]);
       targetCols.push(rootDatum.transpose[i]);
     }
 
@@ -352,12 +356,12 @@ body = '''</script>
     var eventType = '';
 
     // zoom
-    if (button === 0 && !datum.element.classList.contains('collapsed')) {
+    if (button === 0 && !rootDatum.transpose[datum.j].isCollapsed) {
       eventType = 'zoom';
 
       // expand/collapse
     } else if (button > 0) {
-      if (this.classList.contains('collapsed')) {
+      if (rootDatum.transpose[datum.j].isCollapsed) {
         eventType = 'expand';
       } else {
         eventType = 'collapse';
@@ -384,19 +388,39 @@ body = '''</script>
 
   function zoom(event) {}
 
-  function expand(datum) {}
-
   function collapse(event) {
     var detail = event.detail;
     var target = detail.element;
     var columns = resolveEventTargetColumns(event);
 
+    console.log(event);
+    var collapseGroup = [];
     columns.forEach(function(col, i, arr) {
+      collapseGroup.push(col);
+      col.collapseGroup = collapseGroup;
       col.width = (target.children != null && i !== 0) ? 0 : COLLAPSED_SIZE_PIXELS;
+      col.isCollapsed = true;
+    });
 
-      col.forEach(function(d, i, arr) {
-        d.element.classList.add('collapsed');
-      });
+    setExpandingDx();
+    setAllRowPositions();
+    transitionAll();
+  }
+
+  function expand(event) {
+    var detail = event.detail;
+    var target = detail.target;
+    var columns = resolveEventTargetColumns(event);
+
+    columns.forEach(function(col, i, arr) {
+      if(col.collapseGroup != null) {
+        col.collapseGroup.forEach(function(c, i, arr) {
+          c.width = nodeLen;
+          delete c.collapseGroup;
+        });
+      }
+      col.width = nodeLen;
+      col.isCollapsed = false;
     });
 
     setExpandingDx();
@@ -407,20 +431,18 @@ body = '''</script>
   function setExpandingDx() {
     var collapsedArea = 0;
     var numCollapsedCols = rootDatum.transpose.reduce(function(acc, col) {
-      if (col[0].element.classList.contains('collapsed')) {
+      if (col.isCollapsed) {
         collapsedArea += col.width;
         return acc + 1;
       } else {
         return acc;
       }
     }, 0);
-        console.log(collapsedArea);
-        console.log(numCollapsedCols);
 
     var expandedNodeSize = (cl - collapsedArea) / (rootDatum.transpose.length - numCollapsedCols);
 
     rootDatum.transpose.forEach(function(col, i, arr) {
-      if (!col[0].element.classList.contains('collapsed')) {
+      if (!col.isCollapsed) {
         col.width = expandedNodeSize;
       }
     });
