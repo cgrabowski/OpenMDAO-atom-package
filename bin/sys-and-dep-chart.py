@@ -871,6 +871,11 @@ body = '''</script>
   window.addEventListener('load', function() {
     nodeLen = cl / data.depMatrix.length
 
+    var container = document.getElementById('dependency-matrix-chart');
+    if (container.previousElementSibling.children[0].nodeName === 'svg') {
+      container.style.paddingTop = nodeLen + 'px';
+    }
+
     svg = d3.select('#dependency-matrix-chart').append('svg')
       .attr('width', cl)
       .attr('height', cl);
@@ -946,20 +951,26 @@ body = '''</script>
       return acc;
     }, []);
     rootDatum.transpose = transpose;
-
-    //console.log(flat);
+    rootDatum.element = container;
 
     svg.selectAll('g').data(flat).enter()
       .append('g')
       .append('rect')
-      .attr('fill', colors[1])
+      .attr('fill', function(d) {
+        return (d.value === 1) ? colors[1] : colors[3];
+      })
       .attr('x', deltaX)
       .attr('y', deltaY)
       .attr('width', deltaWidth)
       .attr('height', deltaHeight)
       .each(function(d) {
         d.element = this;
-      }).transition(1);
+      })
+      .on('click', click)
+      .on('contextmenu', click)
+      .on('focus', function(d) {
+        focusedDatum = d;
+      });
 
     console.log(rootDatum);
   });
@@ -987,7 +998,7 @@ body = '''</script>
         targetDatum = collapse(datum);
         eventType = 'collapse';
       }
-    } ///
+    }
 
     // Trigger global event
     if (targetDatum != null) {
@@ -1014,15 +1025,41 @@ body = '''</script>
   }
 
   function collapse(datum) {
+    var column = rootDatum.transpose[datum.j];
 
+    column.width = COLLAPSED_SIZE_PIXELS;
+    column.forEach(function(d, i, arr) {
+      var ele = d.element;
+      ele.classList.add('collapsed');
+    });
+
+    setExpandingDx();
+    setAllRowPositions();
+    transitionAll();
+
+    return datum;
   }
 
   function setExpandingDx() {
+    var numCollapsedCols = rootDatum.transpose.reduce(function(acc, col) {
+      return (col[0].element.classList.contains('collapsed')) ? acc + 1 : acc;
+    }, 0);
 
+    var expandedNodeSize = (cl - numCollapsedCols * 10) / (rootDatum.transpose.length - numCollapsedCols);
+
+    rootDatum.transpose.forEach(function(col, i, arr) {
+      if (!col[0].element.classList.contains('collapsed')) {
+        col.width = expandedNodeSize;
+      }
+    });
   }
 
   function setAllRowPositions() {
-
+    rootDatum.transpose.forEach(function(col, i, arr) {
+      if (i !== 0) {
+        col.x = arr[i - 1].x + arr[i - 1].width;
+      }
+    });
   }
 
   function transitionAll(duration) {
