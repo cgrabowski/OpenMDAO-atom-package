@@ -362,20 +362,16 @@ body = '''</script>
       focusedDatum = d;
     });
 
-    window.addEventListener('zoom', function(event){
-      console.log(event);
+    window.addEventListener('zoom', function(event) {
+      zoom(event.detail.datum);
     });
 
     window.addEventListener('collapse', function(event) {
-      var leaf = getDataLeaves(rootDatum)[event.detail.column];
-      d3.event.button = event.detail.button;
-      click.call(leaf.element, leaf, true);
-    });//
+      collapse(event.detail.datum);
+    });
 
     window.addEventListener('expand', function(event) {
-      var leaf = getDataLeaves(rootDatum)[event.detail.column];
-      d3.event.button = event.detail.button;
-      click.call(leaf.element, leaf, true);
+      expand(event.detail.datum);
     });
 
     // Help items
@@ -414,40 +410,45 @@ body = '''</script>
 
   // initiates zooming, collapsing, and expanding
   // emmits the zoom, collapse, and expand events
-  function click(datum, isExternalEvent) {
+  function click(datum) {
     var button = d3.event.button;
-    var targetDatum = null;
     var eventType = '';
 
     // zoom
     if (button === 0 && !datum.element.classList.contains('collapsed')) {
-      targetDatum = zoom(datum);
       eventType = 'zoom';
 
       // expand/collapse
     } else if (button > 0) {
-
       if (this.classList.contains('collapsed')) {
-        targetDatum = expand(datum);
         eventType = 'expand';
-
-      } else {
-        targetDatum = collapse(datum);
+      } else { //
         eventType = 'collapse';
       }
     }
 
     // Trigger global event
-    if (targetDatum != null && isExternalEvent == null) {
-      var event = new CustomEvent(eventType, {
-        detail: {
-          datum: targetDatum,
-          element: targetDatum.element
-        },
-        bubbles: true
-      });
-      targetDatum.element.dispatchEvent(event);
+    var columns;
+    var leaves = getDataLeaves(rootDatum);
+    var eleLeaves = getDataLeaves(datum);
+    if (eleLeaves.length === 1) {
+      columns = [leaves.indexOf(datum), leaves.indexOf(datum) + 1];
+    } else {
+      columns = [eleLeaves[0].rowOrder, eleLeaves[eleLeaves.length - 1].rowOrder + 1];
     }
+
+    var event = new CustomEvent(eventType, {
+      detail: {
+        rootId: svg[0][0].parentNode.getAttribute('id'),
+        root: rootDatum,
+        datum: datum,
+        element: datum.element,
+        rows: [datum.depth, datum.depth + 1],
+        columns: columns
+      },
+      bubbles: true
+    });
+    datum.element.dispatchEvent(event);
 
     d3.event.preventDefault();
   }
@@ -816,6 +817,8 @@ body = '''</script>
   }
 
   // gets all leaves that are decendants of datum
+  // !IMPORTANT: This function guarantees leaves are returned in row order,
+  // and code that uses this funciton depends on that!
   function getDataLeaves(datum) {
     var leaves = [];
     var selection;

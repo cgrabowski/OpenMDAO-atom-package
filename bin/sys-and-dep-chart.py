@@ -362,20 +362,16 @@ body = '''</script>
       focusedDatum = d;
     });
 
-    window.addEventListener('zoom', function(event){
-      console.log(event);
+    window.addEventListener('zoom', function(event) {
+      zoom(event.detail.datum);
     });
 
     window.addEventListener('collapse', function(event) {
-      var leaf = getDataLeaves(rootDatum)[event.detail.column];
-      d3.event.button = event.detail.button;
-      click.call(leaf.element, leaf, true);
-    });//
+      collapse(event.detail.datum);
+    });
 
     window.addEventListener('expand', function(event) {
-      var leaf = getDataLeaves(rootDatum)[event.detail.column];
-      d3.event.button = event.detail.button;
-      click.call(leaf.element, leaf, true);
+      expand(event.detail.datum);
     });
 
     // Help items
@@ -414,40 +410,45 @@ body = '''</script>
 
   // initiates zooming, collapsing, and expanding
   // emmits the zoom, collapse, and expand events
-  function click(datum, isExternalEvent) {
+  function click(datum) {
     var button = d3.event.button;
-    var targetDatum = null;
     var eventType = '';
 
     // zoom
     if (button === 0 && !datum.element.classList.contains('collapsed')) {
-      targetDatum = zoom(datum);
       eventType = 'zoom';
 
       // expand/collapse
     } else if (button > 0) {
-
       if (this.classList.contains('collapsed')) {
-        targetDatum = expand(datum);
         eventType = 'expand';
-
-      } else {
-        targetDatum = collapse(datum);
+      } else { //
         eventType = 'collapse';
       }
     }
 
     // Trigger global event
-    if (targetDatum != null && isExternalEvent == null) {
-      var event = new CustomEvent(eventType, {
-        detail: {
-          datum: targetDatum,
-          element: targetDatum.element
-        },
-        bubbles: true
-      });
-      targetDatum.element.dispatchEvent(event);
+    var columns;
+    var leaves = getDataLeaves(rootDatum);
+    var eleLeaves = getDataLeaves(datum);
+    if (eleLeaves.length === 1) {
+      columns = [leaves.indexOf(datum), leaves.indexOf(datum) + 1];
+    } else {
+      columns = [eleLeaves[0].rowOrder, eleLeaves[eleLeaves.length - 1].rowOrder + 1];
     }
+
+    var event = new CustomEvent(eventType, {
+      detail: {
+        rootId: svg[0][0].parentNode.getAttribute('id'),
+        root: rootDatum,
+        datum: datum,
+        element: datum.element,
+        rows: [datum.depth, datum.depth + 1],
+        columns: columns
+      },
+      bubbles: true
+    });
+    datum.element.dispatchEvent(event);
 
     d3.event.preventDefault();
   }
@@ -816,6 +817,8 @@ body = '''</script>
   }
 
   // gets all leaves that are decendants of datum
+  // !IMPORTANT: This function guarantees leaves are returned in row order,
+  // and code that uses this funciton depends on that!
   function getDataLeaves(datum) {
     var leaves = [];
     var selection;
@@ -951,7 +954,6 @@ body = '''</script>
       return acc;
     }, []);
     rootDatum.transpose = transpose;
-    rootDatum.element = container;
 
     svg.selectAll('g').data(flat).enter()
       .append('g')
@@ -975,77 +977,102 @@ body = '''</script>
     console.log(rootDatum);
   });
 
+  window.addEventListener('zoom', function(event) {
+    zoom(event.detail.datum);
+  });
+
+  window.addEventListener('collapse', function(event) {
+    collapse(event);
+  });
+
+  window.addEventListener('expand', function(event) {
+    expand(event.detail.datum);
+  });
+
+  function resolveEventTargetColumns(event) {
+    var targetCols = [];
+    var eventColIndices = event.detail.columns;
+
+    for (var i = eventColIndices[0]; i < eventColIndices[1]; ++i) {
+      targetCols.push(rootDatum.transpose[i]);
+    }
+
+    return targetCols;
+  }
+
   // initiates zooming, collapsing, and expanding
   // emmits the zoom, collapse, and expand events
   function click(datum) {
     var button = d3.event.button;
-    var targetDatum = null;
     var eventType = '';
 
     // zoom
     if (button === 0 && !datum.element.classList.contains('collapsed')) {
-      targetDatum = zoom(datum);
       eventType = 'zoom';
 
       // expand/collapse
     } else if (button > 0) {
-
       if (this.classList.contains('collapsed')) {
-        targetDatum = expand(datum);
         eventType = 'expand';
-
       } else {
-        targetDatum = collapse(datum);
         eventType = 'collapse';
       }
     }
 
     // Trigger global event
-    if (targetDatum != null) {
-      var event = new CustomEvent(eventType, {
-        detail: {
-          rootId: rootDatum.element.getAttribute('id'),
-          root: rootDatum,
-          datum: targetDatum,
-          element: targetDatum.element,
-          row: targetDatum.i,
-          column: targetDatum.j,
-          button: button
-        },
-        bubbles: true
-      });
-      targetDatum.element.dispatchEvent(event);
-    }
+    var event = new CustomEvent(eventType, {
+      detail: {
+        rootId: svg[0][0].parentNode.getAttribute('id'),
+        root: rootDatum,
+        datum: datum,
+        element: datum.element,
+        rows: [datum.i, datum.i + 1],
+        columns: [datum.j, datum.j + 1],
+        button: button
+      },
+      bubbles: true
+    });
+    datum.element.dispatchEvent(event);
 
     d3.event.preventDefault();
   }
 
-  function zoom(datum) {
-    return datum;
-  }
+  function zoom(event) {}
 
-  function collapse(datum) {
-    var column = rootDatum.transpose[datum.j];
+  function expand(datum) {}
 
-    column.width = COLLAPSED_SIZE_PIXELS;
-    column.forEach(function(d, i, arr) {
-      var ele = d.element;
-      ele.classList.add('collapsed');
+  function collapse(event) {
+    var detail = event.detail;
+    var target = detail.element;
+    var columns = resolveEventTargetColumns(event);
+
+    columns.forEach(function(col, i, arr) {
+      col.width = (target.children != null && i !== 0) ? 0 : COLLAPSED_SIZE_PIXELS;
+
+      col.forEach(function(d, i, arr) {
+        d.element.classList.add('collapsed');
+      });
     });
 
     setExpandingDx();
     setAllRowPositions();
     transitionAll();
-
-    return datum;
   }
 
   function setExpandingDx() {
+    var collapsedArea = 0;
     var numCollapsedCols = rootDatum.transpose.reduce(function(acc, col) {
-      return (col[0].element.classList.contains('collapsed')) ? acc + 1 : acc;
+      if (col[0].element.classList.contains('collapsed')) {
+        collapsedArea += col.width;
+        return acc + 1;
+      } else {
+        return acc;
+      }
     }, 0);
+        console.log(collapsedArea);
+        console.log(numCollapsedCols);
 
-    var expandedNodeSize = (cl - numCollapsedCols * 10) / (rootDatum.transpose.length - numCollapsedCols);
+    var expandedNodeSize = (cl - collapsedArea) / (rootDatum.transpose.length - numCollapsedCols);
 
     rootDatum.transpose.forEach(function(col, i, arr) {
       if (!col[0].element.classList.contains('collapsed')) {
@@ -1071,10 +1098,6 @@ body = '''</script>
       .attr('y', deltaY)
       .attr('width', deltaWidth)
       .attr('height', deltaHeight);
-  }
-
-  function expand(datum) {
-
   }
 
   function deltaX(d) {
