@@ -1,14 +1,11 @@
 #!/usr/bin/python
-#
-# Currently this script only generates sys-hierarchy-chart.py
-#
 
 import sys
 
 sys_and_dep_chart_script_head = '''\
 #!/usr/bin/python
 #
-# AUTOMATCALLY GENERATED SCRIPT! MANUALLY EDITING THIS FILE DOES NOTHING!
+# AUTOMATICALLY GENERATED SCRIPT! MANUALLY EDITING THIS FILE DOES NOTHING!
 #
 
 import argparse
@@ -41,7 +38,7 @@ def write_and_close(args, head, d3, body, foot):
 sys_chart_script_head = '''\
 #!/usr/bin/python
 #
-# AUTOMATCALLY GENERATED SCRIPT! MANUALLY EDITING THIS FILE DOES NOTHING!
+# AUTOMATICALLY GENERATED SCRIPT! MANUALLY EDITING THIS FILE DOES NOTHING!
 #
 
 import argparse
@@ -74,7 +71,7 @@ def write_and_close(args, head, d3, body, foot):
 dep_chart_script_head = '''\
 #!/usr/bin/python
 #
-# AUTOMATCALLY GENERATED SCRIPT! MANUALLY EDITING THIS FILE DOES NOTHING!
+# AUTOMATICALLY GENERATED SCRIPT! MANUALLY EDITING THIS FILE DOES NOTHING!
 #
 
 import argparse

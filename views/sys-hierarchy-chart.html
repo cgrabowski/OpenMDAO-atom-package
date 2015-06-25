@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset='utf-8'>
   <title>System Hierarchy</title>
@@ -23,6 +24,20 @@
 
     text {
       cursor: default;
+    }
+
+    .sidebar-left {
+      float: left;
+      width: 10%;
+    }
+
+    .central-with-sidebar {
+      width: 90%;
+      float:right;
+    }
+
+    .label-svg-container {
+      position: relative;
     }
 
     #help,
@@ -62,30 +77,33 @@
 </head>
 
 <body>
-  <div id='system-hierarchy-chart'></div>
-  <div id='dependency-matrix-chart'></div>
-  <svg id='help-icon-background' class='help-icon' height="48" viewBox="0 0 48 48" width='48' xmlns="http://www.w3.org/2000/svg">
-    <circle fill='#20242a' cx='18' cy='18' r='18' />
-  </svg>
-  <svg id='help-icon-paths' class='help-icon' fill="#c8d5ee" height="48" viewBox="0 0 48 48" width="48" xmlns="http://www.w3.org/2000/svg">
-    <g transform='scale(1.5, 1.5)'>
-      <path d="M0 0h24v24H0z" fill="none" />
-      <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"
-      />
-    </g>
-  </svg>
-  <div id='help'>
-    <h3>OpenMDAO System Hierarchy Partition Chart</h3>
-    <p>
-      <strong>left mouse button</strong>: zoom in and out
-      <br /> note: click the very top of the screen to zoom out.
-    </p>
-    <p>
-      <strong>center and right mouse buttons</strong>: collapse and expand partitions
-    </p>
-    <div id='close-help-button'>
-      <strong>X</strong>
+  <div id='container'>
+    <div id='system-hierarchy-chart'></div>
+    <div id='dependency-matrix-chart'></div>
+    <svg id='help-icon-background' class='help-icon' height="48" viewBox="0 0 48 48" width='48' xmlns="http://www.w3.org/2000/svg">
+      <circle fill='#20242a' cx='18' cy='18' r='18' />
+    </svg>
+    <svg id='help-icon-paths' class='help-icon' fill="#c8d5ee" height="48" viewBox="0 0 48 48" width="48" xmlns="http://www.w3.org/2000/svg">
+      <g transform='scale(1.5, 1.5)'>
+        <path d="M0 0h24v24H0z" fill="none" />
+        <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"
+        />
+      </g>
+    </svg>
+    <div id='help'>
+      <h3>OpenMDAO System Hierarchy Partition Chart</h3>
+      <p>
+        <strong>left mouse button</strong>: zoom in and out
+        <br /> note: click the very top of the screen to zoom out.
+      </p>
+      <p>
+        <strong>center and right mouse buttons</strong>: collapse and expand partitions
+      </p>
+      <div id='close-help-button'>
+        <strong>X</strong>
+      </div>
     </div>
   </div>
 </body>
+
 </html>
