@@ -188,58 +188,16 @@ body = '''</script>
   var color = d3.scale.ordinal()
     .range(colors);
 
-  // Adds svg elements of a datum's childrewindow.outerWidthn to the selection
-  d3.selection.prototype.datumChildrenElements = function(datum) {
-    var children = datum.element.children; //
-
-    if (children != null) {
-      for (var i = 0; i < children.length; ++i) {
-        this[0].push(children.item(i));
-      }
-    }
-
-    return this;
-  };
-
-  // adds svg elements of a datum's ancestors to the selection
-  d3.selection.prototype.datumAncestorElements = function(datum) {
-    while (datum.parent != null) {
-      this[0].push(datum.parent.element);
-      datum = datum.parent;
-    }
-
-    return this;
-  };
-
-  // adds svg elements of a datum's descendants to the selection
-  d3.selection.prototype.datumDescendantElements = function(datum) {
-    (function _pushd(d) {
-      var children = d.children;
-
-      if (children != null) {
-        for (var i = 0; i < children.length; ++i) {
-          this[0].push(children[i].element);
-          _pushd.call(this, children[i]);
-        }
-      }
-    }).call(this, datum);
-
-    return this;
-  };
-
-  // adds svg elements of a datum's siblings to the selection
-  d3.selection.prototype.datumSiblingElements = function(datum) {
-    if (datum.parent != null) {
-      datum.parent.children.forEach(function(d, i, arr) {
-        if (d.element !== datum.element) {
-          this[0].push(d.element);
-        }
-      }, this);
-    }
-    return this;
-  };
-
   window.addEventListener('load', function() {
+    var container = document.getElementById('container');
+    cw = parseInt(window.getComputedStyle(container).width);
+
+    rangeX = d3.scale.linear().range([0, cw]);
+
+
+    var jsonLeaves = (function getLeaves(){
+
+    }(data.systemHierarchy));
 
     // create an svg element and append to the container div
     svg = d3.select('#system-hierarchy-chart').append('svg:svg')
@@ -260,7 +218,7 @@ body = '''</script>
 
     // create svg group elements that correspond to the data nodes
     // and append them to the svg.
-    var groups = svg.selectAll('g').data(partition(d3.entries(data)[0]))
+    var groups = svg.selectAll('g').data(partition(d3.entries(data.systemHierarchy)[0]))
       .enter().append('svg:g')
       // set the functions that handle resizing and repositioning partitions
       // for zooming, expading, and collapsing
@@ -294,7 +252,7 @@ body = '''</script>
         out[keyin] = data;
       }
       return out;
-    }(data, 'root', {}));
+    }(data.systemHierarchy, 'root', {}));
 
     // assign leaves their attribute values from json data
     getDataLeaves(rootDatum).forEach(function(d, i, arr) {
@@ -928,6 +886,59 @@ body = '''</script>
 
     return leaves;
   }
+
+
+  // Adds svg elements of a datum's childrewindow.outerWidthn to the selection
+  d3.selection.prototype.datumChildrenElements = function(datum) {
+    var children = datum.element.children;
+
+    if (children != null) {
+      for (var i = 0; i < children.length; ++i) {
+        this[0].push(children.item(i));
+      }
+    }
+
+    return this;
+  };
+
+  // adds svg elements of a datum's ancestors to the selection
+  d3.selection.prototype.datumAncestorElements = function(datum) {
+    while (datum.parent != null) {
+      this[0].push(datum.parent.element);
+      datum = datum.parent;
+    }
+
+    return this;
+  };
+
+  // adds svg elements of a datum's descendants to the selection
+  d3.selection.prototype.datumDescendantElements = function(datum) {
+    (function _pushd(d) {
+      var children = d.children;
+
+      if (children != null) {
+        for (var i = 0; i < children.length; ++i) {
+          this[0].push(children[i].element);
+          _pushd.call(this, children[i]);
+        }
+      }
+    }).call(this, datum);
+
+    return this;
+  };
+
+  // adds svg elements of a datum's siblings to the selection
+  d3.selection.prototype.datumSiblingElements = function(datum) {
+    if (datum.parent != null) {
+      datum.parent.children.forEach(function(d, i, arr) {
+        if (d.element !== datum.element) {
+          this[0].push(d.element);
+        }
+      }, this);
+    }
+    return this;
+  };
+
 }(d3));
 
 </script>
@@ -958,7 +969,7 @@ body = '''</script>
     ];
 
     window.addEventListener('load', function() {
-        nodeLen = cl / data.depMatrix.length
+        nodeLen = cl / data.dependencies.matrix.length
 
         var container = document.getElementById('container');
         var svgContainer = document.getElementById('dependency-matrix-chart');
@@ -989,10 +1000,7 @@ body = '''</script>
           svgContainer.style.paddingTop = padding; labelSvgContainer.style.top = parseInt(sysSvg.getAttribute('height')) + nodeLen + 'px';
           }
 
-          var blah = document.getElementById('dependency-matrix-chart');
-          console.log(window.getComputedStyle(blah).x);
-
-          var labels = data.labels.map(function(ele, i, arr) {
+          var labels = data.dependencies.labels.map(function(ele, i, arr) {
             return {
               name: ele,
               x: 0,
@@ -1030,7 +1038,7 @@ body = '''</script>
               return d.y + nodeLen / 2 + 5;
             });
 
-          var flat = data.depMatrix.reduce(function(acc, ele) {
+          var flat = data.dependencies.matrix.reduce(function(acc, ele) {
             return acc.concat(ele.map(function(ele, i, arr) {
               return {
                 value: ele
@@ -1040,8 +1048,8 @@ body = '''</script>
 
           var transpose = [];
           rootDatum = flat.reduce(function(acc, ele, index) {
-            var i = ele.i = parseInt(index / data.depMatrix.length);
-            var j = ele.j = index % data.depMatrix.length;
+            var i = ele.i = parseInt(index / data.dependencies.matrix.length);
+            var j = ele.j = index % data.dependencies.matrix.length;
 
             if (j === 0) {
               acc.push([ele]);

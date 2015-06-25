@@ -6,7 +6,6 @@ class ChartModel extends Model
   constructor: (@path) ->
     @view = atom.views.getView(@)
     atom.workspace.getActivePane().addItem(@view)
-
     packageRoot = atom.packages.resolvePackagePath('openmdao-atom')
     command = 'python ' + packageRoot + @.constructor.scriptPath + ' ' + @path
     child_process.exec command, (error, stdout, stderr) =>
@@ -57,16 +56,9 @@ module.exports = ChartModelFactory =
 
       numKeys = Object.keys(json).length
       console.log(json)
-      hasDepData = json.hasOwnProperty('depMatrix') and json.hasOwnProperty('labels')
 
-      # There seems to be a problem with using nested ternary statements in coffeescript, so:
-      hasSysData =
-        if hasDepData and numKeys > 2
-          true
-        else if not hasDepData and numKeys > 0
-          true
-        else
-          false
+      hasDepData = json.hasOwnProperty('dependencies')
+      hasSysData = json.hasOwnProperty('systemHierarchy')
 
       if not hasDepData and not hasSysData
         throw new Error('Could not find system hierarchy data or dependency matrix data in ' + path)
