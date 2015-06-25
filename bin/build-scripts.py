@@ -2,7 +2,7 @@
 
 import sys
 
-sys_and_dep_chart_script_head = '''\
+script_head_pre = '''\
 #!/usr/bin/python
 #
 # AUTOMATICALLY GENERATED SCRIPT! MANUALLY EDITING THIS FILE DOES NOTHING!
@@ -10,7 +10,9 @@ sys_and_dep_chart_script_head = '''\
 
 import argparse
 import sys
+'''
 
+sys_and_dep_chart_script_head = '''
 desc = 'Create a HTML chart representing a system hierarchy and dependency matrix.'
 parser = argparse.ArgumentParser(description=desc)
 fileHelp = 'The input json file of combined system hierarchy and dependency matrix data.'
@@ -22,28 +24,9 @@ args = parser.parse_args()
 if args.json_file is None:
   parser.print_help()
   sys.exit(1)
-
-# called at the end of the file
-def write_and_close(args, head, d3, body, foot):
-  with open(args.json_file, 'r') as fin:
-    json = fin.read()
-  if args.out is None:
-    sys.stdout.write(head + d3 + body + json + foot)
-  else:
-    with open(args.out, 'w') as fout:
-      fout.write(head + d3 + body + json + foot)
-
 '''
 
-sys_chart_script_head = '''\
-#!/usr/bin/python
-#
-# AUTOMATICALLY GENERATED SCRIPT! MANUALLY EDITING THIS FILE DOES NOTHING!
-#
-
-import argparse
-import sys
-
+sys_chart_script_head = '''
 desc = 'Create a HTML partition chart from JSON representing a system hierarchy.'
 parser = argparse.ArgumentParser(description=desc)
 fileHelp = 'The input json file of system hierarchy data.'
@@ -55,28 +38,9 @@ args = parser.parse_args()
 if args.json_file is None:
   parser.print_help()
   sys.exit(1)
-
-# called at the end of the file
-def write_and_close(args, head, d3, body, foot):
-  with open(args.json_file, 'r') as fin:
-    json = fin.read()
-  if args.out is None:
-    sys.stdout.write(head + d3 + body + json + foot)
-  else:
-    with open(args.out, 'w') as fout:
-      fout.write(head + d3 + body + json + foot)
-
 '''
 
-dep_chart_script_head = '''\
-#!/usr/bin/python
-#
-# AUTOMATICALLY GENERATED SCRIPT! MANUALLY EDITING THIS FILE DOES NOTHING!
-#
-
-import argparse
-import sys
-
+dep_chart_script_head = '''
 desc = 'Create a HTML partition chart from JSON representing a system hierarchy.'
 parser = argparse.ArgumentParser(description=desc)
 fileHelp = 'The input json file of dependency data.'
@@ -88,21 +52,32 @@ args = parser.parse_args()
 if args.json_file is None:
   parser.print_help()
   sys.exit(1)
+'''
 
+script_head_post = '''
 # called at the end of the file
 def write_and_close(args, head, d3, body, foot):
   with open(args.json_file, 'r') as fin:
     json = fin.read()
   if args.out is None:
-    sys.stdout.write(head + d3 + body + json + foot)
+    sys.stdout.write(head)
+    sys.stdout.write(d3)
+    sys.stdout.write(body)
+    sys.stdout.write(json)
+    sys.stdout.write(foot)
   else:
     with open(args.out, 'w') as fout:
-      fout.write(head + d3 + body + json + foot)
+      fout.write(head)
+      fout.write(d3)
+      fout.write(body)
+      fout.write(json)
+      fout.write(foot)
 
 '''
 
 script_tail = '''
-write_and_close(args, head, d3, body, foot)\n
+write_and_close(args, head, d3, body, foot)
+
 '''
 
 with open('../views/sys-hierarchy-chart.html', 'r') as fin:
@@ -118,7 +93,9 @@ with open('../lib/dependency-matrix-chart.js', 'r') as fin:
   dep_chart_js = fin.read()
 
 with open('sys-and-dep-chart.py', 'w') as fout:
+  fout.write(script_head_pre)
   fout.write(sys_and_dep_chart_script_head)
+  fout.write(script_head_post)
   fout.write("head = '''" + sys_chart_html_parts[0] + "\n<!-- d3 library -->\n<script>'''\n\n")
   fout.write("d3 = r'''\n" + d3_min_js + "\n'''\n\n")
   fout.write("body = '''</script>\n")
@@ -130,7 +107,9 @@ with open('sys-and-dep-chart.py', 'w') as fout:
   fout.write(script_tail)
 
 with open('sys-hierarchy-chart.py', 'w') as fout:
+  fout.write(script_head_pre)
   fout.write(sys_chart_script_head)
+  fout.write(script_head_post)
   fout.write("head = '''" + sys_chart_html_parts[0] + "\n<!-- d3 library -->\n<script>'''\n\n")
   fout.write("d3 = r'''\n" + d3_min_js + "\n'''\n\n")
   fout.write("body = '''</script>\n")
@@ -141,7 +120,9 @@ with open('sys-hierarchy-chart.py', 'w') as fout:
   fout.write(script_tail)
 
 with open('dependency-matrix-chart.py', 'w') as fout:
+  fout.write(script_head_pre)
   fout.write(dep_chart_script_head)
+  fout.write(script_head_post)
   fout.write("head = '''" + sys_chart_html_parts[0] + "\n<!-- d3 library -->\n<script>'''\n\n")
   fout.write("d3 = r'''\n" + d3_min_js + "\n'''\n\n")
   fout.write("body = '''</script>\n")

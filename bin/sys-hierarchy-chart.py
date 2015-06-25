@@ -23,10 +23,18 @@ def write_and_close(args, head, d3, body, foot):
   with open(args.json_file, 'r') as fin:
     json = fin.read()
   if args.out is None:
-    sys.stdout.write(head + d3 + body + json + foot)
+    sys.stdout.write(head)
+    sys.stdout.write(d3)
+    sys.stdout.write(body)
+    sys.stdout.write(json)
+    sys.stdout.write(foot)
   else:
     with open(args.out, 'w') as fout:
-      fout.write(head + d3 + body + json + foot)
+      fout.write(head)
+      fout.write(d3)
+      fout.write(body)
+      fout.write(json)
+      fout.write(foot)
 
 head = '''<!DOCTYPE html>
 <html>
