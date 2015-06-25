@@ -118,16 +118,13 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
  * System Hierarchy Partition Chart
  */
 (function(d3, undefined) {
-  var CHART_SIZE_RATIO = 0.87; // chart to window width/height ratio
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
   var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
 
-  var ww = window.innerWidth;
-  var wh = window.innerHeight;
-  var cw = ww * CHART_SIZE_RATIO;
-  var ch = wh * CHART_SIZE_RATIO;
-  var rangeX = d3.scale.linear().range([0, cw]);
-  var rangeY = d3.scale.linear().range([0, ch]);
+  var cw;
+  var ch;
+  var rangeX;
+  var rangeY;
   // matches only a trailing string of alphanumeric characters
   // (includng the underscore character)
   var removeParentNamesRegex = /\w*$/;
@@ -146,58 +143,16 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
   var color = d3.scale.ordinal()
     .range(colors);
 
-  // Adds svg elements of a datum's childrewindow.outerWidthn to the selection
-  d3.selection.prototype.datumChildrenElements = function(datum) {
-    var children = datum.element.children;
-
-    if (children != null) {
-      for (var i = 0; i < children.length; ++i) {
-        this[0].push(children.item(i));
-      }
-    }
-
-    return this;
-  };
-
-  // adds svg elements of a datum's ancestors to the selection
-  d3.selection.prototype.datumAncestorElements = function(datum) {
-    while (datum.parent != null) {
-      this[0].push(datum.parent.element);
-      datum = datum.parent;
-    }
-
-    return this;
-  };
-
-  // adds svg elements of a datum's descendants to the selection
-  d3.selection.prototype.datumDescendantElements = function(datum) {
-    (function _pushd(d) {
-      var children = d.children;
-
-      if (children != null) {
-        for (var i = 0; i < children.length; ++i) {
-          this[0].push(children[i].element);
-          _pushd.call(this, children[i]);
-        }
-      }
-    }).call(this, datum);
-
-    return this;
-  };
-
-  // adds svg elements of a datum's siblings to the selection
-  d3.selection.prototype.datumSiblingElements = function(datum) {
-    if (datum.parent != null) {
-      datum.parent.children.forEach(function(d, i, arr) {
-        if (d.element !== datum.element) {
-          this[0].push(d.element);
-        }
-      }, this);
-    }
-    return this;
-  };
-
   window.addEventListener('load', function() {
+    var container = document.getElementById('container');
+    if (container.classList.contains('central-with-sidebar')) {
+      cw = window.innerWidth * 0.885;
+    } else {
+      cw = window.innerWidth * 0.984;
+    }
+    ch = window.innerHeight;
+    rangeX = d3.scale.linear().range([0, cw]);
+    rangeY = d3.scale.linear().range([0, ch]);
 
     // create an svg element and append to the container div
     svg = d3.select('#system-hierarchy-chart').append('svg:svg')
@@ -218,7 +173,7 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
 
     // create svg group elements that correspond to the data nodes
     // and append them to the svg.
-    var groups = svg.selectAll('g').data(partition(d3.entries(data)[0]))
+    var groups = svg.selectAll('g').data(partition(d3.entries(data.systemHierarchy)[0]))
       .enter().append('svg:g')
       // set the functions that handle resizing and repositioning partitions
       // for zooming, expading, and collapsing
@@ -252,7 +207,7 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
         out[keyin] = data;
       }
       return out;
-    }(data, 'root', {}));
+    }(data.systemHierarchy, 'root', {}));
 
     // assign leaves their attribute values from json data
     getDataLeaves(rootDatum).forEach(function(d, i, arr) {
@@ -886,6 +841,59 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
 
     return leaves;
   }
+
+
+  // Adds svg elements of a datum's childrewindow.outerWidthn to the selection
+  d3.selection.prototype.datumChildrenElements = function(datum) {
+    var children = datum.element.children;
+
+    if (children != null) {
+      for (var i = 0; i < children.length; ++i) {
+        this[0].push(children.item(i));
+      }
+    }
+
+    return this;
+  };
+
+  // adds svg elements of a datum's ancestors to the selection
+  d3.selection.prototype.datumAncestorElements = function(datum) {
+    while (datum.parent != null) {
+      this[0].push(datum.parent.element);
+      datum = datum.parent;
+    }
+
+    return this;
+  };
+
+  // adds svg elements of a datum's descendants to the selection
+  d3.selection.prototype.datumDescendantElements = function(datum) {
+    (function _pushd(d) {
+      var children = d.children;
+
+      if (children != null) {
+        for (var i = 0; i < children.length; ++i) {
+          this[0].push(children[i].element);
+          _pushd.call(this, children[i]);
+        }
+      }
+    }).call(this, datum);
+
+    return this;
+  };
+
+  // adds svg elements of a datum's siblings to the selection
+  d3.selection.prototype.datumSiblingElements = function(datum) {
+    if (datum.parent != null) {
+      datum.parent.children.forEach(function(d, i, arr) {
+        if (d.element !== datum.element) {
+          this[0].push(d.element);
+        }
+      }, this);
+    }
+    return this;
+  };
+
 }(d3));
 
 </script>
@@ -894,616 +902,626 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
  * Dependency Matrix Chart
  */
 (function(d3, undefined) {
-    var CHART_SIZE_RATIO = 0.87; // chart to window width/height ratio
-    var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
-    var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
+  var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
+  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
+  var CHART_SIZE_RATIO = 0.885;
 
-    var ww = window.innerWidth;
-    var cl = ww * CHART_SIZE_RATIO;
-    var nodeLen;
-    var focusedDatum = null;
-    var labelsvg;
-    var svg;//
-    var rootDatum;
-    var colors = [
-      'rgb(240, 190, 190)', // root
-      'rgb(240, 180, 180)', // group
-      'rgb(180, 180, 240)', // component
-      'rgb(210, 210, 225)', // variable
-      'rgb(210, 240, 180)', // state var and its parent
-      'rgb(0, 0, 0)', // black
-      'rgb(255, 255, 255)' // white
-    ];
+  var cl = window.innerWidth * CHART_SIZE_RATIO;
+  var container;
+  var svgContainer;
+  var sidebar;
+  var labelSvgContainer;
+  var svg;
+  var labelSvg;
+  var nodeLen;
+  var cl;
+  var focusedDatum = null;
+  var rootDatum;
+  var colors = [
+    'rgb(240, 190, 190)', // root
+    'rgb(240, 180, 180)', // group
+    'rgb(180, 180, 240)', // component
+    'rgb(210, 210, 225)', // variable
+    'rgb(210, 240, 180)', // state var and its parent
+    'rgb(0, 0, 0)', // black
+    'rgb(255, 255, 255)' // white
+  ];
 
-    window.addEventListener('load', function() {
-        nodeLen = cl / data.depMatrix.length
+  document.addEventListener('readystatechange', function(event) {
+    if (document.readyState !== 'complete') {
+      return;
+    }
+    container = document.getElementById('container');
+    svgContainer = document.getElementById('dependency-matrix-chart');
+    sidebar = document.createElement('div');
+    labelSvgContainer = document.createElement('div');
 
-        var container = document.getElementById('container');
-        var svgContainer = document.getElementById('dependency-matrix-chart');
-        var sidebar = document.createElement('div');
-        var labelSvgContainer = document.createElement('div');
+    container.classList.add('central-with-sidebar');
+    sidebar.classList.add('sidebar-left');
+    labelSvgContainer.classList.add('label-svg-container');
+    labelSvgContainer.setAttribute('id', 'label-svg-container');
+    sidebar.setAttribute('id', 'label-sidebar');
+    document.body.insertBefore(sidebar, container.nextSibling);
+    sidebar.appendChild(labelSvgContainer);
+  });
 
-        container.classList.add('central-with-sidebar');
-        sidebar.classList.add('sidebar-left');
-        labelSvgContainer.classList.add('label-svg-container');
-        labelSvgContainer.setAttribute('id', 'label-svg-container');
-        sidebar.setAttribute('id', 'label-sidebar');
-        document.body.insertBefore(sidebar, container.nextSibling);
-        sidebar.appendChild(labelSvgContainer);
+  window.addEventListener('load', function() {
+    nodeLen = cl / data.dependencies.matrix.length;
 
-        svg = d3.select('#dependency-matrix-chart').append('svg')
-          .attr('width', cl)
-          .attr('height', cl);
+    svg = d3.select('#dependency-matrix-chart').append('svg')
+      .attr('width', cl)
+      .attr('height', cl);
 
-        labelsvg = d3.select('#label-svg-container').append('svg')
-          .attr('width', function(d) {
-            return parseInt(/[0-9.]*/.exec(window.getComputedStyle(sidebar).width)) - 10;
-          })
-          .attr('height', cl);
+    labelSvg = d3.select('#label-svg-container').append('svg')
+      .attr('width', function(d) {
+        return parseInt(/[0-9.]*/.exec(window.getComputedStyle(sidebar).width)) - 10;
+      })
+      .attr('height', cl);
 
-        var sysSvg = svgContainer.previousElementSibling.children[0];
-        if (sysSvg != null && sysSvg.nodeName === 'svg') {
-          var padding = nodeLen + 'px';
-          svgContainer.style.paddingTop = padding; labelSvgContainer.style.top = parseInt(sysSvg.getAttribute('height')) + nodeLen + 'px';
-          }
+    var sysSvg = svgContainer.previousElementSibling.children[0];
+    if (sysSvg != null && sysSvg.nodeName === 'svg') {
+      var padding = nodeLen + 'px';
+      svgContainer.style.paddingTop = padding;
+      labelSvgContainer.style.top = parseInt(sysSvg.getAttribute('height')) + nodeLen + 'px';
+    }
 
-          var blah = document.getElementById('dependency-matrix-chart');
-          console.log(window.getComputedStyle(blah).x);
+    var labels = data.dependencies.labels.map(function(ele, i, arr) {
+      return {
+        name: ele,
+        x: 0,
+        y: i * nodeLen
+      };
+    });
 
-          var labels = data.labels.map(function(ele, i, arr) {
-            return {
-              name: ele,
-              x: 0,
-              y: i * nodeLen
-            };
-          });
-
-          var labelGroups = labelsvg.selectAll('g').data(labels)
-            .enter().append('g')
-            //.attr('fill', 'white')
-            .attr('x', function(d) {
-              return d.x;
-            })
-            .attr('y', function(d) {
-              return d.y;
-            })
-            .attr('width', cl / 3)
-            .attr('height', nodeLen)
-            .each(function(d) {
-              d.element = this;
-            });
-
-          labelGroups.append('text')
-            .text(function(d) {
-              return d.name;
-            })
-            .attr('font-size', 13)
-            .attr('fill', 'rgb(170, 170, 170)')
-            .attr('text-anchor', 'end')
-            .attr('style', "font-family: 'Lucida Grande', 'Segoe UI', Ubuntu, Cantarell, sans-serif;")
-            .attr('x', function(d) {
-              return d.x + parseInt(/[0-9.]*/.exec(window.getComputedStyle(sidebar).width)) - 20;
-            })
-            .attr('y', function(d) {
-              return d.y + nodeLen / 2 + 5;
-            });
-
-          var flat = data.depMatrix.reduce(function(acc, ele) {
-            return acc.concat(ele.map(function(ele, i, arr) {
-              return {
-                value: ele
-              };
-            }));
-          }, []);
-
-          var transpose = [];
-          rootDatum = flat.reduce(function(acc, ele, index) {
-            var i = ele.i = parseInt(index / data.depMatrix.length);
-            var j = ele.j = index % data.depMatrix.length;
-
-            if (j === 0) {
-              acc.push([ele]);
-              acc[i].y = nodeLen * i;
-              acc[i].height = nodeLen;
-            } else {
-              acc[i].push(ele);
-            }
-            if (i === 0) {
-              transpose.push([ele]);
-              transpose[j].x = nodeLen * j;
-              transpose[j].width = nodeLen;
-              transpose[j].isCollapsed = false;
-            } else {
-              transpose[j].push(ele);
-            }
-
-            Object.defineProperty(ele, 'x', {
-              get: function() {
-                return transpose[j].x;
-              },
-              set: function(x) {
-                transpose[j].x = x;
-              },
-              enumerable: true
-            });
-
-            Object.defineProperty(ele, 'y', {
-              get: function() {
-                return acc[i].y;
-              },
-              set: function(y) {
-                acc[i].y = y;
-              },
-              enumerable: true
-            });
-
-            Object.defineProperty(ele, 'width', {
-              get: function() {
-                return transpose[j].width;
-              },
-              set: function(width) {
-                transpose[j].width = width;
-              },
-              enumerable: true
-            });
-
-            Object.defineProperty(ele, 'height', {
-              get: function() {
-                return acc[i].height;
-              },
-              set: function(height) {
-                acc[i].height = height;
-              },
-              enumerable: true
-            });
-
-            return acc;
-          }, []);
-
-          rootDatum.transpose = transpose;
-
-          svg.selectAll('g').data(flat).enter()
-            .append('g')
-            .append('rect')
-            .attr('fill', function(d) {
-              return (d.value === 1) ? colors[1] : colors[3];
-            })
-            .attr('x', deltaX)
-            .attr('y', deltaY)
-            .attr('width', deltaWidth)
-            .attr('height', deltaHeight)
-            .each(function(d) {
-              d.element = this;
-            })
-            .on('click', click)
-            .on('contextmenu', click)
-            .on('focus', function(d) {
-              focusedDatum = d;
-            });
-
-          console.log(rootDatum);
-        });
-
-      window.addEventListener('zoom', function(event) {
-        zoom(event.detail.datum);
-      });
-
-      window.addEventListener('collapse', function(event) {
-        collapse(event);
-      });
-
-      window.addEventListener('expand', function(event) {
-        expand(event);
-      });
-
-      function resolveEventTargetColumns(event) {
-        var targetCols = [];
-        var eventColIndices = event.detail.columns;
-
-        for (var i = eventColIndices[0]; i < eventColIndices[1]; ++i) {
-          //console.log(i);
-          //console.log(rootDatum.transpose[i]);
-          targetCols.push(rootDatum.transpose[i]);
-        }
-
-        return targetCols;
-      }
-
-      // initiates zooming, collapsing, and expanding
-      // emmits the zoom, collapse, and expand events
-      function click(datum) {
-        var button = d3.event.button;
-        var eventType = '';
-
-        // zoom
-        //if (button === 0 && !rootDatum.transpose[datum.j].isCollapsed) {
-        //  eventType = 'zoom';
-
-        // expand/collapse
-        //} else if (button > 0) {
-        if (button > 0) { //
-          if (rootDatum.transpose[datum.j].isCollapsed) {
-            eventType = 'expand';
-          } else {
-            eventType = 'collapse';
-          }
-        }
-
-        // Trigger global event
-        var event = new CustomEvent(eventType, {
-          detail: {
-            rootId: svg[0][0].parentNode.getAttribute('id'),
-            root: rootDatum,
-            datum: datum,
-            element: datum.element,
-            rows: [datum.i, datum.i + 1],
-            columns: [datum.j, datum.j + 1],
-            button: button,
-            secondary: false
-          },
-          bubbles: true
-        });
-        datum.element.dispatchEvent(event);
-
-        d3.event.preventDefault();
-      }
-
-      function zoom(event) {}
-
-      function collapse(event) {
-        var detail = event.detail;
-        var target = detail.element;
-        var columns = resolveEventTargetColumns(event);
-
-        var numCollapsedCols = rootDatum.transpose.reduce(function(acc, ele) {
-          return (ele.isCollapsed) ? acc + 1 : acc;
-        }, 0);
-
-        if (numCollapsedCols === rootDatum.transpose.length - 1) {
-          return;
-        }
-
-        var collapseGroup = [];
-        columns.forEach(function(col, i, arr) {
-          collapseGroup.push(col);
-          col.collapseGroup = collapseGroup;
-          var c = COLLAPSED_SIZE_PIXELS;
-          col.width = ((target.children != null && i !== 0) || col.width === 0) ? 0 : c;
-          col.isCollapsed = true;
-        });
-
-        //console.log(event);
-        //console.log(columns);
-
-        setExpandingDx();
-        setAllRowPositions();
-        transitionAll();
-      }
-
-      function expand(event) {
-        var detail = event.detail;
-        var target = detail.target;
-        var columns = resolveEventTargetColumns(event);
-
-        columns.forEach(function(col, i, arr) {
-          if (col.collapseGroup != null) {
-            col.collapseGroup.forEach(function(c, i, arr) {
-              c.isCollapsed = false;
-              delete c.collapseGroup;
-            });
-          }
-          col.isCollapsed = false;
-        });
-
-        setExpandingDx();
-        setAllRowPositions();
-        transitionAll();
-      }
-
-      function setExpandingDx() {
-        var collapsedArea = 0;
-        var numCollapsedCols = rootDatum.transpose.reduce(function(acc, col) {
-          if (col.isCollapsed) {
-            collapsedArea += col.width;
-            return acc + 1;
-          } else {
-            return acc;
-          }
-        }, 0);
-
-        var expandedNodeSize = (cl - collapsedArea) / (rootDatum.transpose.length - numCollapsedCols);
-
-        rootDatum.transpose.forEach(function(col, i, arr) {
-          if (!col.isCollapsed) {
-            col.width = expandedNodeSize;
-          }
-        });
-      }
-
-      function setAllRowPositions() {
-        rootDatum.transpose.forEach(function(col, i, arr) {
-          if (i !== 0) {
-            col.x = arr[i - 1].x + arr[i - 1].width;
-          }
-        });
-      }
-
-      function transitionAll(duration) {
-        duration = duration || DEFAULT_TRANSITION_DURATION;
-
-        svg.selectAll('rect').transition()
-          .duration(duration)
-          .attr('x', deltaX)
-          .attr('y', deltaY)
-          .attr('width', deltaWidth)
-          .attr('height', deltaHeight);
-      }
-
-      function deltaX(d) {
+    var labelGroups = labelSvg.selectAll('g').data(labels)
+      .enter().append('g')
+      //.attr('fill', 'white')
+      .attr('x', function(d) {
         return d.x;
-      }
-
-      function deltaY(d) {
+      })
+      .attr('y', function(d) {
         return d.y;
-      }
-
-      function deltaWidth(d) {
-        return d.width;
-      }
-
-      function deltaHeight(d) {
-        return d.height;
-      }
-
-      // resize svg on window resize
-      window.addEventListener('resize', function() {
-        ww = window.innerWidth;
-        cl = ww * CHART_SIZE_RATIO;
+      })
+      .attr('width', cl / 3)
+      .attr('height', nodeLen)
+      .each(function(d) {
+        d.element = this;
       });
 
-    })(d3);
+    labelGroups.append('text')
+      .text(function(d) {
+        return d.name;
+      })
+      .attr('font-size', 13)
+      .attr('fill', 'rgb(170, 170, 170)')
+      .attr('text-anchor', 'end')
+      .attr('style', "font-family: 'Lucida Grande', 'Segoe UI', Ubuntu, Cantarell, sans-serif;")
+      .attr('x', function(d) {
+        return d.x + parseInt(/[0-9.]*/.exec(window.getComputedStyle(sidebar).width)) - 20;
+      })
+      .attr('y', function(d) {
+        return d.y + nodeLen / 2 + 5;
+      });
+
+    var flat = data.dependencies.matrix.reduce(function(acc, ele) {
+      return acc.concat(ele.map(function(ele, i, arr) {
+        return {
+          value: ele
+        };
+      }));
+    }, []);
+
+    var transpose = [];
+    rootDatum = flat.reduce(function(acc, ele, index) {
+      var i = ele.i = parseInt(index / data.dependencies.matrix.length);
+      var j = ele.j = index % data.dependencies.matrix.length;
+
+      if (j === 0) {
+        acc.push([ele]);
+        acc[i].y = nodeLen * i;
+        acc[i].height = nodeLen;
+      } else {
+        acc[i].push(ele);
+      }
+      if (i === 0) {
+        transpose.push([ele]);
+        transpose[j].x = nodeLen * j;
+        transpose[j].width = nodeLen;
+        transpose[j].isCollapsed = false;
+      } else {
+        transpose[j].push(ele);
+      }
+
+      Object.defineProperty(ele, 'x', {
+        get: function() {
+          return transpose[j].x;
+        },
+        set: function(x) {
+          transpose[j].x = x;
+        },
+        enumerable: true
+      });
+
+      Object.defineProperty(ele, 'y', {
+        get: function() {
+          return acc[i].y;
+        },
+        set: function(y) {
+          acc[i].y = y;
+        },
+        enumerable: true
+      });
+
+      Object.defineProperty(ele, 'width', {
+        get: function() {
+          return transpose[j].width;
+        },
+        set: function(width) {
+          transpose[j].width = width;
+        },
+        enumerable: true
+      });
+
+      Object.defineProperty(ele, 'height', {
+        get: function() {
+          return acc[i].height;
+        },
+        set: function(height) {
+          acc[i].height = height;
+        },
+        enumerable: true
+      });
+
+      return acc;
+    }, []);
+
+    rootDatum.transpose = transpose;
+
+    svg.selectAll('g').data(flat).enter()
+      .append('g')
+      .append('rect')
+      .attr('fill', function(d) {
+        return (d.value === 1) ? colors[1] : colors[3];
+      })
+      .attr('x', deltaX)
+      .attr('y', deltaY)
+      .attr('width', deltaWidth)
+      .attr('height', deltaHeight)
+      .each(function(d) {
+        d.element = this;
+      })
+      .on('click', click)
+      .on('contextmenu', click)
+      .on('focus', function(d) {
+        focusedDatum = d;
+      });
+
+    console.log(rootDatum);
+  });
+
+  window.addEventListener('zoom', function(event) {
+    zoom(event.detail.datum);
+  });
+
+  window.addEventListener('collapse', function(event) {
+    collapse(event);
+  });
+
+  window.addEventListener('expand', function(event) {
+    expand(event);
+  });
+
+  function resolveEventTargetColumns(event) {
+    var targetCols = [];
+    var eventColIndices = event.detail.columns;
+
+    for (var i = eventColIndices[0]; i < eventColIndices[1]; ++i) {
+      //console.log(i);
+      //console.log(rootDatum.transpose[i]);
+      targetCols.push(rootDatum.transpose[i]);
+    }
+
+    return targetCols;
+  }
+
+  // initiates zooming, collapsing, and expanding
+  // emmits the zoom, collapse, and expand events
+  function click(datum) {
+    var button = d3.event.button;
+    var eventType = '';
+
+    // zoom
+    //if (button === 0 && !rootDatum.transpose[datum.j].isCollapsed) {
+    //  eventType = 'zoom';
+
+    // expand/collapse
+    //} else if (button > 0) {
+    if (button > 0) { //
+      if (rootDatum.transpose[datum.j].isCollapsed) {
+        eventType = 'expand';
+      } else {
+        eventType = 'collapse';
+      }
+    }
+
+    // Trigger global event
+    var event = new CustomEvent(eventType, {
+      detail: {
+        rootId: svg[0][0].parentNode.getAttribute('id'),
+        root: rootDatum,
+        datum: datum,
+        element: datum.element,
+        rows: [datum.i, datum.i + 1],
+        columns: [datum.j, datum.j + 1],
+        button: button,
+        secondary: false
+      },
+      bubbles: true
+    });
+    datum.element.dispatchEvent(event);
+
+    d3.event.preventDefault();
+  }
+
+  function zoom(event) {}
+
+  function collapse(event) {
+    var detail = event.detail;
+    var target = detail.element;
+    var columns = resolveEventTargetColumns(event);
+
+    var numCollapsedCols = rootDatum.transpose.reduce(function(acc, ele) {
+      return (ele.isCollapsed) ? acc + 1 : acc;
+    }, 0);
+
+    if (numCollapsedCols === rootDatum.transpose.length - 1) {
+      return;
+    }
+
+    var collapseGroup = [];
+    columns.forEach(function(col, i, arr) {
+      collapseGroup.push(col);
+      col.collapseGroup = collapseGroup;
+      var c = COLLAPSED_SIZE_PIXELS;
+      col.width = ((target.children != null && i !== 0) || col.width === 0) ? 0 : c;
+      col.isCollapsed = true;
+    });
+
+    //console.log(event);
+    //console.log(columns);
+
+    setExpandingDx();
+    setAllRowPositions();
+    transitionAll();
+  }
+
+  function expand(event) {
+    var detail = event.detail;
+    var target = detail.target;
+    var columns = resolveEventTargetColumns(event);
+
+    columns.forEach(function(col, i, arr) {
+      if (col.collapseGroup != null) {
+        col.collapseGroup.forEach(function(c, i, arr) {
+          c.isCollapsed = false;
+          delete c.collapseGroup;
+        });
+      }
+      col.isCollapsed = false;
+    });
+
+    setExpandingDx();
+    setAllRowPositions();
+    transitionAll();
+  }
+
+  function setExpandingDx() {
+    var collapsedArea = 0;
+    var numCollapsedCols = rootDatum.transpose.reduce(function(acc, col) {
+      if (col.isCollapsed) {
+        collapsedArea += col.width;
+        return acc + 1;
+      } else {
+        return acc;
+      }
+    }, 0);
+
+    var expandedNodeSize = (cl - collapsedArea) / (rootDatum.transpose.length - numCollapsedCols);
+
+    rootDatum.transpose.forEach(function(col, i, arr) {
+      if (!col.isCollapsed) {
+        col.width = expandedNodeSize;
+      }
+    });
+  }
+
+  function setAllRowPositions() {
+    rootDatum.transpose.forEach(function(col, i, arr) {
+      if (i !== 0) {
+        col.x = arr[i - 1].x + arr[i - 1].width;
+      }
+    });
+  }
+
+  function transitionAll(duration) {
+    duration = duration || DEFAULT_TRANSITION_DURATION;
+
+    svg.selectAll('rect').transition()
+      .duration(duration)
+      .attr('x', deltaX)
+      .attr('y', deltaY)
+      .attr('width', deltaWidth)
+      .attr('height', deltaHeight);
+  }
+
+  function deltaX(d) {
+    return d.x;
+  }
+
+  function deltaY(d) {
+    return d.y;
+  }
+
+  function deltaWidth(d) {
+    return d.width;
+  }
+
+  function deltaHeight(d) {
+    return d.height;
+  }
+
+  // resize svg on window resize
+  window.addEventListener('resize', function() {
+    cl = window.innerWidth * CHART_SIZE_RATIO;
+  });
+
+})(d3);
 
 </script>
 <script>
 var data = {
-  "root": {
-    "chem_eq": {
-      "n2ls": {
-        "chem_eq:n2ls:rhs": {
-          "relative_name": "rhs",
-          "shape": [3],
-          "size": 3,
-          "val": [0.0, 0.0, 0.0],
-          "desc": "Right-hand side of resulting system"
+  "systemHierarchy": {
+    "root": {
+      "chem_eq": {
+        "n2ls": {
+          "chem_eq:n2ls:rhs": {
+            "relative_name": "rhs",
+            "shape": [3],
+            "size": 3,
+            "val": [0.0, 0.0, 0.0],
+            "desc": "Right-hand side of resulting system"
+          },
+          "chem_eq:n2ls:mu": {
+            "val": [0.0, 0.0, 0.0],
+            "relative_name": "mu",
+            "shape": [3],
+            "units": "cal/(g*mol)",
+            "desc": "Chemical Potential per Kilogram-mole of species j",
+            "size": 3
+          },
+          "chem_eq:n2ls:ch": {
+            "relative_name": "ch",
+            "shape": [3, 3],
+            "size": 9,
+            "val": [
+              [0.0, 0.0, 0.0],
+              [0.0, 0.0, 0.0],
+              [0.0, 0.0, 0.0]
+            ],
+            "desc": "Left-hand side of resulting system"
+          },
+          "chem_eq:n2ls:b": {
+            "relative_name": "b",
+            "shape": [2],
+            "size": 2,
+            "val": [0.0, 0.0],
+            "desc": "assigned kg-atoms of element i per total kg of reactant"
+          },
+          "chem_eq:n2ls:b0": {
+            "relative_name": "b0",
+            "shape": [2],
+            "size": 2,
+            "val": [0.0, 0.0],
+            "desc": "assigned kg-atoms of element i per total kg of reactant for the initial prod amounts"
+          }
         },
-        "chem_eq:n2ls:mu": {
-          "val": [0.0, 0.0, 0.0],
-          "relative_name": "mu",
+        "ls2pi": {
+          "chem_eq:ls2pi:x": {
+            "shape": [3],
+            "relative_name": "x",
+            "state": true,
+            "val": [0.0, 0.0, 0.0],
+            "size": 3
+          }
+        },
+        "pi2n": {
+          "chem_eq:pi2n:dLn": {
+            "relative_name": "dLn",
+            "shape": [4],
+            "size": 4,
+            "val": [0.0, 0.0, 0.0, 0.0],
+            "desc": "Kilogram-moles of species j per kg mixture last element:             Kilogram-moles of mixture per unit mass"
+          }
+        },
+        "next_n": {
+          "chem_eq:next_n:lambdaf": {
+            "relative_name": "lambdaf",
+            "shape": 1,
+            "size": 1,
+            "val": 1.0,
+            "desc": "adaptive under-relaxation factor"
+          },
+          "chem_eq:next_n:n": {
+            "val": [0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.1],
+            "state": true,
+            "relative_name": "n",
+            "shape": [4],
+            "desc": "computed value of the next iterate for n",
+            "size": 4
+          }
+        }
+      },
+      "props": {
+        "TP2ls": {
+          "props:TP2ls:rhs_T": {
+            "relative_name": "rhs_T",
+            "shape": [3],
+            "size": 3,
+            "val": [0.0, 0.0, 0.0],
+            "desc": "rhs for the T solve"
+          },
+          "props:TP2ls:rhs_P": {
+            "relative_name": "rhs_P",
+            "shape": [3],
+            "size": 3,
+            "val": [0.0, 0.0, 0.0],
+            "desc": "rhs for the P solve"
+          },
+          "props:TP2ls:lhs_TP": {
+            "relative_name": "lhs_TP",
+            "shape": [3, 3],
+            "size": 9,
+            "val": [
+              [0.0, 0.0, 0.0],
+              [0.0, 0.0, 0.0],
+              [0.0, 0.0, 0.0]
+            ],
+            "desc": "A matrix for the totals linear solve"
+          }
+        },
+        "ls2t": {
+          "props:ls2t:x": {
+            "shape": [3],
+            "relative_name": "x",
+            "state": true,
+            "val": [0.0, 0.0, 0.0],
+            "size": 3
+          }
+        },
+        "ls2p": {
+          "props:ls2p:x": {
+            "shape": [3],
+            "relative_name": "x",
+            "state": true,
+            "val": [0.0, 0.0, 0.0],
+            "size": 3
+          }
+        },
+        "tp2tot": {
+          "props:tp2tot:h": {
+            "val": 0.0,
+            "relative_name": "h",
+            "shape": 1,
+            "units": "cal/g",
+            "desc": "enthalpy",
+            "size": 1
+          },
+          "props:tp2tot:S": {
+            "val": 0.0,
+            "relative_name": "S",
+            "shape": 1,
+            "units": "cal/(g*degK)",
+            "desc": "entropy",
+            "size": 1
+          },
+          "props:tp2tot:gamma": {
+            "relative_name": "gamma",
+            "shape": 1,
+            "size": 1,
+            "val": 0.0,
+            "desc": "ratio of specific heats"
+          },
+          "props:tp2tot:Cp": {
+            "val": 0.0,
+            "relative_name": "Cp",
+            "shape": 1,
+            "units": "cal/(g*degK)",
+            "desc": "Specific heat at constant pressure",
+            "size": 1
+          },
+          "props:tp2tot:Cv": {
+            "val": 0.0,
+            "relative_name": "Cv",
+            "shape": 1,
+            "units": "cal/(g*degK)",
+            "desc": "Specific heat at constant volume",
+            "size": 1
+          },
+          "props:tp2tot:rho": {
+            "val": 0.0,
+            "relative_name": "rho",
+            "shape": 1,
+            "units": "g/cm**3",
+            "desc": "density",
+            "size": 1
+          }
+        }
+      },
+      "init_prod": {
+        "init_prod:init_prod_amounts": {
           "shape": [3],
-          "units": "cal/(g*mol)",
-          "desc": "Chemical Potential per Kilogram-mole of species j",
+          "relative_name": "init_prod_amounts",
+          "val": [0.022722108611679163, 0.0, 0.0],
           "size": 3
-        },
-        "chem_eq:n2ls:ch": {
-          "relative_name": "ch",
-          "shape": [3, 3],
-          "size": 9,
-          "val": [
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0]
-          ],
-          "desc": "Left-hand side of resulting system"
-        },
-        "chem_eq:n2ls:b": {
-          "relative_name": "b",
-          "shape": [2],
-          "size": 2,
-          "val": [0.0, 0.0],
-          "desc": "assigned kg-atoms of element i per total kg of reactant"
-        },
-        "chem_eq:n2ls:b0": {
-          "relative_name": "b0",
-          "shape": [2],
-          "size": 2,
-          "val": [0.0, 0.0],
-          "desc": "assigned kg-atoms of element i per total kg of reactant for the initial prod amounts"
         }
       },
-      "ls2pi": {
-        "chem_eq:ls2pi:x": {
-          "shape": [3],
-          "relative_name": "x",
-          "state": true,
-          "val": [0.0, 0.0, 0.0],
-          "size": 3
-        }
-      },
-      "pi2n": {
-        "chem_eq:pi2n:dLn": {
-          "relative_name": "dLn",
-          "shape": [4],
-          "size": 4,
-          "val": [0.0, 0.0, 0.0, 0.0],
-          "desc": "Kilogram-moles of species j per kg mixture last element:             Kilogram-moles of mixture per unit mass"
-        }
-      },
-      "next_n": {
-        "chem_eq:next_n:lambdaf": {
-          "relative_name": "lambdaf",
+      "temp": {
+        "temp:T": {
+          "units": "degK",
           "shape": 1,
-          "size": 1,
-          "val": 1.0,
-          "desc": "adaptive under-relaxation factor"
-        },
-        "chem_eq:next_n:n": {
-          "val": [0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.1],
-          "state": true,
-          "relative_name": "n",
-          "shape": [4],
-          "desc": "computed value of the next iterate for n",
-          "size": 4
-        }
-      }
-    },
-    "props": {
-      "TP2ls": {
-        "props:TP2ls:rhs_T": {
-          "relative_name": "rhs_T",
-          "shape": [3],
-          "size": 3,
-          "val": [0.0, 0.0, 0.0],
-          "desc": "rhs for the T solve"
-        },
-        "props:TP2ls:rhs_P": {
-          "relative_name": "rhs_P",
-          "shape": [3],
-          "size": 3,
-          "val": [0.0, 0.0, 0.0],
-          "desc": "rhs for the P solve"
-        },
-        "props:TP2ls:lhs_TP": {
-          "relative_name": "lhs_TP",
-          "shape": [3, 3],
-          "size": 9,
-          "val": [
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0]
-          ],
-          "desc": "A matrix for the totals linear solve"
-        }
-      },
-      "ls2t": {
-        "props:ls2t:x": {
-          "shape": [3],
-          "relative_name": "x",
-          "state": true,
-          "val": [0.0, 0.0, 0.0],
-          "size": 3
-        }
-      },
-      "ls2p": {
-        "props:ls2p:x": {
-          "shape": [3],
-          "relative_name": "x",
-          "state": true,
-          "val": [0.0, 0.0, 0.0],
-          "size": 3
-        }
-      },
-      "tp2tot": {
-        "props:tp2tot:h": {
-          "val": 0.0,
-          "relative_name": "h",
-          "shape": 1,
-          "units": "cal/g",
-          "desc": "enthalpy",
-          "size": 1
-        },
-        "props:tp2tot:S": {
-          "val": 0.0,
-          "relative_name": "S",
-          "shape": 1,
-          "units": "cal/(g*degK)",
-          "desc": "entropy",
-          "size": 1
-        },
-        "props:tp2tot:gamma": {
-          "relative_name": "gamma",
-          "shape": 1,
-          "size": 1,
-          "val": 0.0,
-          "desc": "ratio of specific heats"
-        },
-        "props:tp2tot:Cp": {
-          "val": 0.0,
-          "relative_name": "Cp",
-          "shape": 1,
-          "units": "cal/(g*degK)",
-          "desc": "Specific heat at constant pressure",
-          "size": 1
-        },
-        "props:tp2tot:Cv": {
-          "val": 0.0,
-          "relative_name": "Cv",
-          "shape": 1,
-          "units": "cal/(g*degK)",
-          "desc": "Specific heat at constant volume",
-          "size": 1
-        },
-        "props:tp2tot:rho": {
-          "val": 0.0,
-          "relative_name": "rho",
-          "shape": 1,
-          "units": "g/cm**3",
-          "desc": "density",
+          "relative_name": "T",
+          "val": 4000.0,
           "size": 1
         }
-      }
-    },
-    "init_prod": {
-      "init_prod:init_prod_amounts": {
-        "shape": [3],
-        "relative_name": "init_prod_amounts",
-        "val": [0.022722108611679163, 0.0, 0.0],
-        "size": 3
-      }
-    },
-    "temp": {
-      "temp:T": {
-        "units": "degK",
-        "shape": 1,
-        "relative_name": "T",
-        "val": 4000.0,
-        "size": 1
-      }
-    },
-    "pressure": {
-      "pressure:P": {
-        "shape": 1,
-        "relative_name": "P",
-        "val": 1.03421,
-        "size": 1
-      }
-    },
-    "stupid_english_units": {
-      "stupid_english_units:T_eng": {
-        "units": "degR",
-        "shape": 1,
-        "relative_name": "T_eng",
-        "val": 0.0,
-        "size": 1
+      },
+      "pressure": {
+        "pressure:P": {
+          "shape": 1,
+          "relative_name": "P",
+          "val": 1.03421,
+          "size": 1
+        }
+      },
+      "stupid_english_units": {
+        "stupid_english_units:T_eng": {
+          "units": "degR",
+          "shape": 1,
+          "relative_name": "T_eng",
+          "val": 0.0,
+          "size": 1
+        }
       }
     }
   },
-  "depMatrix": [
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
-  ],
-  "labels": ["chem_eq:n2ls:rhs", "chem_eq:n2ls:mu", "chem_eq:n2ls:ch", "chem_eq:n2ls:b", "chem_eq:n2ls:b0", "chem_eq:ls2pi:x", "chem_eq:pi2n:dLn", "chem_eq:next_n:lambdaf", "chem_eq:next_n:n", "props:TP2ls:rhs_T", "props:TP2ls:rhs_P", "props:TP2ls:lhs_TP", "props:ls2t:x", "props:ls2p:x", "props:tp2tot:h", "props:tp2tot:S", "props:tp2tot:gamma", "props:tp2tot:Cp", "props:tp2tot:Cv", "props:tp2tot:rho", "init_prod:init_prod_amounts", "temp:T", "pressure:P", "stupid_english_units:T_eng"]
+  "dependencies": {
+    "matrix": [
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    ],
+    "labels": ["chem_eq:n2ls:rhs", "chem_eq:n2ls:mu", "chem_eq:n2ls:ch", "chem_eq:n2ls:b", "chem_eq:n2ls:b0", "chem_eq:ls2pi:x", "chem_eq:pi2n:dLn", "chem_eq:next_n:lambdaf", "chem_eq:next_n:n", "props:TP2ls:rhs_T", "props:TP2ls:rhs_P", "props:TP2ls:lhs_TP", "props:ls2t:x", "props:ls2p:x", "props:tp2tot:h", "props:tp2tot:S", "props:tp2tot:gamma", "props:tp2tot:Cp", "props:tp2tot:Cv", "props:tp2tot:rho", "init_prod:init_prod_amounts", "temp:T", "pressure:P", "stupid_english_units:T_eng"]
+  }
 }
 
 

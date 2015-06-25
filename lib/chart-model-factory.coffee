@@ -31,7 +31,7 @@ class SystemHierarchyChartModel extends ChartModel
   constructor: (path) -> super(path)
 
 class DependencyMatrixChartModel extends ChartModel
-  @scriptPath: '/bin/dependency-matrix-chart.py'
+  @scriptPath: '/bin/dependencies-chart.py'
   constructor: (path) -> super(path)
 
 class CombinedChartModel extends ChartModel
