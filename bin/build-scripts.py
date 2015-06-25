@@ -41,7 +41,7 @@ if args.json_file is None:
 '''
 
 dep_chart_script_head = '''
-desc = 'Create a HTML partition chart from JSON representing a system hierarchy.'
+desc = 'Create a HTML chart from JSON representing system variable dependencies.'
 parser = argparse.ArgumentParser(description=desc)
 fileHelp = 'The input json file of dependency data.'
 parser.add_argument('json_file', type=str, nargs='?', default=None, help=fileHelp)
@@ -66,7 +66,7 @@ def write_and_close(args, head, d3, body, foot):
     sys.stdout.write(json)
     sys.stdout.write(foot)
   else:
-    with open(args.out, 'w') as fout:
+    with open(args.out, 'w+') as fout:
       fout.write(head)
       fout.write(d3)
       fout.write(body)
@@ -89,7 +89,7 @@ with open('../vendor/d3.min.js', 'r') as fin:
 with open('../lib/sys-hierarchy-chart.js', 'r') as fin:
   sys_chart_js = fin.read()
 
-with open('../lib/dependency-matrix-chart.js', 'r') as fin:
+with open('../lib/dependencies-chart.js', 'r') as fin:
   dep_chart_js = fin.read()
 
 with open('sys-and-dep-chart.py', 'w') as fout:
@@ -119,7 +119,7 @@ with open('sys-hierarchy-chart.py', 'w') as fout:
   fout.write(sys_chart_html_parts[2] + "'''\n")
   fout.write(script_tail)
 
-with open('dependency-matrix-chart.py', 'w') as fout:
+with open('dependencies-chart.py', 'w') as fout:
   fout.write(script_head_pre)
   fout.write(dep_chart_script_head)
   fout.write(script_head_post)

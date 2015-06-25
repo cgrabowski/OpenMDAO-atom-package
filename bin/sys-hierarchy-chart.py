@@ -29,7 +29,7 @@ def write_and_close(args, head, d3, body, foot):
     sys.stdout.write(json)
     sys.stdout.write(foot)
   else:
-    with open(args.out, 'w') as fout:
+    with open(args.out, 'w+') as fout:
       fout.write(head)
       fout.write(d3)
       fout.write(body)
@@ -160,16 +160,13 @@ body = '''</script>
  * System Hierarchy Partition Chart
  */
 (function(d3, undefined) {
-  var CHART_SIZE_RATIO = 0.87; // chart to window width/height ratio
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
   var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
 
-  var ww = window.innerWidth;
-  var wh = window.innerHeight;
-  var cw = ww * CHART_SIZE_RATIO;
-  var ch = wh * CHART_SIZE_RATIO;
-  var rangeX = d3.scale.linear().range([0, cw]);
-  var rangeY = d3.scale.linear().range([0, ch]);
+  var cw;
+  var ch;
+  var rangeX;
+  var rangeY;
   // matches only a trailing string of alphanumeric characters
   // (includng the underscore character)
   var removeParentNamesRegex = /\w*$/;
@@ -190,14 +187,14 @@ body = '''</script>
 
   window.addEventListener('load', function() {
     var container = document.getElementById('container');
-    cw = parseInt(window.getComputedStyle(container).width);
-
+    if (container.classList.contains('central-with-sidebar')) {
+      cw = window.innerWidth * 0.885;
+    } else {
+      cw = window.innerWidth * 0.984;
+    }
+    ch = window.innerHeight;
     rangeX = d3.scale.linear().range([0, cw]);
-
-
-    var jsonLeaves = (function getLeaves(){
-
-    }(data.systemHierarchy));
+    rangeY = d3.scale.linear().range([0, ch]);
 
     // create an svg element and append to the container div
     svg = d3.select('#system-hierarchy-chart').append('svg:svg')
@@ -361,10 +358,13 @@ body = '''</script>
 
   // resize svg on window resize
   window.addEventListener('resize', function() {
-    ww = window.innerWidth;
-    wh = window.innerHeight;
-    cw = ww * CHART_SIZE_RATIO;
-    ch = wh * CHART_SIZE_RATIO;
+    var container = document.getElementById('container');
+    if (container.classList.contains('central-with-sidebar')) {
+      cw = window.innerWidth * 0.885;
+    } else {
+      cw = window.innerWidth * 0.984;
+    }
+    ch = window.innerHeight;
     rangeX.range([0, cw]);
     rangeY.range([0, ch]);
     transitionAll(100);
