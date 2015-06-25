@@ -28,6 +28,13 @@ module.exports = openmdao =
 
     chart_server.activate()
 
+    isChartFileRegex = /\/lib\/.*\.js|\/views\//
+    atom.workspace.observeTextEditors (editor) ->
+      filePath = editor.buffer.file?.path;
+      if filePath? && isChartFileRegex.test(filePath)
+        editor.onDidSave (event) ->
+          chart_client.write('chart file saved to ' + filePath)
+
     for key, constructor of ChartModelFactory.constructors
       atom.views.addViewProvider
         modelConstructor: constructor
