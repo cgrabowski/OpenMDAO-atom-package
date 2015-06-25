@@ -11,8 +11,7 @@ class SystemHierarchyView extends View
   setModel: (@model) ->
 
   init: (base64Source) ->
-    $('.openmdao-chart-container')
-      .on('contextmenu', -> false)
+    @container.on('contextmenu', -> false)
     @setWebview(base64Source)
 
   setWebview: (base64Source) ->
