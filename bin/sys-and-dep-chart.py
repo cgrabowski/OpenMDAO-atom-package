@@ -149,13 +149,40 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
 body = '''</script>
 <script>
 /*
- * d3 extensions
+ * System Hierarchy Partition Chart
  */
 (function(d3, undefined) {
+  var CHART_SIZE_RATIO = 0.87; // chart to window width/height ratio
+  var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
+  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
+
+  var ww = window.innerWidth;
+  var wh = window.innerHeight;
+  var cw = ww * CHART_SIZE_RATIO;
+  var ch = wh * CHART_SIZE_RATIO;
+  var rangeX = d3.scale.linear().range([0, cw]);
+  var rangeY = d3.scale.linear().range([0, ch]);
+  // matches only a trailing string of alphanumeric characters
+  // (includng the underscore character)
+  var removeParentNamesRegex = /\w*$/;
+  // matches trailing elipsis
+  var elipsisRegex = /\.\.\.$/;
+  var focusedDatum = null;
+  var svg;
+  var rootDatum;
+  var colors = [
+    'rgb(240, 190, 190)', // root
+    'rgb(240, 180, 180)', // group
+    'rgb(180, 180, 240)', // component
+    'rgb(210, 210, 225)', // variable
+    'rgb(210, 240, 180)' // state var and its parent
+  ];
+  var color = d3.scale.ordinal()
+    .range(colors);
 
   // Adds svg elements of a datum's childrewindow.outerWidthn to the selection
   d3.selection.prototype.datumChildrenElements = function(datum) {
-    var children = datum.element.children;//
+    var children = datum.element.children; //
 
     if (children != null) {
       for (var i = 0; i < children.length; ++i) {
@@ -203,42 +230,6 @@ body = '''</script>
     }
     return this;
   };
-
-}(d3));
-
-</script>
-<script>
-/*
- * System Hierarchy Partition Chart
- */
-(function(d3, undefined) {
-  var CHART_SIZE_RATIO = 0.87; // chart to window width/height ratio
-  var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
-  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
-
-  var ww = window.innerWidth;
-  var wh = window.innerHeight;
-  var cw = ww * CHART_SIZE_RATIO;
-  var ch = wh * CHART_SIZE_RATIO;
-  var rangeX = d3.scale.linear().range([0, cw]);
-  var rangeY = d3.scale.linear().range([0, ch]);
-  // matches only a trailing string of alphanumeric characters
-  // (includng the underscore character)
-  var removeParentNamesRegex = /\w*$/;
-  // matches trailing elipsis
-  var elipsisRegex = /\.\.\.$/;
-  var focusedDatum = null;
-  var svg;
-  var rootDatum;
-  var colors = [
-    'rgb(240, 190, 190)', // root
-    'rgb(240, 180, 180)', // group
-    'rgb(180, 180, 240)', // component
-    'rgb(210, 210, 225)', // variable
-    'rgb(210, 240, 180)' // state var and its parent
-  ];
-  var color = d3.scale.ordinal()
-    .range(colors);
 
   window.addEventListener('load', function() {
 

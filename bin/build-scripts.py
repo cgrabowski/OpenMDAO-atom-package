@@ -111,9 +111,6 @@ with open('../views/sys-hierarchy-chart.html', 'r') as fin:
 with open('../vendor/d3.min.js', 'r') as fin:
   d3_min_js = fin.read()
 
-with open('../lib/d3-extensions.js', 'r') as fin:
-  d3_extensions_js = fin.read()
-
 with open('../lib/sys-hierarchy-chart.js', 'r') as fin:
   sys_chart_js = fin.read()
 
@@ -125,7 +122,6 @@ with open('sys-and-dep-chart.py', 'w') as fout:
   fout.write("head = '''" + sys_chart_html_parts[0] + "\n<!-- d3 library -->\n<script>'''\n\n")
   fout.write("d3 = r'''\n" + d3_min_js + "\n'''\n\n")
   fout.write("body = '''</script>\n")
-  fout.write("<script>\n" + d3_extensions_js + "\n</script>\n")
   fout.write("<script>\n" + sys_chart_js + "\n</script>\n")
   fout.write("<script>\n" + dep_chart_js + "\n</script>\n")
   fout.write("<script>\nvar data = '''\n\n")
@@ -138,7 +134,6 @@ with open('sys-hierarchy-chart.py', 'w') as fout:
   fout.write("head = '''" + sys_chart_html_parts[0] + "\n<!-- d3 library -->\n<script>'''\n\n")
   fout.write("d3 = r'''\n" + d3_min_js + "\n'''\n\n")
   fout.write("body = '''</script>\n")
-  fout.write("<script>\n" + d3_extensions_js + "\n</script>\n")
   fout.write("<script>\n" + sys_chart_js + "\n</script>\n")
   fout.write("<script>\nvar data = '''\n\n")
   fout.write("foot = '''\n\n</script>\n" + sys_chart_html_parts[1] + "\n")
@@ -150,7 +145,6 @@ with open('dependency-matrix-chart.py', 'w') as fout:
   fout.write("head = '''" + sys_chart_html_parts[0] + "\n<!-- d3 library -->\n<script>'''\n\n")
   fout.write("d3 = r'''\n" + d3_min_js + "\n'''\n\n")
   fout.write("body = '''</script>\n")
-  fout.write("<script>\n" + d3_extensions_js + "\n</script>\n")
   fout.write("<script>\n" + dep_chart_js + "\n</script>\n")
   fout.write("<script>\nvar data = '''\n\n")
   fout.write("foot = '''\n\n</script>\n" + sys_chart_html_parts[1] + "\n")
