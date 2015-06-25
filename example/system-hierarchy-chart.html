@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset='utf-8'>
   <title>System Hierarchy</title>
@@ -23,6 +24,20 @@
 
     text {
       cursor: default;
+    }
+
+    .sidebar-left {
+      float: left;
+      width: 10%;
+    }
+
+    .central-with-sidebar {
+      width: 90%;
+      float:right;
+    }
+
+    .label-svg-container {
+      position: relative;
     }
 
     #help,
@@ -62,28 +77,31 @@
 </head>
 
 <body>
-  <div id='system-hierarchy-chart'></div>
-  <svg id='help-icon-background' class='help-icon' height="48" viewBox="0 0 48 48" width='48' xmlns="http://www.w3.org/2000/svg">
-    <circle fill='#20242a' cx='18' cy='18' r='18' />
-  </svg>
-  <svg id='help-icon-paths' class='help-icon' fill="#c8d5ee" height="48" viewBox="0 0 48 48" width="48" xmlns="http://www.w3.org/2000/svg">
-    <g transform='scale(1.5, 1.5)'>
-      <path d="M0 0h24v24H0z" fill="none" />
-      <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"
-      />
-    </g>
-  </svg>
-  <div id='help'>
-    <h3>OpenMDAO System Hierarchy Partition Chart</h3>
-    <p>
-      <strong>left mouse button</strong>: zoom in and out
-      <br /> note: click the very top of the screen to zoom out.
-    </p>
-    <p>
-      <strong>center and right mouse buttons</strong>: collapse and expand partitions
-    </p>
-    <div id='close-help-button'>
-      <strong>X</strong>
+  <div id='container'>
+    <div id='system-hierarchy-chart'></div>
+    <div id='dependency-matrix-chart'></div>
+    <svg id='help-icon-background' class='help-icon' height="48" viewBox="0 0 48 48" width='48' xmlns="http://www.w3.org/2000/svg">
+      <circle fill='#20242a' cx='18' cy='18' r='18' />
+    </svg>
+    <svg id='help-icon-paths' class='help-icon' fill="#c8d5ee" height="48" viewBox="0 0 48 48" width="48" xmlns="http://www.w3.org/2000/svg">
+      <g transform='scale(1.5, 1.5)'>
+        <path d="M0 0h24v24H0z" fill="none" />
+        <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"
+        />
+      </g>
+    </svg>
+    <div id='help'>
+      <h3>OpenMDAO System Hierarchy Partition Chart</h3>
+      <p>
+        <strong>left mouse button</strong>: zoom in and out
+        <br /> note: click the very top of the screen to zoom out.
+      </p>
+      <p>
+        <strong>center and right mouse buttons</strong>: collapse and expand partitions
+      </p>
+      <div id='close-help-button'>
+        <strong>X</strong>
+      </div>
     </div>
   </div>
 
@@ -160,7 +178,7 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
  * System Hierarchy Partition Chart
  */
 (function(d3, undefined) {
-  var CHART_SIZE_RATIO = 0.97; // chart to window width/height ratio
+  var CHART_SIZE_RATIO = 0.87; // chart to window width/height ratio
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
   var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
 
@@ -170,7 +188,7 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
   var ch = wh * CHART_SIZE_RATIO;
   var rangeX = d3.scale.linear().range([0, cw]);
   var rangeY = d3.scale.linear().range([0, ch]);
-  // matches only a trailin string of alphanumeric characters
+  // matches only a trailing string of alphanumeric characters
   // (includng the underscore character)
   var removeParentNamesRegex = /\w*$/;
   // matches trailing elipsis
@@ -229,6 +247,8 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
       rootDatum = d;
     });
 
+    console.log(rootDatum);
+
     var jsonLowestPlainObjs = (function getLow(data, keyin, out) {
       var hasChildObj = false;
       for (var key in data) {
@@ -248,7 +268,6 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
       for (var key in jsonLowestPlainObjs[d.key]) {
         d[key] = jsonLowestPlainObjs[d.key][key];
       }
-      //console.log(d);
     });
 
     // create and append a visible rect for each svg group
@@ -268,7 +287,7 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
         }
 
         // variable color index is 3
-        if(d.children == null) {
+        if (d.children == null) {
           index = 3;
         }
 
@@ -317,7 +336,8 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
       row = getDataByDepth(++depth);
     }
 
-    // set event handlers
+    // Set event handlers. Events to communicate outside of system hierarchy chart
+    // are emitted from within the handlers.
     svg.selectAll('g').on('click', click);
     svg.selectAll('g').on('contextmenu', click);
     // sets focusedDatum variable to the datum whose svg element has focus
@@ -325,6 +345,7 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
       focusedDatum = d;
     });
 
+    // Help items
     var helpIconElements = document.getElementsByClassName('help-icon');
     var helpDiv = document.getElementById('help');
     var closeHelpButton = document.getElementById('close-help-button');
@@ -338,13 +359,13 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
         return false;
       };
     }
-    closeHelpButton.onclick = function(event) {
+    closeHelpButton.addEventListener('click', function(event) {
       for (var i = 0; i < helpIconElements.length; ++i) {
         helpIconElements.item(i).style.display = 'block';
       }
       helpDiv.style.display = 'none';
       return false;
-    };
+    });
   });
 
   // resize svg on window resize
@@ -358,57 +379,153 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
     transitionAll(100);
   });
 
-  // initiates zooming, collapsing, and expanding
-  function click(datum) {
-    var button = d3.event.button;
+  window.addEventListener('zoom', function(event) {
+    zoom(event.detail.datum);
+  });
 
-    if (button === 0 && !datum.element.classList.contains('collapsed')) {
-      if (focusedDatum != null) {
-        var d = focusedDatum;
-        rangeX.domain([d.x, d.x + d.dx]);
-        rangeY.domain([d.y, 1]).range([d.y ? 20 : 0, ch]);
-      }
-      transitionAll();
-
-    } else if (button > 0) {
-      if (this.classList.contains('collapsed')) {
-        expand(datum);
-      } else {
-        collapse(datum);
-      }
+  window.addEventListener('collapse', function(event) {
+    if (event.detail.secondary === true) {
+      return;
     }
-    d3.event.preventDefault();
-  }
+    var detail = event.detail;
+    var datum;
 
-  // determines which elements need to be expanded and expands them
-  // repositions the rest of the elements as necessary
-  function expand(datum) {
-    d3.select(datum.element)
-      .datumChildrenElements(datum)
-      .datumDescendantElements(datum)
-      .classed('collapsed', false);
+    if (detail.root === rootDatum) {
+      datum = detail.datum;
+    } else {
+      var leaves = getDataLeaves(rootDatum);
+      datum = leaves[detail.columns[0]];
+    }
 
     var parent = datum.parent;
+    var origDatum = datum;
     while (parent != null) {
-      d3.select(parent.element).classed('collapsed', false);
-
       var numExpandedChildren = parent.children.filter(function(d, i, arr) {
         return !d.element.classList.contains('collapsed');
       }).length;
 
       if (numExpandedChildren === 1) {
-        parent.children.forEach(function(d, i, arr) {
-          d3.select(d.element).datumDescendantElements(d)
-            .classed('collapsed', false);
-        });
+        // if parent has no more expanded children, then it becomes the
+        // root of the collapse
+        datum = parent;
       }
-
       parent = parent.parent;
     }
 
-    setExpandingDx();
-    setAllRowPositions();
+
+    // trigger secondary collapse event if root of the collapse has changed
+    if (datum !== origDatum) {
+      var leaves = getDataLeaves(rootDatum);
+      var datumLeaves = getDataLeaves(datum);
+      var startIndex = leaves.indexOf(datumLeaves[0]);
+      var lastIndex = startIndex + datumLeaves.length;
+      var columns = [startIndex, lastIndex];
+      var event = new CustomEvent('collapse', {
+        detail: {
+          rootId: svg[0][0].parentNode.getAttribute('id'),
+          root: rootDatum,
+          datum: datum,
+          element: datum.element,
+          rows: [datum.depth, datum.depth + 1],
+          columns: columns,
+          secondary: true
+        },
+        bubbles: true
+      });
+      datum.element.dispatchEvent(event);
+    }
+
+    collapse(datum);
+  });
+
+  window.addEventListener('expand', function(event) {
+    var detail = event.detail;
+
+    if (event.detail.id === svg[0][0].parentNode.getAttribute('id')) {
+      expand(detail.datum);
+
+    } else {
+      var leaves = getDataLeaves(rootDatum);
+      var columns = detail.columns;
+
+      for (var i = columns[0]; i < columns[1]; ++i) {
+        expand(leaves[i]);
+      }
+    }
+  });
+
+  // initiates zooming, collapsing, and expanding
+  // emmits the zoom, collapse, and expand events
+  function click(datum) {
+    var button = d3.event.button;
+    var eventType = '';
+
+    // zoom
+    if (button === 0 && !datum.element.classList.contains('collapsed')) {
+      eventType = 'zoom';
+
+      // expand/collapse
+    } else if (button > 0) {
+      if (this.classList.contains('collapsed')) {
+        eventType = 'expand';
+
+      } else {
+        eventType = 'collapse';
+
+        var parent = datum.parent;
+        while (parent != null) {
+          var numExpandedChildren = parent.children.filter(function(d, i, arr) {
+            return !d.element.classList.contains('collapsed');
+          }).length;
+
+          if (numExpandedChildren === 1) {
+            // if parent has no more expanded children, then it becomes the
+            // root of the collapse
+            datum = parent;
+          }
+          parent = parent.parent;
+        }
+      }
+    }
+
+    // Trigger global event
+    var columns;
+    var leaves = getDataLeaves(rootDatum);
+    var eleLeaves = getDataLeaves(datum);
+    if (eleLeaves.length === 1) {
+      if (eleLeaves[0] === datum) {
+        columns = [leaves.indexOf(datum), leaves.indexOf(datum) + 1];
+      } else {
+        columns = [leaves.indexOf(datum.children[0]), leaves.indexOf(datum.children[0]) + 1];
+      }
+    } else {
+      var startIndex = leaves.indexOf(eleLeaves[0]);
+      var endIndex = startIndex + eleLeaves.length;
+      columns = [startIndex, endIndex];
+    }
+
+    var event = new CustomEvent(eventType, {
+      detail: {
+        rootId: svg[0][0].parentNode.getAttribute('id'),
+        root: rootDatum,
+        datum: datum,
+        element: datum.element,
+        rows: [datum.depth, datum.depth + 1],
+        columns: columns,
+        secondary: false
+      },
+      bubbles: true
+    });
+    datum.element.dispatchEvent(event);
+
+    d3.event.preventDefault();
+  }
+
+  function zoom(datum) {
+    rangeX.domain([datum.x, datum.x + datum.dx]);
+    rangeY.domain([datum.y, 1]).range([datum.y ? 20 : 0, ch]);
     transitionAll();
+    return datum;
   }
 
   // determines which elements need to be collapsed and collapses them.
@@ -426,26 +543,10 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
       return;
     }
 
+    datum.element.classList.add('collapsed');
     var collapsing = d3.select(datum.element)
       .datumDescendantElements(datum)
       .classed('collapsed', true);
-
-    var parent = datum.parent;
-    while (parent != null) {
-      var numExpandedChildren = parent.children.filter(function(d, i, arr) {
-        return !d.element.classList.contains('collapsed');
-      }).length;
-
-      if (numExpandedChildren === 0) {
-        d3.select(parent.element).classed('collapsed', true);
-        collapsing[0].push(parent.element);
-        // if parent has no more expanded children, then it becomes the
-        // root of the collapse
-        datum = parent;
-      }
-
-      parent = parent.parent;
-    }
 
     collapsing.each(function(d) {
       if (this.nodeName === 'text') {
@@ -462,19 +563,19 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
       d.x = datum.x;
     });
 
-    parent = datum;
-    while (parent.children != null) {
+    var child = datum;
+    while (child.children != null) {
       var stateVar = null;
 
-      for (var i = 0, len = parent.children.length; i < len; ++i) {
-        if (parent.children[i].state != null) {
-          stateVar = parent.children[i];
+      for (var i = 0, len = child.children.length; i < len; ++i) {
+        if (child.children[i].state != null) {
+          stateVar = child.children[i];
           stateVar.dx = COLLAPSED_SIZE_PIXELS / cw;
           break;
         }
       }
 
-      parent.children.forEach(function(d, i, arr) {
+      child.children.forEach(function(d, i, arr) {
         if (stateVar == null && i === 0) {
           d.dx = COLLAPSED_SIZE_PIXELS / cw;
 
@@ -486,12 +587,53 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
         }
       });
 
-      parent = parent.children[0];
+      child = child.children[0];
     }
 
     setExpandingDx();
     setAllRowPositions();
     transitionAll();
+
+    return datum;
+  }
+
+
+  // determines which elements need to be expanded and expands them
+  // repositions the rest of the elements as necessary
+  function expand(datum) {
+    d3.select(datum.element)
+      .datumChildrenElements(datum)
+      .datumDescendantElements(datum)
+      .classed('collapsed', false);
+
+    var rootExpansionDatum = (function traverseAncestors(d) {
+      var parent = d.parent;
+      var parentSelection = d3.select(parent.element);
+
+      if (!parentSelection.classed('collapsed')) {
+        return d;
+      }
+
+      parentSelection.classed('collapsed', false);
+
+      var numExpandedChildren = parent.children.filter(function(d, i, arr) {
+        return !d.element.classList.contains('collapsed');
+      }).length;
+
+      if (numExpandedChildren === 1) {
+        parent.children.forEach(function(d, i, arr) {
+          d3.select(d.element).datumDescendantElements(d).classed('collapsed', false);
+        });
+      }
+
+      return traverseAncestors(parent);
+    }(datum));
+
+    setExpandingDx();
+    setAllRowPositions();
+    transitionAll();
+
+    return rootExpansionDatum;
   }
 
   // Set the new size of expanding or resizing elements
@@ -558,10 +700,10 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
       var laterals = getDataByDepth(d.depth);
 
       d.newX = 0;
-      var pos = laterals.indexOf(d);
-      for (var i = 0; i < pos; ++i) {
+      for (var i = 0, pos = laterals.indexOf(d); i < pos; ++i) {
         d.newX += laterals[i].dx;
       }
+
     }).each(function(d) {
       if (d.parent == null) {
         return;
@@ -728,6 +870,8 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
   }
 
   // gets all leaves that are decendants of datum
+  // !IMPORTANT: This function guarantees leaves are returned in row order,
+  // and code that uses this funciton depends on that!
   function getDataLeaves(datum) {
     var leaves = [];
     var selection;
@@ -755,221 +899,223 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
 
 </script>
 <script>
-var data = { 'root':
-{
-  "chem_eq": {
-    "n2ls": {
-      "chem_eq:n2ls:rhs": {
-        "relative_name": "rhs",
-        "shape": [3],
-        "size": 3,
-        "val": [0.0, 0.0, 0.0],
-        "desc": "Right-hand side of resulting system"
+var data = {
+  "root": {
+    "chem_eq": {
+      "n2ls": {
+        "chem_eq:n2ls:rhs": {
+          "relative_name": "rhs",
+          "shape": [3],
+          "size": 3,
+          "val": [0.0, 0.0, 0.0],
+          "desc": "Right-hand side of resulting system"
+        },
+        "chem_eq:n2ls:mu": {
+          "val": [0.0, 0.0, 0.0],
+          "relative_name": "mu",
+          "shape": [3],
+          "units": "cal/(g*mol)",
+          "desc": "Chemical Potential per Kilogram-mole of species j",
+          "size": 3
+        },
+        "chem_eq:n2ls:ch": {
+          "relative_name": "ch",
+          "shape": [3, 3],
+          "size": 9,
+          "val": [
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0]
+          ],
+          "desc": "Left-hand side of resulting system"
+        },
+        "chem_eq:n2ls:b": {
+          "relative_name": "b",
+          "shape": [2],
+          "size": 2,
+          "val": [0.0, 0.0],
+          "desc": "assigned kg-atoms of element i per total kg of reactant"
+        },
+        "chem_eq:n2ls:b0": {
+          "relative_name": "b0",
+          "shape": [2],
+          "size": 2,
+          "val": [0.0, 0.0],
+          "desc": "assigned kg-atoms of element i per total kg of reactant for the initial prod amounts"
+        }
       },
-      "chem_eq:n2ls:mu": {
-        "val": [0.0, 0.0, 0.0],
-        "relative_name": "mu",
+      "ls2pi": {
+        "chem_eq:ls2pi:x": {
+          "shape": [3],
+          "relative_name": "x",
+          "state": true,
+          "val": [0.0, 0.0, 0.0],
+          "size": 3
+        }
+      },
+      "pi2n": {
+        "chem_eq:pi2n:dLn": {
+          "relative_name": "dLn",
+          "shape": [4],
+          "size": 4,
+          "val": [0.0, 0.0, 0.0, 0.0],
+          "desc": "Kilogram-moles of species j per kg mixture last element:             Kilogram-moles of mixture per unit mass"
+        }
+      },
+      "next_n": {
+        "chem_eq:next_n:lambdaf": {
+          "relative_name": "lambdaf",
+          "shape": 1,
+          "size": 1,
+          "val": 1.0,
+          "desc": "adaptive under-relaxation factor"
+        },
+        "chem_eq:next_n:n": {
+          "val": [0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.1],
+          "state": true,
+          "relative_name": "n",
+          "shape": [4],
+          "desc": "computed value of the next iterate for n",
+          "size": 4
+        }
+      }
+    },
+    "props": {
+      "TP2ls": {
+        "props:TP2ls:rhs_T": {
+          "relative_name": "rhs_T",
+          "shape": [3],
+          "size": 3,
+          "val": [0.0, 0.0, 0.0],
+          "desc": "rhs for the T solve"
+        },
+        "props:TP2ls:rhs_P": {
+          "relative_name": "rhs_P",
+          "shape": [3],
+          "size": 3,
+          "val": [0.0, 0.0, 0.0],
+          "desc": "rhs for the P solve"
+        },
+        "props:TP2ls:lhs_TP": {
+          "relative_name": "lhs_TP",
+          "shape": [3, 3],
+          "size": 9,
+          "val": [
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0]
+          ],
+          "desc": "A matrix for the totals linear solve"
+        }
+      },
+      "ls2t": {
+        "props:ls2t:x": {
+          "shape": [3],
+          "relative_name": "x",
+          "state": true,
+          "val": [0.0, 0.0, 0.0],
+          "size": 3
+        }
+      },
+      "ls2p": {
+        "props:ls2p:x": {
+          "shape": [3],
+          "relative_name": "x",
+          "state": true,
+          "val": [0.0, 0.0, 0.0],
+          "size": 3
+        }
+      },
+      "tp2tot": {
+        "props:tp2tot:h": {
+          "val": 0.0,
+          "relative_name": "h",
+          "shape": 1,
+          "units": "cal/g",
+          "desc": "enthalpy",
+          "size": 1
+        },
+        "props:tp2tot:S": {
+          "val": 0.0,
+          "relative_name": "S",
+          "shape": 1,
+          "units": "cal/(g*degK)",
+          "desc": "entropy",
+          "size": 1
+        },
+        "props:tp2tot:gamma": {
+          "relative_name": "gamma",
+          "shape": 1,
+          "size": 1,
+          "val": 0.0,
+          "desc": "ratio of specific heats"
+        },
+        "props:tp2tot:Cp": {
+          "val": 0.0,
+          "relative_name": "Cp",
+          "shape": 1,
+          "units": "cal/(g*degK)",
+          "desc": "Specific heat at constant pressure",
+          "size": 1
+        },
+        "props:tp2tot:Cv": {
+          "val": 0.0,
+          "relative_name": "Cv",
+          "shape": 1,
+          "units": "cal/(g*degK)",
+          "desc": "Specific heat at constant volume",
+          "size": 1
+        },
+        "props:tp2tot:rho": {
+          "val": 0.0,
+          "relative_name": "rho",
+          "shape": 1,
+          "units": "g/cm**3",
+          "desc": "density",
+          "size": 1
+        }
+      }
+    },
+    "init_prod": {
+      "init_prod:init_prod_amounts": {
         "shape": [3],
-        "units": "cal/(g*mol)",
-        "desc": "Chemical Potential per Kilogram-mole of species j",
+        "relative_name": "init_prod_amounts",
+        "val": [0.022722108611679163, 0.0, 0.0],
         "size": 3
-      },
-      "chem_eq:n2ls:ch": {
-        "relative_name": "ch",
-        "shape": [3, 3],
-        "size": 9,
-        "val": [
-          [0.0, 0.0, 0.0],
-          [0.0, 0.0, 0.0],
-          [0.0, 0.0, 0.0]
-        ],
-        "desc": "Left-hand side of resulting system"
-      },
-      "chem_eq:n2ls:b": {
-        "relative_name": "b",
-        "shape": [2],
-        "size": 2,
-        "val": [0.0, 0.0],
-        "desc": "assigned kg-atoms of element i per total kg of reactant"
-      },
-      "chem_eq:n2ls:b0": {
-        "relative_name": "b0",
-        "shape": [2],
-        "size": 2,
-        "val": [0.0, 0.0],
-        "desc": "assigned kg-atoms of element i per total kg of reactant for the initial prod amounts"
       }
     },
-    "ls2pi": {
-      "chem_eq:ls2pi:x": {
-        "shape": [3],
-        "relative_name": "x",
-        "state": true,
-        "val": [0.0, 0.0, 0.0],
-        "size": 3
-      }
-    },
-    "pi2n": {
-      "chem_eq:pi2n:dLn": {
-        "relative_name": "dLn",
-        "shape": [4],
-        "size": 4,
-        "val": [0.0, 0.0, 0.0, 0.0],
-        "desc": "Kilogram-moles of species j per kg mixture last element:             Kilogram-moles of mixture per unit mass"
-      }
-    },
-    "next_n": {
-      "chem_eq:next_n:lambdaf": {
-        "relative_name": "lambdaf",
+    "temp": {
+      "temp:T": {
+        "units": "degK",
         "shape": 1,
-        "size": 1,
-        "val": 1.0,
-        "desc": "adaptive under-relaxation factor"
-      },
-      "chem_eq:next_n:n": {
-        "val": [0.03333333333333333, 0.03333333333333333, 0.03333333333333333, 0.1],
-        "state": true,
-        "relative_name": "n",
-        "shape": [4],
-        "desc": "computed value of the next iterate for n",
-        "size": 4
-      }
-    }
-  },
-  "props": {
-    "TP2ls": {
-      "props:TP2ls:rhs_T": {
-        "relative_name": "rhs_T",
-        "shape": [3],
-        "size": 3,
-        "val": [0.0, 0.0, 0.0],
-        "desc": "rhs for the T solve"
-      },
-      "props:TP2ls:rhs_P": {
-        "relative_name": "rhs_P",
-        "shape": [3],
-        "size": 3,
-        "val": [0.0, 0.0, 0.0],
-        "desc": "rhs for the P solve"
-      },
-      "props:TP2ls:lhs_TP": {
-        "relative_name": "lhs_TP",
-        "shape": [3, 3],
-        "size": 9,
-        "val": [
-          [0.0, 0.0, 0.0],
-          [0.0, 0.0, 0.0],
-          [0.0, 0.0, 0.0]
-        ],
-        "desc": "A matrix for the totals linear solve"
-      }
-    },
-    "ls2t": {
-      "props:ls2t:x": {
-        "shape": [3],
-        "relative_name": "x",
-        "state": true,
-        "val": [0.0, 0.0, 0.0],
-        "size": 3
-      }
-    },
-    "ls2p": {
-      "props:ls2p:x": {
-        "shape": [3],
-        "relative_name": "x",
-        "state": true,
-        "val": [0.0, 0.0, 0.0],
-        "size": 3
-      }
-    },
-    "tp2tot": {
-      "props:tp2tot:h": {
-        "val": 0.0,
-        "relative_name": "h",
-        "shape": 1,
-        "units": "cal/g",
-        "desc": "enthalpy",
-        "size": 1
-      },
-      "props:tp2tot:S": {
-        "val": 0.0,
-        "relative_name": "S",
-        "shape": 1,
-        "units": "cal/(g*degK)",
-        "desc": "entropy",
-        "size": 1
-      },
-      "props:tp2tot:gamma": {
-        "relative_name": "gamma",
-        "shape": 1,
-        "size": 1,
-        "val": 0.0,
-        "desc": "ratio of specific heats"
-      },
-      "props:tp2tot:Cp": {
-        "val": 0.0,
-        "relative_name": "Cp",
-        "shape": 1,
-        "units": "cal/(g*degK)",
-        "desc": "Specific heat at constant pressure",
-        "size": 1
-      },
-      "props:tp2tot:Cv": {
-        "val": 0.0,
-        "relative_name": "Cv",
-        "shape": 1,
-        "units": "cal/(g*degK)",
-        "desc": "Specific heat at constant volume",
-        "size": 1
-      },
-      "props:tp2tot:rho": {
-        "val": 0.0,
-        "relative_name": "rho",
-        "shape": 1,
-        "units": "g/cm**3",
-        "desc": "density",
+        "relative_name": "T",
+        "val": 4000.0,
         "size": 1
       }
-    }
-  },
-  "init_prod": {
-    "init_prod:init_prod_amounts": {
-      "shape": [3],
-      "relative_name": "init_prod_amounts",
-      "val": [0.022722108611679163, 0.0, 0.0],
-      "size": 3
-    }
-  },
-  "temp": {
-    "temp:T": {
-      "units": "degK",
-      "shape": 1,
-      "relative_name": "T",
-      "val": 4000.0,
-      "size": 1
-    }
-  },
-  "pressure": {
-    "pressure:P": {
-      "shape": 1,
-      "relative_name": "P",
-      "val": 1.03421,
-      "size": 1
-    }
-  },
-  "stupid_english_units": {
-    "stupid_english_units:T_eng": {
-      "units": "degR",
-      "shape": 1,
-      "relative_name": "T_eng",
-      "val": 0.0,
-      "size": 1
+    },
+    "pressure": {
+      "pressure:P": {
+        "shape": 1,
+        "relative_name": "P",
+        "val": 1.03421,
+        "size": 1
+      }
+    },
+    "stupid_english_units": {
+      "stupid_english_units:T_eng": {
+        "units": "degR",
+        "shape": 1,
+        "relative_name": "T_eng",
+        "val": 0.0,
+        "size": 1
+      }
     }
   }
 }
 
-};
+
 </script>
 </body>
+
 
 </html>
