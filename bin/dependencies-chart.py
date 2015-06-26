@@ -161,7 +161,7 @@ body = '''</script>
  */
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
-  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
+  var DEFAULT_TRANSITION_DURATION = 600; // transition duration millis
   var CHART_SIZE_RATIO = 0.885;
 
   var cl = window.innerWidth * CHART_SIZE_RATIO;
@@ -246,10 +246,7 @@ body = '''</script>
         d.element = this;
       });
 
-    labelGroups.append('text')
-      .text(function(d) {
-        return d.name;
-      })
+    var texts = labelGroups.append('text')
       .attr('font-size', 13)
       .attr('fill', 'rgb(170, 170, 170)')
       .attr('text-anchor', 'end')
@@ -259,7 +256,26 @@ body = '''</script>
       })
       .attr('y', function(d) {
         return d.y + nodeLen / 2 + 5;
+      })
+      .text(function(d) {
+        return d.name;
       });
+
+    texts.text(function(d) {
+      var name = d.name;
+      var sw = labelSvg[0][0].getAttribute('width');
+      var tw = this.getBBox().width;
+
+      if (sw < tw) {
+        this.textContent = name = name.replace(/.{3}/, '...');
+      }
+      while(sw < tw) {
+        tw = this.getBBox().width;
+        this.textContent = name = name.replace(/\.{3}./, '...');
+      }
+
+      return name;
+    });
 
     var flat = data.dependencies.matrix.reduce(function(acc, ele) {
       return acc.concat(ele.map(function(ele, i, arr) {

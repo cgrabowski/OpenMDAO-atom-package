@@ -161,7 +161,7 @@ body = '''</script>
  */
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
-  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
+  var DEFAULT_TRANSITION_DURATION = 600; // transition duration millis
 
   var cw;
   var ch;
