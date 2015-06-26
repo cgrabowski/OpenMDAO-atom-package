@@ -86,6 +86,9 @@ with open('../views/sys-hierarchy-chart.html', 'r') as fin:
 with open('../vendor/d3.min.js', 'r') as fin:
   d3_min_js = fin.read()
 
+with open('../lib/combined.js', 'r') as fin:
+  combined_chart_js = fin.read();
+
 with open('../lib/sys-hierarchy-chart.js', 'r') as fin:
   sys_chart_js = fin.read()
 
@@ -101,6 +104,7 @@ with open('sys-and-dep-chart.py', 'w') as fout:
   fout.write("body = '''</script>\n")
   fout.write("<script>\n" + sys_chart_js + "\n</script>\n")
   fout.write("<script>\n" + dep_chart_js + "\n</script>\n")
+  fout.write("<script>\n" + combined_chart_js + "\n</script>\n")
   fout.write("<script>\nvar data = '''\n\n")
   fout.write("foot = '''\n\n</script>\n" + sys_chart_html_parts[1] + "\n")
   fout.write(sys_chart_html_parts[2] + "'''\n")

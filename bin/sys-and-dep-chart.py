@@ -161,7 +161,7 @@ body = '''</script>
  */
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
-  var DEFAULT_TRANSITION_DURATION = 600; // transition duration millis
+  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
 
   var cw;
   var ch;
@@ -185,10 +185,10 @@ body = '''</script>
   var color = d3.scale.ordinal()
     .range(colors);
 
-  window.addEventListener('load', function() {
+  window.addEventListener('load', function(event) {
     var container = document.getElementById('container');
     if (container.classList.contains('central-with-sidebar')) {
-      cw = window.innerWidth * 0.885;
+      cw = window.innerWidth * 0.875;
     } else {
       cw = window.innerWidth * 0.984;
     }
@@ -199,7 +199,9 @@ body = '''</script>
     // create an svg element and append to the container div
     svg = d3.select('#system-hierarchy-chart').append('svg:svg')
       .attr('width', cw)
-      .attr('height', ch);
+      .attr('height', ch)
+      .append('g')
+      .classed('container-g', true);
 
     // create a partition layout and set the getChildren and getValue funcs
     var partition = d3.layout.partition()
@@ -948,10 +950,10 @@ body = '''</script>
  */
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
-  var DEFAULT_TRANSITION_DURATION = 600; // transition duration millis
-  var CHART_SIZE_RATIO = 0.885;
+  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
+  var CHART_SIZE_RATIO = 0.875;
 
-  var cl = window.innerWidth * CHART_SIZE_RATIO;
+  var cl = window.innerWidth * CHART_SIZE_RATIO;//
   var container;
   var svgContainer;
   var sidebar;
@@ -979,7 +981,7 @@ body = '''</script>
     container = document.getElementById('container');
     svgContainer = document.getElementById('dependency-matrix-chart');
     sidebar = document.createElement('div');
-    labelSvgContainer = document.createElement('div');
+    labelSvgContainer = document.createElement('div');//
 
     container.classList.add('central-with-sidebar');
     sidebar.classList.add('sidebar-left');
@@ -990,12 +992,14 @@ body = '''</script>
     sidebar.appendChild(labelSvgContainer);
   });
 
-  window.addEventListener('load', function() {
+  window.addEventListener('load', function(event) {
     nodeLen = cl / data.dependencies.matrix.length;
 
     svg = d3.select('#dependency-matrix-chart').append('svg')
       .attr('width', cl)
-      .attr('height', cl);
+      .attr('height', cl)
+      .append('g')
+      .classed('container-g', true);
 
     labelSvg = d3.select('#label-svg-container').append('svg')
       .attr('width', function(d) {
@@ -1337,6 +1341,32 @@ body = '''</script>
   });
 
 })(d3);
+
+</script>
+<script>
+(function(d3, undefined) {
+
+
+  window.addEventListener('load', function(event) {
+    //console.log('combined');
+    var svgs = document.getElementById('container').children;
+
+    for (var i = 0; i < svgs.length; ++i) {
+      var svg = svgs.item(i);
+      //console.log(svg);
+      //d3.selectAll('g').attr("transform", "translate(0, 0)scale(1)");
+      var zoom = d3.behavior.zoom()
+        .scaleExtent([0, 1])
+        .on('zoom', function() {
+          console.log('zoomed');
+          console.log(d3.event);
+          d3.selectAll('.container-g').attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+        });
+      d3.select(svg).call(zoom);
+    }
+  });
+
+}(d3));
 
 </script>
 <script>

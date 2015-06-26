@@ -161,7 +161,7 @@ body = '''</script>
  */
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
-  var DEFAULT_TRANSITION_DURATION = 600; // transition duration millis
+  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
 
   var cw;
   var ch;
@@ -185,10 +185,10 @@ body = '''</script>
   var color = d3.scale.ordinal()
     .range(colors);
 
-  window.addEventListener('load', function() {
+  window.addEventListener('load', function(event) {
     var container = document.getElementById('container');
     if (container.classList.contains('central-with-sidebar')) {
-      cw = window.innerWidth * 0.885;
+      cw = window.innerWidth * 0.875;
     } else {
       cw = window.innerWidth * 0.984;
     }
@@ -199,7 +199,9 @@ body = '''</script>
     // create an svg element and append to the container div
     svg = d3.select('#system-hierarchy-chart').append('svg:svg')
       .attr('width', cw)
-      .attr('height', ch);
+      .attr('height', ch)
+      .append('g')
+      .classed('container-g', true);
 
     // create a partition layout and set the getChildren and getValue funcs
     var partition = d3.layout.partition()

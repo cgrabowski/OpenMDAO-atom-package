@@ -161,10 +161,10 @@ body = '''</script>
  */
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
-  var DEFAULT_TRANSITION_DURATION = 600; // transition duration millis
-  var CHART_SIZE_RATIO = 0.885;
+  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
+  var CHART_SIZE_RATIO = 0.875;
 
-  var cl = window.innerWidth * CHART_SIZE_RATIO;
+  var cl = window.innerWidth * CHART_SIZE_RATIO;//
   var container;
   var svgContainer;
   var sidebar;
@@ -192,7 +192,7 @@ body = '''</script>
     container = document.getElementById('container');
     svgContainer = document.getElementById('dependency-matrix-chart');
     sidebar = document.createElement('div');
-    labelSvgContainer = document.createElement('div');
+    labelSvgContainer = document.createElement('div');//
 
     container.classList.add('central-with-sidebar');
     sidebar.classList.add('sidebar-left');
@@ -203,12 +203,14 @@ body = '''</script>
     sidebar.appendChild(labelSvgContainer);
   });
 
-  window.addEventListener('load', function() {
+  window.addEventListener('load', function(event) {
     nodeLen = cl / data.dependencies.matrix.length;
 
     svg = d3.select('#dependency-matrix-chart').append('svg')
       .attr('width', cl)
-      .attr('height', cl);
+      .attr('height', cl)
+      .append('g')
+      .classed('container-g', true);
 
     labelSvg = d3.select('#label-svg-container').append('svg')
       .attr('width', function(d) {
