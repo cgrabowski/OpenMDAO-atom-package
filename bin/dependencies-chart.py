@@ -159,9 +159,12 @@ body = '''</script>
 /*
  * Dependency Matrix Chart
  */
+
+ var DEPENDENCIES_CHART = true;
+
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
-  var DEFAULT_TRANSITION_DURATION = 600; // transition duration millis
+  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
   var CHART_SIZE_RATIO = 0.885;
 
   var cl = window.innerWidth * CHART_SIZE_RATIO;

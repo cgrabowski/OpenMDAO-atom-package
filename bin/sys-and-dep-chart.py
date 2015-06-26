@@ -159,9 +159,12 @@ body = '''</script>
 /*
  * System Hierarchy Partition Chart
  */
+
+ var SYSTEM_CHART = true;
+
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
-  var DEFAULT_TRANSITION_DURATION = 600; // transition duration millis
+  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
 
   var cw;
   var ch;
@@ -187,17 +190,17 @@ body = '''</script>
 
   window.addEventListener('load', function() {
     var container = document.getElementById('container');
-    if (container.classList.contains('central-with-sidebar')) {
+    if (DEPENDENCIES_CHART != null) {
       cw = window.innerWidth * 0.885;
     } else {
       cw = window.innerWidth * 0.984;
     }
-    ch = window.innerHeight;
+      ch = window.innerHeight;
     rangeX = d3.scale.linear().range([0, cw]);
     rangeY = d3.scale.linear().range([0, ch]);
 
     // create an svg element and append to the container div
-    svg = d3.select('#system-hierarchy-chart').append('svg:svg')
+    svg = d3.select('#system-hierarchy-chart').append('svg')
       .attr('width', cw)
       .attr('height', ch);
 
@@ -216,7 +219,7 @@ body = '''</script>
     // create svg group elements that correspond to the data nodes
     // and append them to the svg.
     var groups = svg.selectAll('g').data(partition(d3.entries(data.systemHierarchy)[0]))
-      .enter().append('svg:g')
+      .enter().append('g')
       // set the functions that handle resizing and repositioning partitions
       // for zooming, expading, and collapsing
       .attr('x', deltaX)
@@ -259,7 +262,7 @@ body = '''</script>
     });
 
     // create and append a visible rect for each svg group
-    var rects = groups.append('svg:rect')
+    var rects = groups.append('rect')
       .attr('x', deltaX)
       .attr('y', deltaY)
       .attr('width', deltaWidth)
@@ -295,10 +298,10 @@ body = '''</script>
       });
 
     // create and append tooltip popup elements
-    var titles = groups.append('svg:title');
+    var titles = groups.append('title');
 
     // create and append a svg text element for each group
-    var texts = groups.append('svg:text')
+    var texts = groups.append('text')
       .attr('font-size', deltaText)
       // gets the text of a text elementproperty of a data node
       // returns the key
@@ -761,7 +764,9 @@ body = '''</script>
   // calculates a change in font size
   function deltaText(d) {
     var wh = window.innerHeight;
-    return 32 * wh / (wh + rangeY(d.y));
+    var newSize = 32 * wh / (wh + rangeY(d.y));
+    newSize = (newSize < 18) ? 18 : newSize;
+    return newSize;
   }
 
   // hides a text element that is larger than the rect it lives on
@@ -946,9 +951,12 @@ body = '''</script>
 /*
  * Dependency Matrix Chart
  */
+
+ var DEPENDENCIES_CHART = true;
+
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
-  var DEFAULT_TRANSITION_DURATION = 600; // transition duration millis
+  var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
   var CHART_SIZE_RATIO = 0.885;
 
   var cl = window.innerWidth * CHART_SIZE_RATIO;
