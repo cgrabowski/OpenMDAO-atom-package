@@ -257,7 +257,6 @@ var SYSTEM_CHART = true;
 
     if (DEPENDENCIES_CHART != null) {
       var leaf = getDataLeaves(rootDatum)[0];
-      console.log(leaf);
       ch = leaf.dx * cw * (leaf.depth + 1);
       svg.attr('height', ch);
       rangeY = d3.scale.linear().range([0, ch]);
@@ -393,11 +392,32 @@ var SYSTEM_CHART = true;
       var datum = getDataLeaves(rootDatum)[detail.columns[0]];
 
       while (datum.parent.parent != null && (focusedDatum == null || focusedDatum !== datum.parent)) {
-        console.log(focusedDatum === datum);
         datum = datum.parent;
       }
       focusedDatum = datum;
       zoom(datum);
+
+      var leaves = getDataLeaves(rootDatum);
+      var datumLeaves = getDataLeaves(datum);
+      var startIndex = leaves.indexOf(datumLeaves[0]);
+      var lastIndex = startIndex + datumLeaves.length;
+      var columns = [startIndex, lastIndex];
+      // Trigger global event
+      var newEvent = new CustomEvent('zoom', {
+        detail: {
+          rootId: svg[0][0].parentNode.getAttribute('id'),
+          root: rootDatum,
+          datum: datum,
+          element: datum.element,
+          rows: [datum.depth, datum.depth + 1],
+          columns: columns,
+          button: event.button,
+          secondary: true
+        },
+        bubbles: true
+      });
+
+      datum.element.dispatchEvent(newEvent);
     }
   });
 

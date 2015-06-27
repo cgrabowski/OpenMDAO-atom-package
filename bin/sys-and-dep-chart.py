@@ -257,7 +257,6 @@ var SYSTEM_CHART = true;
 
     if (DEPENDENCIES_CHART != null) {
       var leaf = getDataLeaves(rootDatum)[0];
-      console.log(leaf);
       ch = leaf.dx * cw * (leaf.depth + 1);
       svg.attr('height', ch);
       rangeY = d3.scale.linear().range([0, ch]);
@@ -393,11 +392,32 @@ var SYSTEM_CHART = true;
       var datum = getDataLeaves(rootDatum)[detail.columns[0]];
 
       while (datum.parent.parent != null && (focusedDatum == null || focusedDatum !== datum.parent)) {
-        console.log(focusedDatum === datum);
         datum = datum.parent;
       }
       focusedDatum = datum;
       zoom(datum);
+
+      var leaves = getDataLeaves(rootDatum);
+      var datumLeaves = getDataLeaves(datum);
+      var startIndex = leaves.indexOf(datumLeaves[0]);
+      var lastIndex = startIndex + datumLeaves.length;
+      var columns = [startIndex, lastIndex];
+      // Trigger global event
+      var newEvent = new CustomEvent('zoom', {
+        detail: {
+          rootId: svg[0][0].parentNode.getAttribute('id'),
+          root: rootDatum,
+          datum: datum,
+          element: datum.element,
+          rows: [datum.depth, datum.depth + 1],
+          columns: columns,
+          button: event.button,
+          secondary: true
+        },
+        bubbles: true
+      });
+
+      datum.element.dispatchEvent(newEvent);
     }
   });
 
@@ -983,8 +1003,6 @@ var DEPENDENCIES_CHART = true;
   var CHART_SIZE_RATIO = 0.885;
 
   var cl = window.innerWidth * CHART_SIZE_RATIO;
-  var rangeX;
-  var rangeY;
   var container;
   var svgContainer;
   var sidebar;
@@ -1025,8 +1043,6 @@ var DEPENDENCIES_CHART = true;
 
   window.addEventListener('load', function() {
     nodeLen = cl / data.dependencies.matrix.length;
-    rangeX = d3.scale.linear().range([0, cl]);
-    rangeY = d3.scale.linear().range([0, cl]);
 
     svg = d3.select('#dependency-matrix-chart').append('svg')
       .attr('width', cl)
@@ -1260,6 +1276,7 @@ var DEPENDENCIES_CHART = true;
 
   function zoom(event) {
     var detail = event.detail;
+
     if (detail.rootId === 'dependency-matrix-chart' && SYSTEM_CHART != null && detail.secondary === false) {
       var datum = detail.datum;
       // Trigger global event
@@ -1276,7 +1293,22 @@ var DEPENDENCIES_CHART = true;
         },
         bubbles: true
       });
+
       datum.element.dispatchEvent(event);
+
+    } else if (detail.rootId === 'system-hierarchy-chart') {
+      var datum = detail.datum;
+      var rangeX = d3.scale.linear().domain([datum.x, datum.x + datum.dx]).range([0, cl]);
+
+      svg.selectAll('g, rect, text').transition()
+        .duration(DEFAULT_TRANSITION_DURATION)
+        .attr('x', function(d) {
+          return rangeX(d.x / cl);
+        })
+        .attr('width', function(d){
+          return (detail.columns.length - 1) * cl;
+        });
+
     }
   }
 
