@@ -40,6 +40,10 @@
       position: relative;
     }
 
+    .overflow-hidden {
+      overflow: hidden;
+    }
+
     #help,
     .help-icon {
       position: fixed;
@@ -117,6 +121,9 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
 /*
  * System Hierarchy Partition Chart
  */
+
+var SYSTEM_CHART = true;
+
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
   var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
@@ -145,7 +152,8 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
 
   window.addEventListener('load', function() {
     var container = document.getElementById('container');
-    if (container.classList.contains('central-with-sidebar')) {
+
+    if (typeof(DEPENDENCIES_CHART) !== 'undefined') {
       cw = window.innerWidth * 0.885;
     } else {
       cw = window.innerWidth * 0.984;
@@ -155,7 +163,7 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
     rangeY = d3.scale.linear().range([0, ch]);
 
     // create an svg element and append to the container div
-    svg = d3.select('#system-hierarchy-chart').append('svg:svg')
+    svg = d3.select('#system-hierarchy-chart').append('svg')
       .attr('width', cw)
       .attr('height', ch);
 
@@ -174,7 +182,7 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
     // create svg group elements that correspond to the data nodes
     // and append them to the svg.
     var groups = svg.selectAll('g').data(partition(d3.entries(data.systemHierarchy)[0]))
-      .enter().append('svg:g')
+      .enter().append('g')
       // set the functions that handle resizing and repositioning partitions
       // for zooming, expading, and collapsing
       .attr('x', deltaX)
@@ -209,6 +217,14 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
       return out;
     }(data.systemHierarchy, 'root', {}));
 
+    if (typeof(DEPENDENCIES_CHART) !== 'undefined') {
+      var leaf = getDataLeaves(rootDatum)[0];
+      ch = leaf.dx * cw * (leaf.depth + 1);
+      svg.attr('height', ch);
+      rangeY = d3.scale.linear().range([0, ch]);
+      transitionAll(10);
+    }
+
     // assign leaves their attribute values from json data
     getDataLeaves(rootDatum).forEach(function(d, i, arr) {
       for (var key in jsonLowestPlainObjs[d.key]) {
@@ -217,7 +233,7 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
     });
 
     // create and append a visible rect for each svg group
-    var rects = groups.append('svg:rect')
+    var rects = groups.append('rect')
       .attr('x', deltaX)
       .attr('y', deltaY)
       .attr('width', deltaWidth)
@@ -253,10 +269,10 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
       });
 
     // create and append tooltip popup elements
-    var titles = groups.append('svg:title');
+    var titles = groups.append('title');
 
     // create and append a svg text element for each group
-    var texts = groups.append('svg:text')
+    var texts = groups.append('text')
       .attr('font-size', deltaText)
       // gets the text of a text elementproperty of a data node
       // returns the key
@@ -316,17 +332,55 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
 
   // resize svg on window resize
   window.addEventListener('resize', function() {
-    ww = window.innerWidth;
-    wh = window.innerHeight;
-    cw = ww * CHART_SIZE_RATIO;
-    ch = wh * CHART_SIZE_RATIO;
+    var container = document.getElementById('container');
+    if (container.classList.contains('central-with-sidebar')) {
+      cw = window.innerWidth * 0.885;
+    } else {
+      cw = window.innerWidth * 0.984;
+    }
+    ch = window.innerHeight;
     rangeX.range([0, cw]);
     rangeY.range([0, ch]);
     transitionAll(100);
   });
 
   window.addEventListener('zoom', function(event) {
-    zoom(event.detail.datum);
+    var detail = event.detail;
+
+    if (detail.rootId === 'system-hierarchy-chart') {
+      zoom(detail.datum);
+
+    } else if (detail.secondary === true) {
+      var datum = getDataLeaves(rootDatum)[detail.columns[0]];
+
+      while (datum.parent.parent != null && (focusedDatum == null || focusedDatum !== datum.parent)) {
+        datum = datum.parent;
+      }
+      focusedDatum = datum;
+      zoom(datum);
+
+      var leaves = getDataLeaves(rootDatum);
+      var datumLeaves = getDataLeaves(datum);
+      var startIndex = leaves.indexOf(datumLeaves[0]);
+      var lastIndex = startIndex + datumLeaves.length;
+      var columns = [startIndex, lastIndex];
+      // Trigger global event
+      var newEvent = new CustomEvent('zoom', {
+        detail: {
+          rootId: svg[0][0].parentNode.getAttribute('id'),
+          root: rootDatum,
+          datum: datum,
+          element: datum.element,
+          rows: [datum.depth, datum.depth + 1],
+          columns: columns,
+          button: event.button,
+          secondary: true
+        },
+        bubbles: true
+      });
+
+      datum.element.dispatchEvent(newEvent);
+    }
   });
 
   window.addEventListener('collapse', function(event) {
@@ -715,8 +769,9 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
 
   // calculates a change in font size
   function deltaText(d) {
-    var wh = window.innerHeight;
-    return 32 * wh / (wh + rangeY(d.y));
+    var newSize = 32 / (d.depth + 1);
+    newSize = (newSize < 18) ? 18 : newSize;
+    return newSize;
   }
 
   // hides a text element that is larger than the rect it lives on
@@ -901,6 +956,9 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
 /*
  * Dependency Matrix Chart
  */
+
+var DEPENDENCIES_CHART = true;
+
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
   var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
@@ -937,6 +995,9 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
     labelSvgContainer = document.createElement('div');
 
     container.classList.add('central-with-sidebar');
+    if (typeof(SYSTEM_CHART) !== 'undefined') {
+      document.body.classList.add('overflow-hidden');
+    }
     sidebar.classList.add('sidebar-left');
     labelSvgContainer.classList.add('label-svg-container');
     labelSvgContainer.setAttribute('id', 'label-svg-container');
@@ -960,9 +1021,9 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
 
     var sysSvg = svgContainer.previousElementSibling.children[0];
     if (sysSvg != null && sysSvg.nodeName === 'svg') {
-      var padding = nodeLen + 'px';
+      var padding = 3 + 'px';
       svgContainer.style.paddingTop = padding;
-      labelSvgContainer.style.top = parseInt(sysSvg.getAttribute('height')) + nodeLen + 'px';
+      labelSvgContainer.style.top = parseInt(sysSvg.getAttribute('height')) + 3 + 'px';
     }
 
     var labels = data.dependencies.labels.map(function(ele, i, arr) {
@@ -988,10 +1049,7 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
         d.element = this;
       });
 
-    labelGroups.append('text')
-      .text(function(d) {
-        return d.name;
-      })
+    var texts = labelGroups.append('text')
       .attr('font-size', 13)
       .attr('fill', 'rgb(170, 170, 170)')
       .attr('text-anchor', 'end')
@@ -1001,7 +1059,26 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
       })
       .attr('y', function(d) {
         return d.y + nodeLen / 2 + 5;
+      })
+      .text(function(d) {
+        return d.name;
       });
+
+    texts.text(function(d) {
+      var name = d.name;
+      var sw = labelSvg[0][0].getAttribute('width');
+      var tw = this.getBBox().width;
+
+      if (sw < tw) {
+        this.textContent = name = name.replace(/.{3}/, '...');
+      }
+      while (sw < tw) {
+        tw = this.getBBox().width;
+        this.textContent = name = name.replace(/\.{3}./, '...');
+      }
+
+      return name;
+    });
 
     var flat = data.dependencies.matrix.reduce(function(acc, ele) {
       return acc.concat(ele.map(function(ele, i, arr) {
@@ -1100,7 +1177,7 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
   });
 
   window.addEventListener('zoom', function(event) {
-    zoom(event.detail.datum);
+    zoom(event);
   });
 
   window.addEventListener('collapse', function(event) {
@@ -1110,6 +1187,35 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
   window.addEventListener('expand', function(event) {
     expand(event);
   });
+
+  if (typeof(SYSTEM_CHART) !== 'undefined') {
+    window.addEventListener('wheel', function(event) {
+      event.preventDefault();
+      var up = event.deltaY > 0;
+      var r = rootDatum;
+
+      if ((!up && r[0].y <= -nodeLen) || (up && r[r.length - 1].y > nodeLen)) {
+        svg.selectAll('g, rect').transition(DEFAULT_TRANSITION_DURATION)
+          .attr('y', function(d) {
+            if (d.j === 0) {
+              d.y += (up) ? -nodeLen / 2 : nodeLen / 2;
+            }
+
+            return d.y;
+          });
+
+        labelSvg.selectAll('text').transition(DEFAULT_TRANSITION_DURATION)
+          .attr('y', function(d) {
+            if (up) {
+              d.y -= nodeLen;
+            } else {
+              d.y += nodeLen;//
+            }
+            return d.y + nodeLen / 2 + 5;
+          });
+      }
+    });
+  }
 
   function resolveEventTargetColumns(event) {
     var targetCols = [];
@@ -1131,12 +1237,11 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
     var eventType = '';
 
     // zoom
-    //if (button === 0 && !rootDatum.transpose[datum.j].isCollapsed) {
-    //  eventType = 'zoom';
+    if (button === 0 && !rootDatum.transpose[datum.j].isCollapsed) {
+      eventType = 'zoom';
 
-    // expand/collapse
-    //} else if (button > 0) {
-    if (button > 0) { //
+      // expand/collapse
+    } else if (button > 0) {
       if (rootDatum.transpose[datum.j].isCollapsed) {
         eventType = 'expand';
       } else {
@@ -1163,7 +1268,43 @@ return i.size=function(n){return arguments.length?(l=n,i):l},i.padding=function(
     d3.event.preventDefault();
   }
 
-  function zoom(event) {}
+  function zoom(event) {
+    var detail = event.detail;
+
+    if (detail.rootId === 'dependency-matrix-chart' && typeof(SYSTEM_CHART) !== 'undefined' && detail.secondary === false) {
+      var datum = detail.datum;
+      // Trigger global event
+      var event = new CustomEvent('zoom', {
+        detail: {
+          rootId: svg[0][0].parentNode.getAttribute('id'),
+          root: rootDatum,
+          datum: datum,
+          element: datum.element,
+          rows: [datum.i, datum.i + 1],
+          columns: [datum.j, datum.j + 1],
+          button: event.button,
+          secondary: true
+        },
+        bubbles: true
+      });
+
+      datum.element.dispatchEvent(event);
+
+    } else if (detail.rootId === 'system-hierarchy-chart') {
+      var datum = detail.datum;
+      var rangeX = d3.scale.linear().domain([datum.x, datum.x + datum.dx]).range([0, cl]);
+
+      svg.selectAll('g, rect, text').transition()
+        .duration(DEFAULT_TRANSITION_DURATION)
+        .attr('x', function(d) {
+          return rangeX(d.x / cl);
+        })
+        .attr('width', function(d) {
+          return (detail.columns.length - 1) * cl;
+        });
+
+    }
+  }
 
   function collapse(event) {
     var detail = event.detail;
