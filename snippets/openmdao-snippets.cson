@@ -1,50 +1,43 @@
-'.source.python':
-  'New Component':
-    'prefix': 'comp'
-    'body': 'class ${1:ComponentName}(Component):\n\t"""${2:$1 is a Component that calculates ${3:...}}"""\n\n\t# inputs\n\t${4:x} = ${5:Float}(${6:0.0}, iotype=\'in\', desc=\'${7:description}\')\n\n\t# outputs\n\t${8:y} = ${9:Float}(${10:0.0}, iotype=\'out\', desc=\'${11:description}\')\n\n\tdef execute(self):\n\t\t${12:self.y \= self.x}\n\n\t#def list_deriv_vars(self):\n\t\t#${13:pass}\n\n\t#def provideJ(self):\n\t\t#${14:pass}\n\n$0'
-  'New Assembly':
-    'prefix': 'assem'
-    'body': 'class ${1:AssemblyName}(Assembly):\n\t"""${2:$1 is an Assembly that ${3:...}}"""\n\n\tdef configure(self):\n\t\t${4:self.add(\'${5:comp}\', ${6:constructor}())}\n\n$0'
-  'New Component Class':
-    'prefix': '(Component):'
-    'body': '(Component):\n\t"""${2:A Component that calculates ${3:...}}"""\n\n\t# inputs\n\t${4:x} = ${5:Float}(${6:0.0}, iotype=\'in\', desc=\'${7:description}\')\n\n\t# outputs\n\t${8:y} = ${9:Float}(${10:0.0}, iotype=\'out\', desc=\'${11:description}\')\n\n\tdef execute(self):\n\t\t${12:self.y \= self.x}\n\n\t#def list_deriv_vars(self):\n\t\t#${13:pass}\n\n\t#def provideJ(self):\n\t\t#${14:pass}\n\n$0'
-  'New Assembly Class':
-    'prefix': '(Assembly):'
-    'body': '(Assembly):\n\t"""${2:An Assembly that ${3:...}}"""\n\n\tdef configure(self):\n\t\t${4:self.add(\'${5:comp}\', ${6:constructor}())}\n\n$0'
-
-  'New Array Variable':
-    'prefix': '= Array'
-    'body': '= Array(${1:array([${2:0.0,0.0}])}, dtype=${3:float}, iotype=\'${4:in}\', desc=\'${5:description}\')\n$0'
-  'New Boolean Variable':
-    'prefix': '= Bool'
-    'body': '= Bool(${1:False}, iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
-  'New Complex Variable':
-    'prefix': '= Complex'
-    'body': '= Complex(${1:0.0}+${2:0}j, iotype=\'${3:in}\', desc=\'${4:description}\')\n$0'
-  'New Dict Variable':
-    'prefix': '= Dict'
-    'body': '= Dict(key_trait=${1:Int}, value_trait=${2:Float}, iotype=\'${3:in}\', desc=\'${4:description}\')\n$0'
-  'New Enum Variable':
-    'prefix': '= Enum'
-    'body': '= Enum(${1:1}, (${2:1, 2, 3}), iotype=\'${3:in}\', desc=\'${4:description}\')\n$0'
-  'New Float Variable':
-    'prefix': '= Float'
-    'body': '= Float(${1:0.0}, iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
-  'New File Variable':
-    'prefix': '= File'
-    'body': '= File(\'${1:filename}\', iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
-  'New Integer Variable':
-    'prefix': '= Int'
-    'body': '= Int(${1:0}, iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
-  'New List Variable':
-    'prefix': '= List'
-    'body': '= List(${1:[]}, iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
-  'New Slot Variable':
-    'prefix': '= Slot'
-    'body': '= Slot(${1:Component}, desc=\'${2:description}\', required=${3:True})\n$0'
-  'New String Variable':
-    'prefix': '= Str'
-    'body': '= Str(\'${1:}\', iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
-  'New VarTree Variable':
-    'prefix': '= VarTree'
-    'body': '= VarTree(${1:VariableTree}(), iotype=\'${2:in}\', desc=\'${3:description}\')\n$0'
+".source.python":
+  "promoted":
+    prefix: "pro"
+    body: "promoted(${1:self}, ${2:name})"
+  "subsystems":
+    prefix: "sub"
+    body: "subsystems(${1:self}, ${2:local}, ${3:recurse})"
+  "clear_dparams":
+    prefix: "cle"
+    body: "clear_dparams(${1:self})"
+  "preconditioner":
+    prefix: "pre"
+    body: "preconditioner(${1:self})"
+  "jacobian":
+    prefix: "jac"
+    body: "jacobian(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "solve_nonlinear":
+    prefix: "sol"
+    body: "solve_nonlinear(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "apply_nonlinear":
+    prefix: "app"
+    body: "apply_nonlinear(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "solve_linear":
+    prefix: "sol"
+    body: "solve_linear(${1:self}, ${2:params}, ${3:unknowns}, ${4:vois}, ${5:mode})"
+  "apply_linear":
+    prefix: "app"
+    body: "apply_linear(${1:self}, ${2:params}, ${3:unknowns}, ${4:dparams}, ${5:dunknowns}, ${6:dresids}, ${7:mode})"
+  "is_active":
+    prefix: "is_"
+    body: "is_active(${1:self})"
+  "get_req_procs":
+    prefix: "get"
+    body: "get_req_procs(${1:self})"
+  "fd_jacobian":
+    prefix: "fd_"
+    body: "fd_jacobian(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids}, ${5:step_size}, ${6:form}, ${7:step_type}, ${8:total_derivs})"
+  "get_combined_J":
+    prefix: "get"
+    body: "get_combined_J(${1:self}, ${2:J})"
+  "get_relname_map":
+    prefix: "get"
+    body: "get_relname_map(${1:unknowns}, ${2:unknowns_dict}, ${3:child_name})"
