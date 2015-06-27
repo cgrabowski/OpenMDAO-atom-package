@@ -384,7 +384,21 @@ var SYSTEM_CHART = true;
   });
 
   window.addEventListener('zoom', function(event) {
-    zoom(event.detail.datum);
+    var detail = event.detail;
+
+    if (detail.rootId === 'system-hierarchy-chart') {
+      zoom(detail.datum);
+
+    } else if (detail.secondary === true) {
+      var datum = getDataLeaves(rootDatum)[detail.columns[0]];
+
+      while (datum.parent.parent != null && (focusedDatum == null || focusedDatum !== datum.parent)) {
+        console.log(focusedDatum === datum);
+        datum = datum.parent;
+      }
+      focusedDatum = datum;
+      zoom(datum);
+    }
   });
 
   window.addEventListener('collapse', function(event) {

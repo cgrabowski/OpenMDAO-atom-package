@@ -384,7 +384,21 @@ var SYSTEM_CHART = true;
   });
 
   window.addEventListener('zoom', function(event) {
-    zoom(event.detail.datum);
+    var detail = event.detail;
+
+    if (detail.rootId === 'system-hierarchy-chart') {
+      zoom(detail.datum);
+
+    } else if (detail.secondary === true) {
+      var datum = getDataLeaves(rootDatum)[detail.columns[0]];
+
+      while (datum.parent.parent != null && (focusedDatum == null || focusedDatum !== datum.parent)) {
+        console.log(focusedDatum === datum);
+        datum = datum.parent;
+      }
+      focusedDatum = datum;
+      zoom(datum);
+    }
   });
 
   window.addEventListener('collapse', function(event) {
@@ -961,7 +975,7 @@ var SYSTEM_CHART = true;
  * Dependency Matrix Chart
  */
 
- var DEPENDENCIES_CHART = true;
+var DEPENDENCIES_CHART = true;
 
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
@@ -969,6 +983,8 @@ var SYSTEM_CHART = true;
   var CHART_SIZE_RATIO = 0.885;
 
   var cl = window.innerWidth * CHART_SIZE_RATIO;
+  var rangeX;
+  var rangeY;
   var container;
   var svgContainer;
   var sidebar;
@@ -1009,6 +1025,8 @@ var SYSTEM_CHART = true;
 
   window.addEventListener('load', function() {
     nodeLen = cl / data.dependencies.matrix.length;
+    rangeX = d3.scale.linear().range([0, cl]);
+    rangeY = d3.scale.linear().range([0, cl]);
 
     svg = d3.select('#dependency-matrix-chart').append('svg')
       .attr('width', cl)
@@ -1073,7 +1091,7 @@ var SYSTEM_CHART = true;
       if (sw < tw) {
         this.textContent = name = name.replace(/.{3}/, '...');
       }
-      while(sw < tw) {
+      while (sw < tw) {
         tw = this.getBBox().width;
         this.textContent = name = name.replace(/\.{3}./, '...');
       }
@@ -1178,7 +1196,7 @@ var SYSTEM_CHART = true;
   });
 
   window.addEventListener('zoom', function(event) {
-    zoom(event.detail.datum);
+    zoom(event);
   });
 
   window.addEventListener('collapse', function(event) {
@@ -1209,12 +1227,11 @@ var SYSTEM_CHART = true;
     var eventType = '';
 
     // zoom
-    //if (button === 0 && !rootDatum.transpose[datum.j].isCollapsed) {
-    //  eventType = 'zoom';
+    if (button === 0 && !rootDatum.transpose[datum.j].isCollapsed) {
+      eventType = 'zoom';
 
-    // expand/collapse
-    //} else if (button > 0) {
-    if (button > 0) { //
+      // expand/collapse
+    } else if (button > 0) {
       if (rootDatum.transpose[datum.j].isCollapsed) {
         eventType = 'expand';
       } else {
@@ -1241,7 +1258,27 @@ var SYSTEM_CHART = true;
     d3.event.preventDefault();
   }
 
-  function zoom(event) {}
+  function zoom(event) {
+    var detail = event.detail;
+    if (detail.rootId === 'dependency-matrix-chart' && SYSTEM_CHART != null && detail.secondary === false) {
+      var datum = detail.datum;
+      // Trigger global event
+      var event = new CustomEvent('zoom', {
+        detail: {
+          rootId: svg[0][0].parentNode.getAttribute('id'),
+          root: rootDatum,
+          datum: datum,
+          element: datum.element,
+          rows: [datum.i, datum.i + 1],
+          columns: [datum.j, datum.j + 1],
+          button: event.button,
+          secondary: true
+        },
+        bubbles: true
+      });
+      datum.element.dispatchEvent(event);
+    }
+  }
 
   function collapse(event) {
     var detail = event.detail;
