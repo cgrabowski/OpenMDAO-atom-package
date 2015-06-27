@@ -1,43 +1,568 @@
 ".source.python":
+  "pyOptSparseDriver":
+    prefix: "pyOptSparseDriver"
+    body: "pyOptSparseDriver(${1:self})"
+  "run":
+    prefix: "run"
+    body: "run(${1:self}, ${2:problem})"
+  "objfunc":
+    prefix: "objfunc"
+    body: "objfunc(${1:self}, ${2:dv_dict})"
+  "gradfunc":
+    prefix: "gradfunc"
+    body: "gradfunc(${1:self}, ${2:dv_dict}, ${3:func_dict})"
+  "Relevance":
+    prefix: "Relevance"
+    body: "Relevance(${1:self}, ${2:params_dict}, ${3:unknowns_dict}, ${4:connections}, ${5:inputs}, ${6:outputs}, ${7:mode})"
+  "is_relevant":
+    prefix: "is_relevant"
+    body: "is_relevant(${1:self}, ${2:var_of_interest}, ${3:varname})"
+  "vars_of_interest":
+    prefix: "vars_of_interest"
+    body: "vars_of_interest(${1:self}, ${2:mode})"
+  "create_src_vecwrapper":
+    prefix: "create_src_vecwrapper"
+    body: "create_src_vecwrapper(${1:pathname}, ${2:comm})"
+  "create_tgt_vecwrapper":
+    prefix: "create_tgt_vecwrapper"
+    body: "create_tgt_vecwrapper(${1:pathname}, ${2:comm})"
+  "create_data_xfer":
+    prefix: "create_data_xfer"
+    body: "create_data_xfer(${1:src_vec}, ${2:tgt_vec}, ${3:src_idxs}, ${4:tgt_idxs}, ${5:vec_conns}, ${6:byobj_conns})"
+  "setup":
+    prefix: "setup"
+    body: "setup(${1:self}, ${2:unknowns_dict}, ${3:relevant_vars}, ${4:store_byobjs})"
+  "norm":
+    prefix: "norm"
+    body: "norm(${1:self})"
+  "get_view":
+    prefix: "get_view"
+    body: "get_view(${1:self}, ${2:sys_pathname}, ${3:comm}, ${4:varmap}, ${5:relevance}, ${6:var_of_interest})"
+  "setup":
+    prefix: "setup"
+    body: "setup(${1:self}, ${2:parent_params_vec}, ${3:params_dict}, ${4:srcvec}, ${5:my_params}, ${6:connections}, ${7:relevant_vars}, ${8:store_byobjs})"
+  "PetscDataXfer":
+    prefix: "PetscDataXfer"
+    body: "PetscDataXfer(${1:self}, ${2:src_vec}, ${3:tgt_vec}, ${4:src_idxs}, ${5:tgt_idxs}, ${6:vec_conns}, ${7:byobj_conns})"
+  "transfer":
+    prefix: "transfer"
+    body: "transfer(${1:self}, ${2:srcvec}, ${3:tgtvec}, ${4:mode}, ${5:deriv})"
+  "use_proc_files":
+    prefix: "use_proc_files"
+    body: "use_proc_files()"
+  "under_mpirun":
+    prefix: "under_mpirun"
+    body: "under_mpirun()"
+  "FakeComm":
+    prefix: "FakeComm"
+    body: "FakeComm(${1:self})"
+  "evenly_distrib_idxs":
+    prefix: "evenly_distrib_idxs"
+    body: "evenly_distrib_idxs(${1:num_divisions}, ${2:arr_size})"
+  "MultiProcFailCheck":
+    prefix: "MultiProcFailCheck"
+    body: "MultiProcFailCheck()"
+  "DataXfer":
+    prefix: "DataXfer"
+    body: "DataXfer(${1:self}, ${2:src_idxs}, ${3:tgt_idxs}, ${4:vec_conns}, ${5:byobj_conns})"
+  "transfer":
+    prefix: "transfer"
+    body: "transfer(${1:self}, ${2:srcvec}, ${3:tgtvec}, ${4:mode}, ${5:deriv})"
+  "OptionsDictionary":
+    prefix: "OptionsDictionary"
+    body: "OptionsDictionary(${1:self}, ${2:read_only})"
+  "add_option":
+    prefix: "add_option"
+    body: "add_option(${1:self}, ${2:name}, ${3:value}, ${4:low}, ${5:high}, ${6:values}, ${7:desc})"
+  "items":
+    prefix: "items"
+    body: "items(${1:self})"
+  "check":
+    prefix: "check"
+    body: "check(${1:self}, ${2:name}, ${3:value})"
+  "Component":
+    prefix: "Component"
+    body: "Component(${1:self})"
+  "add_param":
+    prefix: "add_param"
+    body: "add_param(${1:self}, ${2:name}, ${3:val})"
+  "add_output":
+    prefix: "add_output"
+    body: "add_output(${1:self}, ${2:name}, ${3:val})"
+  "add_state":
+    prefix: "add_state"
+    body: "add_state(${1:self}, ${2:name}, ${3:val})"
+  "setup_param_indices":
+    prefix: "setup_param_indices"
+    body: "setup_param_indices(${1:self})"
+  "apply_nonlinear":
+    prefix: "apply_nonlinear"
+    body: "apply_nonlinear(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "jacobian":
+    prefix: "jacobian"
+    body: "jacobian(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "apply_linear":
+    prefix: "apply_linear"
+    body: "apply_linear(${1:self}, ${2:params}, ${3:unknowns}, ${4:dparams}, ${5:dunknowns}, ${6:dresids}, ${7:mode})"
+  "solve_linear":
+    prefix: "solve_linear"
+    body: "solve_linear(${1:self}, ${2:dumat}, ${3:drmat}, ${4:vois}, ${5:mode})"
+  "dump":
+    prefix: "dump"
+    body: "dump(${1:self}, ${2:nest}, ${3:out_stream}, ${4:verbose}, ${5:dvecs})"
+  "create_src_vecwrapper":
+    prefix: "create_src_vecwrapper"
+    body: "create_src_vecwrapper(${1:pathname}, ${2:comm})"
+  "create_tgt_vecwrapper":
+    prefix: "create_tgt_vecwrapper"
+    body: "create_tgt_vecwrapper(${1:pathname}, ${2:comm})"
+  "create_data_xfer":
+    prefix: "create_data_xfer"
+    body: "create_data_xfer(${1:src_vec}, ${2:tgt_vec}, ${3:src_idxs}, ${4:tgt_idxs}, ${5:vec_conns}, ${6:byobj_conns})"
+  "apply_nonlinear":
+    prefix: "apply_nonlinear"
+    body: "apply_nonlinear(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "children_solve_nonlinear":
+    prefix: "children_solve_nonlinear"
+    body: "children_solve_nonlinear(${1:self})"
+  "get_req_procs":
+    prefix: "get_req_procs"
+    body: "get_req_procs(${1:self})"
+  "Driver":
+    prefix: "Driver"
+    body: "Driver(${1:self})"
+  "add_recorder":
+    prefix: "add_recorder"
+    body: "add_recorder(${1:self}, ${2:recorder})"
+  "add_param":
+    prefix: "add_param"
+    body: "add_param(${1:self}, ${2:name}, ${3:low}, ${4:high})"
+  "get_params":
+    prefix: "get_params"
+    body: "get_params(${1:self})"
+  "get_param_metadata":
+    prefix: "get_param_metadata"
+    body: "get_param_metadata(${1:self})"
+  "set_param":
+    prefix: "set_param"
+    body: "set_param(${1:self}, ${2:name}, ${3:value})"
+  "add_objective":
+    prefix: "add_objective"
+    body: "add_objective(${1:self}, ${2:name})"
+  "get_objectives":
+    prefix: "get_objectives"
+    body: "get_objectives(${1:self}, ${2:return_type})"
+  "add_constraint":
+    prefix: "add_constraint"
+    body: "add_constraint(${1:self}, ${2:name}, ${3:ctype}, ${4:linear}, ${5:jacs})"
+  "get_constraints":
+    prefix: "get_constraints"
+    body: "get_constraints(${1:self}, ${2:ctype}, ${3:lintype}, ${4:return_type})"
+  "get_constraint_metadata":
+    prefix: "get_constraint_metadata"
+    body: "get_constraint_metadata(${1:self})"
+  "run":
+    prefix: "run"
+    body: "run(${1:self}, ${2:problem})"
+  "_flat_dict":
+    prefix: "_flat_dict"
+    body: "_flat_dict(${1:self}, ${2:vardict})"
+  "_ByObjWrapper":
+    prefix: "_ByObjWrapper"
+    body: "_ByObjWrapper(${1:self}, ${2:val})"
+  "VecWrapper":
+    prefix: "VecWrapper"
+    body: "VecWrapper(${1:self}, ${2:pathname}, ${3:comm})"
+  "keys":
+    prefix: "keys"
+    body: "keys(${1:self})"
+  "items":
+    prefix: "items"
+    body: "items(${1:self})"
+  "values":
+    prefix: "values"
+    body: "values(${1:self})"
+  "metadata":
+    prefix: "metadata"
+    body: "metadata(${1:self}, ${2:name})"
+  "get_local_idxs":
+    prefix: "get_local_idxs"
+    body: "get_local_idxs(${1:self}, ${2:name})"
+  "norm":
+    prefix: "norm"
+    body: "norm(${1:self})"
+  "get_view":
+    prefix: "get_view"
+    body: "get_view(${1:self}, ${2:sys_pathname}, ${3:comm}, ${4:varmap}, ${5:relevance}, ${6:var_of_interest})"
+  "make_idx_array":
+    prefix: "make_idx_array"
+    body: "make_idx_array(${1:self}, ${2:start}, ${3:end})"
+  "to_idx_array":
+    prefix: "to_idx_array"
+    body: "to_idx_array(${1:self}, ${2:indices})"
+  "merge_idxs":
+    prefix: "merge_idxs"
+    body: "merge_idxs(${1:self}, ${2:src_idxs}, ${3:tgt_idxs})"
+  "get_relative_varname":
+    prefix: "get_relative_varname"
+    body: "get_relative_varname(${1:self}, ${2:abs_name})"
+  "get_states":
+    prefix: "get_states"
+    body: "get_states(${1:self})"
+  "get_vecvars":
+    prefix: "get_vecvars"
+    body: "get_vecvars(${1:self})"
+  "get_byobjs":
+    prefix: "get_byobjs"
+    body: "get_byobjs(${1:self})"
+  "dump":
+    prefix: "dump"
+    body: "dump(${1:self}, ${2:out_stream})"
+  "setup":
+    prefix: "setup"
+    body: "setup(${1:self}, ${2:unknowns_dict}, ${3:relevant_vars}, ${4:store_byobjs})"
+  "setup":
+    prefix: "setup"
+    body: "setup(${1:self}, ${2:parent_params_vec}, ${3:params_dict}, ${4:srcvec}, ${5:my_params}, ${6:connections}, ${7:relevant_vars}, ${8:store_byobjs})"
+  "PlaceholderVecWrapper":
+    prefix: "PlaceholderVecWrapper"
+    body: "PlaceholderVecWrapper(${1:self}, ${2:name})"
+  "idx_merge":
+    prefix: "idx_merge"
+    body: "idx_merge(${1:idxs})"
+  "Problem":
+    prefix: "Problem"
+    body: "Problem(${1:self}, ${2:root}, ${3:driver}, ${4:impl})"
+  "setup":
+    prefix: "setup"
+    body: "setup(${1:self})"
+  "run":
+    prefix: "run"
+    body: "run(${1:self})"
+  "calc_gradient":
+    prefix: "calc_gradient"
+    body: "calc_gradient(${1:self}, ${2:param_list}, ${3:unknown_list}, ${4:mode}, ${5:return_format})"
+  "check_partial_derivatives":
+    prefix: "check_partial_derivatives"
+    body: "check_partial_derivatives(${1:self}, ${2:out_stream})"
+  "check_total_derivatives":
+    prefix: "check_total_derivatives"
+    body: "check_total_derivatives(${1:self}, ${2:out_stream})"
+  "assign_parameters":
+    prefix: "assign_parameters"
+    body: "assign_parameters(${1:connections})"
+  "jac_to_flat_dict":
+    prefix: "jac_to_flat_dict"
+    body: "jac_to_flat_dict(${1:jac})"
+  "System":
+    prefix: "System"
+    body: "System(${1:self})"
   "promoted":
-    prefix: "pro"
+    prefix: "promoted"
     body: "promoted(${1:self}, ${2:name})"
   "subsystems":
-    prefix: "sub"
+    prefix: "subsystems"
     body: "subsystems(${1:self}, ${2:local}, ${3:recurse})"
   "clear_dparams":
-    prefix: "cle"
+    prefix: "clear_dparams"
     body: "clear_dparams(${1:self})"
   "preconditioner":
-    prefix: "pre"
+    prefix: "preconditioner"
     body: "preconditioner(${1:self})"
   "jacobian":
-    prefix: "jac"
+    prefix: "jacobian"
     body: "jacobian(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
   "solve_nonlinear":
-    prefix: "sol"
+    prefix: "solve_nonlinear"
     body: "solve_nonlinear(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
   "apply_nonlinear":
-    prefix: "app"
+    prefix: "apply_nonlinear"
     body: "apply_nonlinear(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
   "solve_linear":
-    prefix: "sol"
+    prefix: "solve_linear"
     body: "solve_linear(${1:self}, ${2:params}, ${3:unknowns}, ${4:vois}, ${5:mode})"
   "apply_linear":
-    prefix: "app"
+    prefix: "apply_linear"
     body: "apply_linear(${1:self}, ${2:params}, ${3:unknowns}, ${4:dparams}, ${5:dunknowns}, ${6:dresids}, ${7:mode})"
   "is_active":
-    prefix: "is_"
+    prefix: "is_active"
     body: "is_active(${1:self})"
   "get_req_procs":
-    prefix: "get"
+    prefix: "get_req_procs"
     body: "get_req_procs(${1:self})"
   "fd_jacobian":
-    prefix: "fd_"
+    prefix: "fd_jacobian"
     body: "fd_jacobian(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids}, ${5:step_size}, ${6:form}, ${7:step_type}, ${8:total_derivs})"
   "get_combined_J":
-    prefix: "get"
+    prefix: "get_combined_J"
     body: "get_combined_J(${1:self}, ${2:J})"
   "get_relname_map":
-    prefix: "get"
+    prefix: "get_relname_map"
     body: "get_relname_map(${1:unknowns}, ${2:unknowns_dict}, ${3:child_name})"
+  "type_mismatch_error":
+    prefix: "type_mismatch_error"
+    body: "type_mismatch_error(${1:cls}, ${2:src}, ${3:target})"
+  "shape_mismatch_error":
+    prefix: "shape_mismatch_error"
+    body: "shape_mismatch_error(${1:cls}, ${2:src}, ${3:target})"
+  "size_mismatch_error":
+    prefix: "size_mismatch_error"
+    body: "size_mismatch_error(${1:cls}, ${2:src}, ${3:target})"
+  "indices_too_large":
+    prefix: "indices_too_large"
+    body: "indices_too_large(${1:cls}, ${2:src}, ${3:target})"
+  "val_and_shape_mismatch_error":
+    prefix: "val_and_shape_mismatch_error"
+    body: "val_and_shape_mismatch_error(${1:cls}, ${2:src}, ${3:target})"
+  "nonexistent_src_error":
+    prefix: "nonexistent_src_error"
+    body: "nonexistent_src_error(${1:cls}, ${2:src}, ${3:target})"
+  "nonexistent_target_error":
+    prefix: "nonexistent_target_error"
+    body: "nonexistent_target_error(${1:cls}, ${2:src}, ${3:target})"
+  "invalid_target_error":
+    prefix: "invalid_target_error"
+    body: "invalid_target_error(${1:cls}, ${2:src}, ${3:target})"
+  "invalid_src_error":
+    prefix: "invalid_src_error"
+    body: "invalid_src_error(${1:cls}, ${2:src}, ${3:target})"
+  "check_types_match":
+    prefix: "check_types_match"
+    body: "check_types_match(${1:src}, ${2:target})"
+  "check_connections":
+    prefix: "check_connections"
+    body: "check_connections(${1:connections}, ${2:params}, ${3:unknowns})"
+  "check_shapes_match":
+    prefix: "check_shapes_match"
+    body: "check_shapes_match(${1:source}, ${2:target})"
+  "Group":
+    prefix: "Group"
+    body: "Group(${1:self})"
+  "add":
+    prefix: "add"
+    body: "add(${1:self}, ${2:name}, ${3:system}, ${4:promotes})"
+  "connect":
+    prefix: "connect"
+    body: "connect(${1:self}, ${2:source}, ${3:targets}, ${4:src_indices})"
+  "subsystems":
+    prefix: "subsystems"
+    body: "subsystems(${1:self}, ${2:local}, ${3:recurse}, ${4:typ})"
+  "subgroups":
+    prefix: "subgroups"
+    body: "subgroups(${1:self}, ${2:local}, ${3:recurse})"
+  "components":
+    prefix: "components"
+    body: "components(${1:self}, ${2:local}, ${3:recurse})"
+  "solve_nonlinear":
+    prefix: "solve_nonlinear"
+    body: "solve_nonlinear(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "children_solve_nonlinear":
+    prefix: "children_solve_nonlinear"
+    body: "children_solve_nonlinear(${1:self})"
+  "apply_nonlinear":
+    prefix: "apply_nonlinear"
+    body: "apply_nonlinear(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "jacobian":
+    prefix: "jacobian"
+    body: "jacobian(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "apply_linear":
+    prefix: "apply_linear"
+    body: "apply_linear(${1:self}, ${2:mode}, ${3:ls_inputs}, ${4:vois})"
+  "solve_linear":
+    prefix: "solve_linear"
+    body: "solve_linear(${1:self}, ${2:dumat}, ${3:drmat}, ${4:vois}, ${5:mode})"
+  "dump":
+    prefix: "dump"
+    body: "dump(${1:self}, ${2:nest}, ${3:out_stream}, ${4:verbose}, ${5:dvecs})"
+  "get_req_procs":
+    prefix: "get_req_procs"
+    body: "get_req_procs(${1:self})"
+  "get_absvarpathnames":
+    prefix: "get_absvarpathnames"
+    body: "get_absvarpathnames(${1:var_name}, ${2:var_dict}, ${3:dict_name})"
+  "LinearGaussSeidel":
+    prefix: "LinearGaussSeidel"
+    body: "LinearGaussSeidel(${1:self})"
+  "solve":
+    prefix: "solve"
+    body: "solve(${1:self}, ${2:rhs_mat}, ${3:system}, ${4:mode})"
+  "RunOnce":
+    prefix: "RunOnce"
+    body: "RunOnce(${1:self})"
+  "solve":
+    prefix: "solve"
+    body: "solve(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids}, ${5:system})"
+  "NLGaussSeidel":
+    prefix: "NLGaussSeidel"
+    body: "NLGaussSeidel(${1:self})"
+  "solve":
+    prefix: "solve"
+    body: "solve(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids}, ${5:system})"
+  "LinearSolver":
+    prefix: "LinearSolver"
+    body: "LinearSolver(${1:self})"
+  "add_recorder":
+    prefix: "add_recorder"
+    body: "add_recorder(${1:self}, ${2:recorder})"
+  "solve":
+    prefix: "solve"
+    body: "solve(${1:self}, ${2:rhs}, ${3:system}, ${4:mode})"
+  "NonLinearSolver":
+    prefix: "NonLinearSolver"
+    body: "NonLinearSolver(${1:self})"
+  "add_recorder":
+    prefix: "add_recorder"
+    body: "add_recorder(${1:self}, ${2:recorder})"
+  "solve":
+    prefix: "solve"
+    body: "solve(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids}, ${5:system})"
+  "ScipyGMRES":
+    prefix: "ScipyGMRES"
+    body: "ScipyGMRES(${1:self})"
+  "solve":
+    prefix: "solve"
+    body: "solve(${1:self}, ${2:rhs_mat}, ${3:system}, ${4:mode})"
+  "mult":
+    prefix: "mult"
+    body: "mult(${1:self}, ${2:arg})"
+  "solve":
+    prefix: "solve"
+    body: "solve(${1:self}, ${2:rhs_mat}, ${3:system}, ${4:mode})"
+  "Newton":
+    prefix: "Newton"
+    body: "Newton(${1:self})"
+  "solve":
+    prefix: "solve"
+    body: "solve(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids}, ${5:system})"
+  "DumpCaseRecorder":
+    prefix: "DumpCaseRecorder"
+    body: "DumpCaseRecorder(${1:self}, ${2:driver}, ${3:out})"
+  "startup":
+    prefix: "startup"
+    body: "startup(${1:self}, ${2:group})"
+  "register":
+    prefix: "register"
+    body: "register(${1:self}, ${2:driver}, ${3:inputs}, ${4:outputs})"
+  "record":
+    prefix: "record"
+    body: "record(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "close":
+    prefix: "close"
+    body: "close(${1:self})"
+  "BaseRecorder":
+    prefix: "BaseRecorder"
+    body: "BaseRecorder(${1:self}, ${2:driver})"
+  "startup":
+    prefix: "startup"
+    body: "startup(${1:self}, ${2:group})"
+  "get_simulation_info":
+    prefix: "get_simulation_info"
+    body: "get_simulation_info(${1:self})"
+  "get_driver_info":
+    prefix: "get_driver_info"
+    body: "get_driver_info(${1:self})"
+  "record":
+    prefix: "record"
+    body: "record(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "run_wing":
+    prefix: "run_wing"
+    body: "run_wing()"
+  "debug":
+    prefix: "debug"
+    body: "debug()"
+  "debug":
+    prefix: "debug"
+    body: "debug()"
+  "dump_meta":
+    prefix: "dump_meta"
+    body: "dump_meta(${1:system}, ${2:nest}, ${3:out_stream})"
+  "ExecComp":
+    prefix: "ExecComp"
+    body: "ExecComp(${1:self}, ${2:exprs})"
+  "solve_nonlinear":
+    prefix: "solve_nonlinear"
+    body: "solve_nonlinear(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "jacobian":
+    prefix: "jacobian"
+    body: "jacobian(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "TmpDict":
+    prefix: "TmpDict"
+    body: "TmpDict(${1:self}, ${2:inner}, ${3:complex})"
+  "_UPDict":
+    prefix: "_UPDict"
+    body: "_UPDict(${1:self}, ${2:unknowns}, ${3:params})"
+  "ParamComp":
+    prefix: "ParamComp"
+    body: "ParamComp(${1:self}, ${2:name}, ${3:val})"
+  "apply_linear":
+    prefix: "apply_linear"
+    body: "apply_linear(${1:self}, ${2:mode}, ${3:ls_inputs}, ${4:vois})"
+  "solve_nonlinear":
+    prefix: "solve_nonlinear"
+    body: "solve_nonlinear(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "LinearSystem":
+    prefix: "LinearSystem"
+    body: "LinearSystem(${1:self}, ${2:size})"
+  "solve_nonlinear":
+    prefix: "solve_nonlinear"
+    body: "solve_nonlinear(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "apply_nonlinear":
+    prefix: "apply_nonlinear"
+    body: "apply_nonlinear(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "apply_linear":
+    prefix: "apply_linear"
+    body: "apply_linear(${1:self}, ${2:params}, ${3:unknowns}, ${4:dparams}, ${5:dunknowns}, ${6:dresids}, ${7:mode})"
+  "UnitComp":
+    prefix: "UnitComp"
+    body: "UnitComp(${1:self}, ${2:shape}, ${3:param_name}, ${4:out_name}, ${5:units})"
+  "solve_nonlinear":
+    prefix: "solve_nonlinear"
+    body: "solve_nonlinear(${1:self}, ${2:params}, ${3:unknowns}, ${4:resids})"
+  "apply_linear":
+    prefix: "apply_linear"
+    body: "apply_linear(${1:self}, ${2:params}, ${3:unknowns}, ${4:dparams}, ${5:dunknowns}, ${6:dresids}, ${7:mode})"
+  "build_directory":
+    prefix: "build_directory"
+    body: "build_directory(${1:dct}, ${2:force}, ${3:topdir})"
+  "find_files":
+    prefix: "find_files"
+    body: "find_files(${1:start}, ${2:match}, ${3:exclude}, ${4:showdirs}, ${5:dirmatch}, ${6:direxclude})"
+  "find_up":
+    prefix: "find_up"
+    body: "find_up(${1:name}, ${2:path})"
+  "onerror":
+    prefix: "onerror"
+    body: "onerror(${1:func}, ${2:path}, ${3:exc_info})"
+  "get_common_ancestor":
+    prefix: "get_common_ancestor"
+    body: "get_common_ancestor(${1:name1}, ${2:name2})"
+  "name_relative_to":
+    prefix: "name_relative_to"
+    body: "name_relative_to(${1:parent_abspath}, ${2:child_abspath})"
+  "ExprVarScanner":
+    prefix: "ExprVarScanner"
+    body: "ExprVarScanner(${1:self}, ${2:vnames})"
+  "visit_Name":
+    prefix: "visit_Name"
+    body: "visit_Name(${1:self}, ${2:node})"
+  "visit_Call":
+    prefix: "visit_Call"
+    body: "visit_Call(${1:self}, ${2:node})"
+  "visit_Attribute":
+    prefix: "visit_Attribute"
+    body: "visit_Attribute(${1:self}, ${2:node})"
+  "parse_for_vars":
+    prefix: "parse_for_vars"
+    body: "parse_for_vars(${1:expr}, ${2:vnames})"
+  "to_slice":
+    prefix: "to_slice"
+    body: "to_slice(${1:idxs})"
+  "array_idx_iter":
+    prefix: "array_idx_iter"
+    body: "array_idx_iter(${1:shape})"
+  "evenly_distrib_idxs":
+    prefix: "evenly_distrib_idxs"
+    body: "evenly_distrib_idxs(${1:num_divisions}, ${2:arr_size})"
+  "is_differentiable":
+    prefix: "is_differentiable"
+    body: "is_differentiable(${1:val})"
