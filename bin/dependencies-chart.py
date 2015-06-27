@@ -221,9 +221,9 @@ body = '''</script>
 
     var sysSvg = svgContainer.previousElementSibling.children[0];
     if (sysSvg != null && sysSvg.nodeName === 'svg') {
-      var padding = nodeLen + 'px';
+      var padding = 3 + 'px';
       svgContainer.style.paddingTop = padding;
-      labelSvgContainer.style.top = parseInt(sysSvg.getAttribute('height')) + nodeLen + 'px';
+      labelSvgContainer.style.top = parseInt(sysSvg.getAttribute('height')) + 3 + 'px';
     }
 
     var labels = data.dependencies.labels.map(function(ele, i, arr) {

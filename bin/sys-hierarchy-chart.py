@@ -160,7 +160,7 @@ body = '''</script>
  * System Hierarchy Partition Chart
  */
 
- var SYSTEM_CHART = true;
+var SYSTEM_CHART = true;
 
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
@@ -190,12 +190,13 @@ body = '''</script>
 
   window.addEventListener('load', function() {
     var container = document.getElementById('container');
+
     if (DEPENDENCIES_CHART != null) {
       cw = window.innerWidth * 0.885;
     } else {
       cw = window.innerWidth * 0.984;
     }
-      ch = window.innerHeight;
+    ch = window.innerHeight;
     rangeX = d3.scale.linear().range([0, cw]);
     rangeY = d3.scale.linear().range([0, ch]);
 
@@ -253,6 +254,15 @@ body = '''</script>
       }
       return out;
     }(data.systemHierarchy, 'root', {}));
+
+    if (DEPENDENCIES_CHART != null) {
+      var leaf = getDataLeaves(rootDatum)[0];
+      console.log(leaf);
+      ch = leaf.dx * cw * (leaf.depth + 1);
+      svg.attr('height', ch);
+      rangeY = d3.scale.linear().range([0, ch]);
+      transitionAll(10);
+    }
 
     // assign leaves their attribute values from json data
     getDataLeaves(rootDatum).forEach(function(d, i, arr) {
@@ -763,8 +773,7 @@ body = '''</script>
 
   // calculates a change in font size
   function deltaText(d) {
-    var wh = window.innerHeight;
-    var newSize = 32 * wh / (wh + rangeY(d.y));
+    var newSize = 32 / (d.depth + 1);
     newSize = (newSize < 18) ? 18 : newSize;
     return newSize;
   }
