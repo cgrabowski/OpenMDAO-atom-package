@@ -1234,9 +1234,9 @@ var DEPENDENCIES_CHART = true;
     window.addEventListener('wheel', function(event) {
       event.preventDefault();
       var up = event.deltaY > 0;
-      var r = rootDatum;
+      var root = rootDatum;
 
-      if ((!up && r[0].y <= -nodeLen) || (up && r[r.length - 1].y > nodeLen)) {
+      if ((!up && root[0].y < -nodeLen + 1) || (up && root[root.length - 1].y > nodeLen)) {
         svg.selectAll('g, rect').transition(DEFAULT_TRANSITION_DURATION)
           .attr('y', function(d) {
             if (d.j === 0) {
