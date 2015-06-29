@@ -169,6 +169,8 @@ var SYSTEM_CHART = true;
 (function(d3, undefined) {
   var COLLAPSED_SIZE_PIXELS = 10; // size in pixels of collapsed partition
   var DEFAULT_TRANSITION_DURATION = 500; // transition duration millis
+  var ROOT_ELEMENT_MAX_FONT_SIZE = 32;
+  var MIN_FONT_SIZE = 14;
 
   var cw;
   var ch;
@@ -782,13 +784,18 @@ var SYSTEM_CHART = true;
     return newX;
   }
 
+var logged = false;
   // calculates a change in y position
   function deltaY(d) {
     var newY = 0;
 
     if (this.nodeName === 'text') {
-      var bb = this.getBBox();
-      newY = rangeY(d.y) + bb.height;
+
+      newY = rangeY(d.y) + parseInt(this.getAttribute('font-size'));
+      if(!logged) {
+        console.log(newY);
+        logged = true;
+      }
 
     } else {
       newY = rangeY(d.y);
@@ -809,8 +816,11 @@ var SYSTEM_CHART = true;
 
   // calculates a change in font size
   function deltaText(d) {
-    var newSize = 32 / (d.depth + 1);
-    newSize = (newSize < 18) ? 18 : newSize;
+    var height = rootDatum.element.getElementsByTagName('rect')[0].getAttribute('height');
+    var rootFontSize = (height * 0.8 > ROOT_ELEMENT_MAX_FONT_SIZE) ? ROOT_ELEMENT_MAX_FONT_SIZE : height * 0.8;
+    var newSize = rootFontSize - 0.15 * rootFontSize * d.depth;
+    newSize = (newSize < MIN_FONT_SIZE) ? MIN_FONT_SIZE : newSize;
+
     return newSize;
   }
 
@@ -1011,6 +1021,7 @@ var DEPENDENCIES_CHART = true;
   var labelSvgContainer;
   var svg;
   var labelSvg;
+  var labelGroups;
   var nodeLen;
   var cl;
   var focusedDatum = null;
@@ -1069,7 +1080,7 @@ var DEPENDENCIES_CHART = true;
       };
     });
 
-    var labelGroups = labelSvg.selectAll('g').data(labels)
+    labelGroups = labelSvg.selectAll('g').data(labels)
       .enter().append('g')
       //.attr('fill', 'white')
       .attr('x', function(d) {
@@ -1225,30 +1236,7 @@ var DEPENDENCIES_CHART = true;
 
   if (typeof(SYSTEM_CHART) !== 'undefined') {
     window.addEventListener('wheel', function(event) {
-      event.preventDefault();
-      var up = event.deltaY > 0;
-      var root = rootDatum;
-
-      if ((!up && root[0].y < -nodeLen + 1) || (up && root[root.length - 1].y > nodeLen)) {
-        svg.selectAll('g, rect').transition(DEFAULT_TRANSITION_DURATION)
-          .attr('y', function(d) {
-            if (d.j === 0) {
-              d.y += (up) ? -nodeLen / 2 : nodeLen / 2;
-            }
-
-            return d.y;
-          });
-
-        labelSvg.selectAll('text').transition(DEFAULT_TRANSITION_DURATION)
-          .attr('y', function(d) {
-            if (up) {
-              d.y -= nodeLen;
-            } else {
-              d.y += nodeLen;//
-            }
-            return d.y + nodeLen / 2 + 5;
-          });
-      }
+      wheel(event);
     });
   }
 
@@ -1263,6 +1251,33 @@ var DEPENDENCIES_CHART = true;
     }
 
     return targetCols;
+  }
+
+  function wheel(event) {
+    event.preventDefault();
+    var up = event.deltaY > 0;
+    var root = rootDatum;
+
+    if ((!up && root[0].y < -nodeLen + 1) || (up && root[root.length - 1].y > nodeLen)) {
+      svg.selectAll('g, rect').transition(DEFAULT_TRANSITION_DURATION)
+        .attr('y', function(d) {
+          if (d.j === 0) {
+            d.y += (up) ? -nodeLen / 2 : nodeLen / 2;
+          }
+
+          return d.y;
+        });
+
+      labelSvg.selectAll('text').transition(DEFAULT_TRANSITION_DURATION)
+        .attr('y', function(d) {
+          if (up) {
+            d.y -= nodeLen;
+          } else {
+            d.y += nodeLen; //
+          }
+          return d.y + nodeLen / 2 + 5;
+        });
+    }
   }
 
   // initiates zooming, collapsing, and expanding
@@ -1360,6 +1375,8 @@ var DEPENDENCIES_CHART = true;
       col.collapseGroup = collapseGroup;
       var c = COLLAPSED_SIZE_PIXELS;
       col.width = ((target.children != null && i !== 0) || col.width === 0) ? 0 : c;
+      // collapse corresponding row too
+      rootDatum[i].height = col.width;
       col.isCollapsed = true;
     });
 
@@ -1367,7 +1384,7 @@ var DEPENDENCIES_CHART = true;
     //console.log(columns);
 
     setExpandingDx();
-    setAllRowPositions();
+    setAllPositions();
     transitionAll();
   }
 
@@ -1387,7 +1404,7 @@ var DEPENDENCIES_CHART = true;
     });
 
     setExpandingDx();
-    setAllRowPositions();
+    setAllPositions();
     transitionAll();
   }
 
@@ -1407,14 +1424,18 @@ var DEPENDENCIES_CHART = true;
     rootDatum.transpose.forEach(function(col, i, arr) {
       if (!col.isCollapsed) {
         col.width = expandedNodeSize;
+        // set corresponding row too
+        rootDatum[i].height = col.width;
       }
     });
   }
 
-  function setAllRowPositions() {
+  function setAllPositions() {
     rootDatum.transpose.forEach(function(col, i, arr) {
       if (i !== 0) {
         col.x = arr[i - 1].x + arr[i - 1].width;
+        // collapse corresponding row too
+        rootDatum[i].y = col.x;
       }
     });
   }
