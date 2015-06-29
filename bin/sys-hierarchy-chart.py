@@ -182,15 +182,13 @@ var SYSTEM_CHART = true;
   var focusedDatum = null;
   var svg;
   var rootDatum;
-  var colors = [
-    'rgb(240, 190, 190)', // root
-    'rgb(240, 180, 180)', // group
-    'rgb(180, 180, 240)', // component
-    'rgb(210, 210, 225)', // variable
-    'rgb(210, 240, 180)' // state var and its parent
-  ];
-  var color = d3.scale.ordinal()
-    .range(colors);
+  var colors = {
+    root: 'rgb(240, 190, 190)',
+    group: 'rgb(240, 180, 180)',
+    component: 'rgb(180, 180, 240)',
+    variable: 'rgb(210, 210, 225)',
+    state: 'rgb(210, 240, 180)' // state var and its parent
+  };
 
   window.addEventListener('load', function() {
     var container = document.getElementById('container');
@@ -283,31 +281,31 @@ var SYSTEM_CHART = true;
       // colors rects
       .attr('fill', function(d) {
         // root color index is 0 and group color index is 1
-        var index = (d.depth === 1) ? 0 : 1;
+        var name = (d.depth === 'group') ? 'root' : 'group';
 
         // component color index is 2
         if (d.children != null && d.children[0].children == null) {
-          index = 2;
+          name = 'component';
         }
 
         // variable color index is 3
         if (d.children == null) {
-          index = 3;
+          name = 'variable';
         }
 
         // state vars and components with state vars color index is 4
         if (d.state != null) {
-          index = 4;
+          name = 'state';
         }
         if (d.children != null) {
           d.children.forEach(function(d, i, arr) {
             if (d.state != null) {
-              index = 4;
+              name = 'state';
             }
           });
         }
 
-        return color(index);
+        return colors[name];
       });
 
     // create and append tooltip popup elements

@@ -182,15 +182,10 @@ var DEPENDENCIES_CHART = true;
   var cl;
   var focusedDatum = null;
   var rootDatum;
-  var colors = [
-    'rgb(240, 190, 190)', // root
-    'rgb(240, 180, 180)', // group
-    'rgb(180, 180, 240)', // component
-    'rgb(210, 210, 225)', // variable
-    'rgb(210, 240, 180)', // state var and its parent
-    'rgb(0, 0, 0)', // black
-    'rgb(255, 255, 255)' // white
-  ];
+  var colors = {
+    noDependency: 'rgb(240, 180, 180)',
+    dependency: 'rgb(210, 210, 225)'
+  };
 
   document.addEventListener('readystatechange', function(event) {
     if (document.readyState !== 'complete') {
@@ -365,7 +360,7 @@ var DEPENDENCIES_CHART = true;
       .append('g')
       .append('rect')
       .attr('fill', function(d) {
-        return (d.value === 1) ? colors[1] : colors[3];
+        return (d.value === 1) ? colors['noDependency'] : colors['dependency'];
       })
       .attr('x', deltaX)
       .attr('y', deltaY)
