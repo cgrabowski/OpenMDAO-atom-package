@@ -225,7 +225,7 @@ var DEPENDENCIES_CHART = true;
 
     var sysSvg = svgContainer.previousElementSibling.children[0];
     if (sysSvg != null && sysSvg.nodeName === 'svg') {
-      var padding = 3 + 'px';
+      var padding = 5 + 'px';
       svgContainer.style.paddingTop = padding;
       labelSvgContainer.style.top = parseInt(sysSvg.getAttribute('height')) + 3 + 'px';
     }
@@ -235,7 +235,7 @@ var DEPENDENCIES_CHART = true;
         name: ele,
         i: i,
         x: 0,
-        y: i * nodeLen
+        y: i * nodeLen + nodeLen / 2 + 7
       };
     });
 
@@ -249,7 +249,6 @@ var DEPENDENCIES_CHART = true;
         return d.y;
       })
       .attr('width', cl / 3)
-      .attr('height', nodeLen)
       .each(function(d) {
         d.element = this;
       });
@@ -263,7 +262,7 @@ var DEPENDENCIES_CHART = true;
         return d.x + parseInt(/[0-9.]*/.exec(window.getComputedStyle(sidebar).width)) - 20;
       })
       .attr('y', function(d) {
-        return d.y + nodeLen / 2 + 5;
+        return d.y;
       })
       .text(deltaText);
 
@@ -388,6 +387,8 @@ var DEPENDENCIES_CHART = true;
   });
 
   window.addEventListener('collapse', function(event) {
+    var datum = event.detail.datum;
+    if(datum.key == null || datum.key !== 'root')
     collapse(event);
   });
 
@@ -434,11 +435,11 @@ var DEPENDENCIES_CHART = true;
           if (up) {
             d.y -= nodeLen;
           } else {
-            d.y += nodeLen; //
+            d.y += nodeLen;
           }
-          return d.y + nodeLen / 2 + 5;
+          return d.y;
         });
-    }
+    }6
   }
 
   // initiates zooming, collapsing, and expanding
@@ -536,9 +537,8 @@ var DEPENDENCIES_CHART = true;
       col.collapseGroup = collapseGroup;
       var c = COLLAPSED_SIZE_PIXELS;
       col.width = ((target.children != null && i !== 0) || col.width === 0) ? 0 : c;
-      // collapse corresponding row too
-      rootDatum[i].height = col.width;
       col.isCollapsed = true;
+      texts[0][rootDatum.transpose.indexOf(col)].setAttribute('visibility', 'hidden');
     });
 
     setExpandingDx();
@@ -556,8 +556,10 @@ var DEPENDENCIES_CHART = true;
         col.collapseGroup.forEach(function(c, i, arr) {
           c.isCollapsed = false;
           delete c.collapseGroup;
+          texts[0][rootDatum.transpose.indexOf(c)].setAttribute('visibility', 'visible');
         });
       }
+      texts[0][rootDatum.transpose.indexOf(col)].setAttribute('visibility', 'visible');
       col.isCollapsed = false;
     });
 
@@ -577,11 +579,11 @@ var DEPENDENCIES_CHART = true;
       }
     }, 0);
 
-    var expandedNodeSize = (cl - collapsedArea) / (rootDatum.transpose.length - numCollapsedCols);
+    nodeLen = (cl - collapsedArea) / (rootDatum.transpose.length - numCollapsedCols);
 
     rootDatum.transpose.forEach(function(col, i, arr) {
       if (!col.isCollapsed) {
-        col.width = expandedNodeSize;
+        col.width = nodeLen;
         // set corresponding row too
         rootDatum[i].height = col.width;
       }
@@ -593,8 +595,10 @@ var DEPENDENCIES_CHART = true;
       if (i !== 0) {
         col.x = arr[i - 1].x + arr[i - 1].width;
         // collapse corresponding row too
-        rootDatum[i].y = col.x;
+        rootDatum[i].y = col.x + rootDatum[0].y;
       }
+      var fontSize = parseInt(texts[0][i].getAttribute('font-size'));
+      texts[0][i].__data__.y = col.x + nodeLen / 2 + fontSize / 2 + rootDatum[0].y;
     });
   }
 
@@ -607,6 +611,10 @@ var DEPENDENCIES_CHART = true;
       .attr('y', deltaY)
       .attr('width', deltaWidth)
       .attr('height', deltaHeight);
+
+    texts.transition()
+      .duration(duration)
+      .attr('y', deltaY);
   }
 
   function deltaX(d) {
