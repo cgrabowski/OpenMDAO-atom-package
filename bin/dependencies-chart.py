@@ -179,6 +179,7 @@ var DEPENDENCIES_CHART = true;
   var svg;
   var labelSvg;
   var labelGroups;
+  var texts;
   var nodeLen;
   var cl;
   var focusedDatum = null;
@@ -232,6 +233,7 @@ var DEPENDENCIES_CHART = true;
     var labels = data.dependencies.labels.map(function(ele, i, arr) {
       return {
         name: ele,
+        i: i,
         x: 0,
         y: i * nodeLen
       };
@@ -252,7 +254,7 @@ var DEPENDENCIES_CHART = true;
         d.element = this;
       });
 
-    var texts = labelGroups.append('text')
+    texts = labelGroups.append('text')
       .attr('font-size', 13)
       .attr('fill', 'rgb(170, 170, 170)')
       .attr('text-anchor', 'end')
@@ -263,25 +265,7 @@ var DEPENDENCIES_CHART = true;
       .attr('y', function(d) {
         return d.y + nodeLen / 2 + 5;
       })
-      .text(function(d) {
-        return d.name;
-      });
-
-    texts.text(function(d) {
-      var name = d.name;
-      var sw = labelSvg[0][0].getAttribute('width');
-      var tw = this.getBBox().width;
-
-      if (sw < tw) {
-        this.textContent = name = name.replace(/.{3}/, '...');
-      }
-      while (sw < tw) {
-        tw = this.getBBox().width;
-        this.textContent = name = name.replace(/\.{3}./, '...');
-      }
-
-      return name;
-    });
+      .text(deltaText);
 
     var flat = data.dependencies.matrix.reduce(function(acc, ele) {
       return acc.concat(ele.map(function(ele, i, arr) {
@@ -377,6 +361,26 @@ var DEPENDENCIES_CHART = true;
       });
 
     console.log(rootDatum);
+    console.log(labelGroups);
+  });
+
+  // resize svg on window resize
+  window.addEventListener('resize', function() {
+    cl = window.innerWidth * CHART_SIZE_RATIO;
+    svg[0][0].setAttribute('width', cl);
+    setExpandingDx();
+    setAllPositions();
+
+    labelSvg[0][0].setAttribute('width', parseInt(/[0-9.]*/.exec(window.getComputedStyle(sidebar).width)) - 20);
+    d3.selectAll(texts[0]).transition()
+      .duration(10)
+      .attr('x', function(d) {
+        var newX = d.x + parseInt(/[0-9.]*/.exec(window.getComputedStyle(sidebar).width)) - 20;
+        return newX;
+      })
+      .text(deltaText);
+
+    transitionAll(10);
   });
 
   window.addEventListener('zoom', function(event) {
@@ -537,9 +541,6 @@ var DEPENDENCIES_CHART = true;
       col.isCollapsed = true;
     });
 
-    //console.log(event);
-    //console.log(columns);
-
     setExpandingDx();
     setAllPositions();
     transitionAll();
@@ -624,10 +625,21 @@ var DEPENDENCIES_CHART = true;
     return d.height;
   }
 
-  // resize svg on window resize
-  window.addEventListener('resize', function() {
-    cl = window.innerWidth * CHART_SIZE_RATIO;
-  });
+  function deltaText(d) {
+    this.textContent = d.name;
+    var sw = parseInt(labelSvg[0][0].getAttribute('width'));
+    var tw = this.getBBox().width;
+
+    if (sw < tw) {
+      this.textContent = this.textContent.replace(/.{3}/, '...');
+    }
+    while (sw < tw) {
+      tw = this.getBBox().width;
+      this.textContent = this.textContent.replace(/\.{3}./, '...');
+    }
+
+    return this.textContent;
+  }
 
 })(d3);
 
