@@ -180,8 +180,10 @@ var DEPENDENCIES_CHART = true;
   var labelSvg;
   var labelGroups;
   var texts;
-  var nodeLen;
+  var nodeWidth;
+  var nodeHeight;
   var cl;
+  var rangeX;
   var focusedDatum = null;
   var rootDatum;
   var colors = {
@@ -211,7 +213,9 @@ var DEPENDENCIES_CHART = true;
   });
 
   window.addEventListener('load', function() {
-    nodeLen = cl / data.dependencies.matrix.length;
+    nodeWidth = cl / data.dependencies.matrix.length;
+    nodeHeight = cl / data.dependencies.matrix.length;
+    rangeX = d3.scale.linear().range([0, cl]);
 
     svg = d3.select('#dependency-matrix-chart').append('svg')
       .attr('width', cl)
@@ -235,7 +239,7 @@ var DEPENDENCIES_CHART = true;
         name: ele,
         i: i,
         x: 0,
-        y: i * nodeLen + nodeLen / 2 + 7
+        y: i * nodeHeight + nodeHeight / 2 + 7
       };
     });
 
@@ -281,15 +285,16 @@ var DEPENDENCIES_CHART = true;
 
       if (j === 0) {
         acc.push([ele]);
-        acc[i].y = nodeLen * i;
-        acc[i].height = nodeLen;
+        acc[i].y = nodeHeight * i;
+        acc[i].height = nodeHeight;
+        acc[i].isCollapsed = false;
       } else {
         acc[i].push(ele);
       }
       if (i === 0) {
         transpose.push([ele]);
-        transpose[j].x = nodeLen * j;
-        transpose[j].width = nodeLen;
+        transpose[j].x = nodeWidth * j;
+        transpose[j].width = nodeWidth;
         transpose[j].isCollapsed = false;
       } else {
         transpose[j].push(ele);
@@ -367,6 +372,8 @@ var DEPENDENCIES_CHART = true;
   window.addEventListener('resize', function() {
     cl = window.innerWidth * CHART_SIZE_RATIO;
     svg[0][0].setAttribute('width', cl);
+    rangeX.range([0, cl]);
+
     setExpandingDx();
     setAllPositions();
 
@@ -386,14 +393,23 @@ var DEPENDENCIES_CHART = true;
     zoom(event);
   });
 
+  window.addEventListener('collapse-row', function(event) {
+    collapseRow(event);
+  });
+
   window.addEventListener('collapse', function(event) {
     var datum = event.detail.datum;
-    if(datum.key == null || datum.key !== 'root')
-    collapse(event);
+    if (datum.key == null || datum.key !== 'root') {
+      collapseColumn(event);
+    }
+  });
+
+  window.addEventListener('expand-row', function(event) {
+    expandRow(event);
   });
 
   window.addEventListener('expand', function(event) {
-    expand(event);
+    expandColumn(event);
   });
 
   if (typeof(SYSTEM_CHART) !== 'undefined') {
@@ -420,11 +436,11 @@ var DEPENDENCIES_CHART = true;
     var up = event.deltaY > 0;
     var root = rootDatum;
 
-    if ((!up && root[0].y < -nodeLen + 1) || (up && root[root.length - 1].y > nodeLen)) {
+    if ((!up && root[0].y < -nodeHeight + 1) || (up && root[root.length - 1].y > nodeHeight)) {
       svg.selectAll('g, rect').transition(DEFAULT_TRANSITION_DURATION)
         .attr('y', function(d) {
           if (d.j === 0) {
-            d.y += (up) ? -nodeLen / 2 : nodeLen / 2;
+            d.y += (up) ? -nodeHeight / 2 : nodeHeight / 2;
           }
 
           return d.y;
@@ -433,13 +449,13 @@ var DEPENDENCIES_CHART = true;
       labelSvg.selectAll('text').transition(DEFAULT_TRANSITION_DURATION)
         .attr('y', function(d) {
           if (up) {
-            d.y -= nodeLen;
+            d.y -= nodeHeight;
           } else {
-            d.y += nodeLen;
+            d.y += nodeHeight;
           }
           return d.y;
         });
-    }6
+    }
   }
 
   // initiates zooming, collapsing, and expanding
@@ -454,10 +470,10 @@ var DEPENDENCIES_CHART = true;
 
       // expand/collapse
     } else if (button > 0) {
-      if (rootDatum.transpose[datum.j].isCollapsed) {
-        eventType = 'expand';
+      if (rootDatum[datum.i].isCollapsed) {
+        eventType = 'expand-row';
       } else {
-        eventType = 'collapse';
+        eventType = 'collapse-row';
       }
     }
 
@@ -504,7 +520,7 @@ var DEPENDENCIES_CHART = true;
 
     } else if (detail.rootId === 'system-hierarchy-chart') {
       var datum = detail.datum;
-      var rangeX = d3.scale.linear().domain([datum.x, datum.x + datum.dx]).range([0, cl]);
+      rangeX = d3.scale.linear().domain([datum.x, datum.x + datum.dx]).range([0, cl]);
 
       svg.selectAll('g, rect, text').transition()
         .duration(DEFAULT_TRANSITION_DURATION)
@@ -518,7 +534,27 @@ var DEPENDENCIES_CHART = true;
     }
   }
 
-  function collapse(event) {
+  function collapseRow(event) {
+    var datum = event.detail.datum;
+
+    var numCollapsedRows = rootDatum.reduce(function(acc, ele) {
+      return (ele.isCollapsed) ? acc + 1 : acc;
+    }, 0);
+
+    if (numCollapsedRows === rootDatum.transpose.length - 1) {
+      return;
+    }
+
+    rootDatum[datum.i].isCollapsed = true;
+    rootDatum[datum.i].height = COLLAPSED_SIZE_PIXELS;
+    texts[0][datum.i].setAttribute('visibility', 'hidden');
+
+    setExpandingDx();
+    setAllPositions();
+    transitionAll();
+  }
+
+  function collapseColumn(event) {
     var detail = event.detail;
     var target = detail.element;
     var columns = resolveEventTargetColumns(event);
@@ -535,10 +571,9 @@ var DEPENDENCIES_CHART = true;
     columns.forEach(function(col, i, arr) {
       collapseGroup.push(col);
       col.collapseGroup = collapseGroup;
-      var c = COLLAPSED_SIZE_PIXELS;
-      col.width = ((target.children != null && i !== 0) || col.width === 0) ? 0 : c;
+      col.width = ((target.children != null && i !== 0) || col.width === 0) ? 0 : COLLAPSED_SIZE_PIXELS;
       col.isCollapsed = true;
-      texts[0][rootDatum.transpose.indexOf(col)].setAttribute('visibility', 'hidden');
+      //texts[0][rootDatum.transpose.indexOf(col)].setAttribute('visibility', 'hidden');
     });
 
     setExpandingDx();
@@ -546,7 +581,20 @@ var DEPENDENCIES_CHART = true;
     transitionAll();
   }
 
-  function expand(event) {
+  function expandRow(event) {
+    var detail = event.detail;
+    var target = detail.datum;
+    var row = rootDatum[target.i];
+
+    row.isCollapsed = false;
+    texts[0][target.i].setAttribute('visibility', 'visible');
+
+    setExpandingDx();
+    setAllPositions();
+    transitionAll();
+  }
+
+  function expandColumn(event) {
     var detail = event.detail;
     var target = detail.target;
     var columns = resolveEventTargetColumns(event);
@@ -556,10 +604,10 @@ var DEPENDENCIES_CHART = true;
         col.collapseGroup.forEach(function(c, i, arr) {
           c.isCollapsed = false;
           delete c.collapseGroup;
-          texts[0][rootDatum.transpose.indexOf(c)].setAttribute('visibility', 'visible');
+          //texts[0][rootDatum.transpose.indexOf(c)].setAttribute('visibility', 'visible');
         });
       }
-      texts[0][rootDatum.transpose.indexOf(col)].setAttribute('visibility', 'visible');
+      //texts[0][rootDatum.transpose.indexOf(col)].setAttribute('visibility', 'visible');
       col.isCollapsed = false;
     });
 
@@ -569,36 +617,44 @@ var DEPENDENCIES_CHART = true;
   }
 
   function setExpandingDx() {
-    var collapsedArea = 0;
+    var collapsedColumnLen = 0;
     var numCollapsedCols = rootDatum.transpose.reduce(function(acc, col) {
       if (col.isCollapsed) {
-        collapsedArea += col.width;
+        collapsedColumnLen += col.width;
         return acc + 1;
       } else {
         return acc;
       }
     }, 0);
 
-    nodeLen = (cl - collapsedArea) / (rootDatum.transpose.length - numCollapsedCols);
+    nodeWidth = (cl - collapsedColumnLen) / (rootDatum.transpose.length - numCollapsedCols);
 
     rootDatum.transpose.forEach(function(col, i, arr) {
       if (!col.isCollapsed) {
-        col.width = nodeLen;
-        // set corresponding row too
-        rootDatum[i].height = col.width;
+        col.width = nodeWidth;
+      }
+    });
+
+    rootDatum.forEach(function(row, i, arr) {
+      if (!row.isCollapsed) {
+        row.height = nodeHeight;
       }
     });
   }
 
   function setAllPositions() {
-    rootDatum.transpose.forEach(function(col, i, arr) {
+    rootDatum.transpose.forEach(function(col, j, arr) {
+      if (j !== 0) {
+        col.x = arr[j - 1].x + arr[j - 1].width;
+      }
+    });
+
+    rootDatum.forEach(function(row, i, arr) {
       if (i !== 0) {
-        col.x = arr[i - 1].x + arr[i - 1].width;
-        // collapse corresponding row too
-        rootDatum[i].y = col.x + rootDatum[0].y;
+        row.y = arr[i - 1].y + arr[i - 1].height;
       }
       var fontSize = parseInt(texts[0][i].getAttribute('font-size'));
-      texts[0][i].__data__.y = col.x + nodeLen / 2 + fontSize / 2 + rootDatum[0].y;
+      texts[0][i].__data__.y = row.y + nodeWidth / 2 + fontSize / 2 + rootDatum[0].y;
     });
   }
 
@@ -618,7 +674,7 @@ var DEPENDENCIES_CHART = true;
   }
 
   function deltaX(d) {
-    return d.x;
+    return rangeX(d.x / cl);
   }
 
   function deltaY(d) {
@@ -626,7 +682,7 @@ var DEPENDENCIES_CHART = true;
   }
 
   function deltaWidth(d) {
-    return d.width;
+    return rangeX(d.width / cl + d.x / cl) - rangeX(d.x / cl);
   }
 
   function deltaHeight(d) {
