@@ -182,6 +182,7 @@ var DEPENDENCIES_CHART = true;
   var texts;
   var nodeLen;
   var cl;
+  var topRow = 0;
   var focusedDatum = null;
   var rootDatum;
   var colors = {
@@ -283,6 +284,7 @@ var DEPENDENCIES_CHART = true;
         acc.push([ele]);
         acc[i].y = nodeLen * i;
         acc[i].height = nodeLen;
+        acc[i].isCollapsed = false;
       } else {
         acc[i].push(ele);
       }
@@ -303,7 +305,7 @@ var DEPENDENCIES_CHART = true;
           transpose[j].x = x;
         },
         enumerable: true
-      });
+      }); //
 
       Object.defineProperty(ele, 'y', {
         get: function() {
@@ -388,8 +390,8 @@ var DEPENDENCIES_CHART = true;
 
   window.addEventListener('collapse', function(event) {
     var datum = event.detail.datum;
-    if(datum.key == null || datum.key !== 'root')
-    collapse(event);
+    if (datum.key == null || datum.key !== 'root')
+      collapse(event);
   });
 
   window.addEventListener('expand', function(event) {
@@ -421,10 +423,11 @@ var DEPENDENCIES_CHART = true;
     var root = rootDatum;
 
     if ((!up && root[0].y < -nodeLen + 1) || (up && root[root.length - 1].y > nodeLen)) {
-      svg.selectAll('g, rect').transition(DEFAULT_TRANSITION_DURATION)
+
+      svg.selectAll('rect').transition(DEFAULT_TRANSITION_DURATION)
         .attr('y', function(d) {
           if (d.j === 0) {
-            d.y += (up) ? -nodeLen / 2 : nodeLen / 2;
+            d.y += (up) ? -rootDatum[topRow].height : rootDatum[topRow].height;
           }
 
           return d.y;
@@ -439,7 +442,9 @@ var DEPENDENCIES_CHART = true;
           }
           return d.y;
         });
-    }6
+
+      topRow += (up) ? 1 : -1;
+    }
   }
 
   // initiates zooming, collapsing, and expanding
@@ -538,6 +543,8 @@ var DEPENDENCIES_CHART = true;
       var c = COLLAPSED_SIZE_PIXELS;
       col.width = ((target.children != null && i !== 0) || col.width === 0) ? 0 : c;
       col.isCollapsed = true;
+      rootDatum[rootDatum.transpose.indexOf(col)].height = col.width;
+      rootDatum[rootDatum.transpose.indexOf(col)].isCollapsed = true;
       texts[0][rootDatum.transpose.indexOf(col)].setAttribute('visibility', 'hidden');
     });
 
@@ -561,6 +568,7 @@ var DEPENDENCIES_CHART = true;
       }
       texts[0][rootDatum.transpose.indexOf(col)].setAttribute('visibility', 'visible');
       col.isCollapsed = false;
+      rootDatum[i].isCollapsed = false;
     });
 
     setExpandingDx();
@@ -594,11 +602,15 @@ var DEPENDENCIES_CHART = true;
     rootDatum.transpose.forEach(function(col, i, arr) {
       if (i !== 0) {
         col.x = arr[i - 1].x + arr[i - 1].width;
-        // collapse corresponding row too
         rootDatum[i].y = col.x + rootDatum[0].y;
+      } else {
+        rootDatum[0].y = 0;
+        for (var i = 0; i < topRow; ++i) {
+          rootDatum[0].y -= rootDatum[i].height;
+        }
       }
       var fontSize = parseInt(texts[0][i].getAttribute('font-size'));
-      texts[0][i].__data__.y = col.x + nodeLen / 2 + fontSize / 2 + rootDatum[0].y;
+      texts[0][i].__data__.y = rootDatum[i].y + nodeLen / 2 + fontSize / 2;
     });
   }
 
