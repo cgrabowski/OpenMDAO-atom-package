@@ -14,26 +14,34 @@ module.exports = openmdao =
     chart_server.deactivate()
 
   activate: ->
-
     chart_server.onStart () ->
       chart_client.activate()
       chart_client.onData (data) ->
-        #console.log('onData listener: ' + data)
-        packageRoot = atom.packages.resolvePackagePath('openmdao-atom')
-        cwd = packageRoot + '/bin'
-        child_process.exec './build-scripts.py', {cwd: cwd}, (err) ->
-          #console.log(err ?= 'scripts rebuilt successfully.')
-          for path, model of ChartModelFactory.models
-            model.resetView()
+        for path, model of ChartModelFactory.models
+          model.resetView()
 
     chart_server.activate()
 
-    isChartFileRegex = /\/lib\/.*\.js|\/views\//
+    isChartFileRegex = /\/lib\/charting\/.*\.js|\/views\//
+    isChartCoffeeFileRegex = /\/lib\/charting\/.*\.coffee/
+
     atom.workspace.observeTextEditors (editor) ->
+      packageRoot = atom.packages.resolvePackagePath('openmdao-atom')
+      cwd = packageRoot + '/bin'
       filePath = editor.buffer.file?.path;
-      if filePath? && isChartFileRegex.test(filePath)
-        editor.onDidSave (event) ->
-          chart_client.write('chart file saved to ' + filePath)
+      if filePath?
+        if isChartFileRegex.test(filePath)
+          editor.onDidSave (event) ->
+            child_process.exec './build-scripts.py', {cwd: cwd}, (err) ->
+              console.log err if err?
+              chart_client.write('chart file saved to ' + filePath)
+        else if isChartCoffeeFileRegex.test filePath
+          editor.onDidSave (event) ->
+            child_process.exec 'coffee -c ' + filePath, {cwd: cwd}, (err) ->
+              console.log err if err?
+              child_process.exec './build-scripts.py', {cwd: cwd}, (err) ->
+                console.log err if err?
+                chart_client.write('chart file saved to ' + filePath)
 
     for key, constructor of ChartModelFactory.constructors
       atom.views.addViewProvider
