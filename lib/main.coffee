@@ -22,7 +22,7 @@ module.exports = openmdao =
 
     chart_server.activate()
 
-    isChartFileRegex = /\/lib\/charting\/.*\.js|\/views\//
+    isChartFileRegex = /\/lib\/charting\/.*\.(js|html)/
     isChartCoffeeFileRegex = /\/lib\/charting\/.*\.coffee/
 
     atom.workspace.observeTextEditors (editor) ->

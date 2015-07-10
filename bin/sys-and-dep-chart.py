@@ -47,13 +47,13 @@ head = '''<!DOCTYPE html>
       outline: none;
     }
 
-    body,
-    #chart {
+    body{
       background-color: #20242a;
     }
 
-    #chart {
+    #container {
       text-align: center;
+      height: 100%;
     }
 
     rect {
@@ -120,8 +120,8 @@ head = '''<!DOCTYPE html>
 
 <body>
   <div id='container'>
-    <div id='system-hierarchy-chart'></div>
-    <div id='dependency-matrix-chart'></div>
+    <div id='system-hierarchy-chart' class='chart-container'></div>
+    <div id='dependency-matrix-chart' class='chart-container'></div>
     <svg id='help-icon-background' class='help-icon' height="48" viewBox="0 0 48 48" width='48' xmlns="http://www.w3.org/2000/svg">
       <circle fill='#20242a' cx='18' cy='18' r='18' />
     </svg>
@@ -169,15 +169,11 @@ body = '''</script>
 
     SysHierarchyChart.prototype.defaults = {
       container: null,
-      chartHeight: null,
-      chartWidth: null,
       minElementHeight: 40,
       collapsedSizePixels: 10,
       transitionDuration: 500,
       rootElementMaxFontSize: 32,
       minFontSize: 14,
-      widthRatioAlone: 0.984,
-      widthRatioCombined: 0.885,
       colors: {
         root: 'rgb(240, 190, 190)',
         group: 'rgb(240, 180, 180)',
@@ -192,24 +188,21 @@ body = '''</script>
     SysHierarchyChart.prototype.elipsisRegex = /\.\.\.$/;
 
     function SysHierarchyChart(data, config) {
-      var datum, getLow, jsonLowestPlainObjs, key, prop, setRowOrder, val, _i, _len, _ref, _ref1, _ref2, _ref3,
+      var closeHelpButton, datum, getLow, helpDiv, helpIconElements, i, jsonLowestPlainObjs, key, partition, prop, self, setRowOrder, val, _i, _j, _len, _ref, _ref1, _ref2,
         _this = this;
       this.data = data;
       this.config = config != null ? config : {};
-      this.handleTextAndTooltips = __bind(this.handleTextAndTooltips, this);
+      this.setAllRowPositions = __bind(this.setAllRowPositions, this);
 
-      this.deltaText = __bind(this.deltaText, this);
-
-      this.deltaHeight = __bind(this.deltaHeight, this);
-
-      this.deltaWidth = __bind(this.deltaWidth, this);
-
-      this.deltaY = __bind(this.deltaY, this);
-
-      this.deltaX = __bind(this.deltaX, this);
+      this.setExpandingDx = __bind(this.setExpandingDx, this);
 
       this.resize = __bind(this.resize, this);
 
+      this.collapse = __bind(this.collapse, this);
+
+      this.zoom = __bind(this.zoom, this);
+
+      self = this;
       _ref = this.defaults;
       for (prop in _ref) {
         val = _ref[prop];
@@ -223,12 +216,12 @@ body = '''</script>
         this.container = document.createElement('div');
         document.body.appendChild(this.container);
       }
-      this.chartWidth = (_ref1 = this.config.chartWidth) != null ? _ref1 : window.innerWidth;
-      this.chartHeight = (_ref2 = this.config.chartHeight) != null ? _ref2 : window.innerHeight;
+      this.chartWidth = parseInt(window.getComputedStyle(this.container).width);
+      this.chartHeight = window.innerHeight - 20;
       this.rangeX = d3.scale.linear().range([0, this.chartWidth]);
       this.rangeY = d3.scale.linear().range([0, this.chartHeight]);
       this.svg = d3.select(this.container).append('svg').attr('width', this.chartWidth).attr('height', this.chartHeight);
-      this.partition = d3.layout.partition().children(function(datum) {
+      partition = d3.layout.partition().children(function(datum) {
         var vals;
         vals = d3.entries(datum.value);
         vals.forEach(function(ele, i, arr) {
@@ -238,19 +231,18 @@ body = '''</script>
           return datum.value.constructor.name === 'Object';
         });
       }).sort(function(a, b) {
-        return a.siblingOrder - b.siblingOrder.value(function(datum) {
-          return 1;
-        });
+        return a.siblingOrder - b.siblingOrder;
+      }).value(function(datum) {
+        return 1;
       });
-      this.groups = this.svg.selectAll('g').data(this.partition(d3.entries(this.data[0]))).enter().append('g').each(function(datum) {
-        return datum.element = this;
-      }).attr('x', this.deltaX).attr('y', this.deltaY).attr('width', this.deltaWidth).attr('height', this.deltaHeight);
-      this.groups.filter(function(datum) {
-        return !(datum.parent != null);
-      }).each(function(datum) {
-        return _this.rootDatum = datum;
+      this.groups = this.svg.selectAll('g').data(partition(d3.entries(this.data.systemHierarchy)[0])).enter().append('g').each(function(datum) {
+        datum.element = this;
+        return datum.chart = self;
+      }).attr('x', this.deltaX).attr('y', this.deltaY).attr('width', this.deltaWidth).attr('height', this.deltaHeight).each(function(datum) {
+        if (datum.parent == null) {
+          return _this.rootDatum = datum;
+        }
       });
-      console.log(this.rootDatum);
       jsonLowestPlainObjs = (getLow = function(data, keyin, out) {
         var hasChildObj, key;
         hasChildObj = false;
@@ -266,15 +258,15 @@ body = '''</script>
         }
         return out;
       })(data, 'root', {});
-      _ref3 = this.getDataLeaves();
-      for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
-        datum = _ref3[_i];
+      _ref1 = this.getDataLeaves();
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        datum = _ref1[_i];
         for (key in jsonLowestPlainObjs[datum.key]) {
           datum[key] = jsonLowestPlainObjs[datum.key][key];
         }
       }
       this.rects = this.groups.append('rect').attr('x', this.deltaX).attr('y', this.deltaY).attr('width', this.deltaWidth).attr('height', this.deltaHeight).attr('fill', function(datum) {
-        var child, type, _j, _len1, _ref4;
+        var child, type, _j, _len1, _ref2;
         type = 'group';
         if (datum.depth === 0) {
           type = 'root';
@@ -289,9 +281,9 @@ body = '''</script>
           type = 'state';
         }
         if (datum.children != null) {
-          _ref4 = datum.children;
-          for (_j = 0, _len1 = _ref4.length; _j < _len1; _j++) {
-            child = _ref4[_j];
+          _ref2 = datum.children;
+          for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+            child = _ref2[_j];
             if (child.state != null) {
               type = 'state';
             }
@@ -300,32 +292,47 @@ body = '''</script>
         return _this.config.colors[type];
       });
       this.titles = this.groups.append('title');
-      /*
-          @texts = @groups.append('text')
-            .attr('font-size', @deltaText)
-            .text((datum) => @removeParentNamesRegex.exec datum.key)
-            .attr('x', @deltaX)
-            .attr('y', @deltaY)
-            .each @handleTextAndTooltips
-      */
-
+      this.texts = this.groups.append('text').attr('font-size', this.deltaText).text(function(datum) {
+        return _this.removeParentNamesRegex.exec(datum.key);
+      }).attr('x', this.deltaX).attr('y', this.deltaY).each(this.handleTextAndTooltips);
       (setRowOrder = function(depth) {
-        var ele, i, row, _j, _len1, _ref4;
+        var ele, i, row, _j, _len1, _ref2;
         if ((row = _this.getDataByDepth(depth)).length !== 0) {
-          _ref4 = row.sort(function(a, b) {
+          _ref2 = row.sort(function(a, b) {
             return a.x - b.x;
           });
-          for (i = _j = 0, _len1 = _ref4.length; _j < _len1; i = ++_j) {
-            ele = _ref4[i];
+          for (i = _j = 0, _len1 = _ref2.length; _j < _len1; i = ++_j) {
+            ele = _ref2[i];
             ele.rowOrder = i;
           }
           return setRowOrder(++depth);
         }
       })(1);
       this.groups.on('focus', function(datum) {
-        return _this.focusedDatum = d;
+        return _this.focusedDatum = datum;
       });
       window.addEventListener('resize', this.resize);
+      helpIconElements = document.getElementsByClassName('help-icon');
+      helpDiv = document.getElementById('help');
+      closeHelpButton = document.getElementById('close-help-button');
+      for (i = _j = 0, _ref2 = helpIconElements.length - 1; 0 <= _ref2 ? _j <= _ref2 : _j >= _ref2; i = 0 <= _ref2 ? ++_j : --_j) {
+        helpIconElements.item(i).addEventListener('click', function(event) {
+          var ii, _k, _ref3;
+          helpDiv.style.display = 'inline-block';
+          for (ii = _k = 0, _ref3 = helpIconElements.length - 1; 0 <= _ref3 ? _k <= _ref3 : _k >= _ref3; ii = 0 <= _ref3 ? ++_k : --_k) {
+            helpIconElements.item(ii).style.display = 'none';
+          }
+          return false;
+        });
+      }
+      closeHelpButton.addEventListener('click', function(event) {
+        var _k, _ref3;
+        for (i = _k = 0, _ref3 = helpIconElements.length - 1; 0 <= _ref3 ? _k <= _ref3 : _k >= _ref3; i = 0 <= _ref3 ? ++_k : --_k) {
+          helpIconElements.item(i).style.display = 'block';
+        }
+        helpDiv.style.display = 'none';
+        return false;
+      });
     }
 
     SysHierarchyChart.prototype.getDataByDepth = function(depth) {
@@ -379,18 +386,16 @@ body = '''</script>
       var pushDatum;
       (pushDatum = function(d) {
         var child, _i, _len, _ref, _results;
-        _ref = d.children;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          child = _ref[_i];
-          if (d.children != null) {
-            selection[0].push(child);
+        if (d.children != null) {
+          _ref = d.children;
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            child = _ref[_i];
+            selection[0].push(child.element);
             _results.push(pushDatum(selection, child));
-          } else {
-            _results.push(void 0);
           }
+          return _results;
         }
-        return _results;
       })(datum);
       return selection;
     };
@@ -412,35 +417,37 @@ body = '''</script>
       return _results;
     };
 
-    SysHierarchyChart.prototype.zooom = function(event) {
+    SysHierarchyChart.prototype.zoom = function(datum) {
+      console.log('zoom');
       this.rangeX.domain([datum.x, datum.x + datum.dx]);
-      this.rangeY.domain([datum.y, 1]).range([datum.y === 0 ? 0 : 20], ch);
+      this.rangeY.domain([datum.y, 1]).range([datum.y === 0 ? 0 : 20, this.chartHeight]);
       return this.transitionAll();
     };
 
     SysHierarchyChart.prototype.collapse = function(datum) {
-      var c, child, collapsing, cw, dd, i, numNotCollapsed, stateVar, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
-      if (datum === rootDatum) {
+      var c, child, collapsing, cw, d, i, numNotCollapsed, stateVar, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2,
+        _this = this;
+      if (datum === this.rootDatum) {
         return;
       }
       cw = this.chartWidth;
-      numNotCollapsed = (this.getDataByDepth(datum.depth).filter(function(datum, i, arr) {
-        return !this.isCollapsed(d.element);
+      numNotCollapsed = (this.getDataByDepth(datum.depth).filter(function(d, i, arr) {
+        return !_this.isCollapsed(d.element);
       })).length;
       if (numNotCollapsed === 1) {
         return;
       }
-      datum.element.classList.add('collapsed');
-      collapsing = this.datumDescendantElements(d3.select(datum.element), datum).classed('collapsed', true);
+      collapsing = this.addDatumDescendantElements(d3.select(datum.element), datum);
       collapsing.each(function(d) {
         var parent;
-        if (this.nodeName === 'text') {
-          this.style.visibility = 'hidden';
+        datum.element.classList.add('collapsed');
+        if (_this.nodeName === 'text') {
+          _this.style.visibility = 'hidden';
         }
         d.dx = 0;
-        parent = datum;
-        while (this.isCollapsed(parent.element)) {
-          parent.dx = this.config.COLLAPSED_SIZE_PIXELS / cw;
+        parent = d;
+        while (_this.isCollapsed(parent.element)) {
+          parent.dx = _this.config.collapsedSizePixels / _this.chartWidth;
           parent = parent.parent;
         }
         return d.x = datum.x;
@@ -453,21 +460,21 @@ body = '''</script>
           c = _ref[i];
           if (c.state != null) {
             stateVar = c;
-            stateVar.dx = this.config.COLLAPSED_SIZE_PIXELS / cw;
+            stateVar.dx = this.config.collapsedSizePixels / cw;
             break;
           }
         }
         _ref1 = child.children;
         for (i = _j = 0, _len1 = _ref1.length; _j < _len1; i = ++_j) {
           c = _ref1[i];
-          if (!((stateVar != null) || i !== 0)) {
-            d.dx = this.config.COLLAPSED_SIZE_PIXELS / cw;
+          if (stateVar === null && i === 0) {
+            c.dx = this.config.collapsedSizePixels / cw;
           } else if (stateVar !== d) {
-            d.dx = 0;
-            _ref2 = datumDescendantElements(d3.select(d.element), d);
+            c.dx = 0;
+            _ref2 = this.addDatumDescendantElements(d3.select(c.element), c);
             for (i = _k = 0, _len2 = _ref2.length; _k < _len2; i = ++_k) {
-              dd = _ref2[i];
-              dd.dx = 0;
+              d = _ref2[i];
+              d.dx = 0;
             }
           }
         }
@@ -479,7 +486,8 @@ body = '''</script>
     };
 
     SysHierarchyChart.prototype.expand = function(datum) {
-      var rootExpansionDatum, selection, traverseAncestors;
+      var rootExpansionDatum, selection, traverseAncestors,
+        _this = this;
       selection = d3.select(datum.element);
       this.datumChildrenElements(selection, datum);
       this.datumDescendantElements(selection, datum);
@@ -488,18 +496,18 @@ body = '''</script>
         var dd, numExpandedChildren, parent, parentSelection, _i, _len, _ref;
         parent = d.parent;
         parentSelection = d3.select(parent.element);
-        if (!this.isCollapsed(parentSelection)) {
+        if (!_this.isCollapsed(parentSelection)) {
           return d;
         }
         parentSelection.classed('collapsed', false);
         numExpandedChildren = (parent.children.filter(function(dd, i, arr) {
-          return !this.isCollapsed(dd.element);
+          return !_this.isCollapsed(dd.element);
         })).length;
         if (numExpandedChildren === 1) {
           _ref = parent.children;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             dd = _ref[_i];
-            this.datumDescendantElements(d3.select(dd.element), dd).classed('collapsed', false);
+            _this.datumDescendantElements(d3.select(dd.element), dd).classed('collapsed', false);
           }
         }
         return traverseAncestors(parent);
@@ -512,18 +520,25 @@ body = '''</script>
 
     SysHierarchyChart.prototype.transitionAll = function(duration) {
       if (duration == null) {
-        duration = this.config.DEFAULT_TRANSITION_DURATION;
+        duration = this.config.transitionDuration;
       }
-      return this.svg.selectAll('g, rect, text').transition().duration(duration.attr('x', this.deltaX.attr('y', this.deltaY.attr('width', this.deltaWidth.attr('height', this.deltaHeight.filter('text'.attr('font-size', this.deltaText.each('end', this.handleTextAndTooltips))))))));
+      return this.svg.selectAll('g, rect, text').transition().duration(duration).attr('x', this.deltaX).attr('y', this.deltaY).attr('width', this.deltaWidth).attr('height', this.deltaHeight).filter(function(datum) {
+        return datum.element.nodeName === 'text';
+      }).attr('font-size', this.deltaText).each('end', this.handleTextAndTooltips);
     };
 
     SysHierarchyChart.prototype.resize = function() {
+      var _this = this;
+      this.chartWidth = parseInt(window.getComputedStyle(this.container).width);
+      this.chartHeight = window.innerHeight - 20;
       this.svg.attr('width', this.chartWidth);
+      this.svg.attr('height', this.chartHeight);
       this.rangeX.range([0, this.chartWidth]);
-      this.svg.selectAll('.collapsed'.each(function(d) {
-        d.dx = d.dx === 0 ? 0 : this.config.collapsedSizePixels / this.chartWidth;
-        return this.deltaWidth(datum);
-      }));
+      this.rangeY.range([0, this.chartHeight]);
+      this.svg.selectAll('.collapsed').each(function(d) {
+        d.dx = d.dx === 0 ? 0 : _this.config.collapsedSizePixels / _this.chartWidth;
+        return _this.deltaWidth(datum);
+      });
       this.setExpandingDx();
       this.setAllRowPositions();
       return this.transitionAll(10);
@@ -534,9 +549,10 @@ body = '''</script>
     };
 
     SysHierarchyChart.prototype.setExpandingDx = function() {
-      var datum, expanding, findCollapsed, i, leaf, leafdx, leaves, lvs, numCollapsed, numCollapsedAreas, numExpanded, numExpandedLeaves, unCollapsedArea, _i, _j, _len, _len1;
+      var datum, expanding, findCollapsed, i, leaf, leafdx, leaves, lvs, numCollapsed, numCollapsedAreas, numExpanded, numExpandedLeaves, unCollapsedArea, _i, _j, _len, _len1,
+        _this = this;
       expanding = this.svg.selectAll('g').filter(function(d) {
-        return !this.isCollapsed(this);
+        return !_this.isCollapsed(d.element);
       });
       leaves = this.getDataLeaves();
       numExpandedLeaves = 0;
@@ -571,7 +587,7 @@ body = '''</script>
           _results = [];
           for (_k = 0, _len2 = children.length; _k < _len2; _k++) {
             child = children[_k];
-            if (this.isCollapsed(child.element)) {
+            if (_this.isCollapsed(child.element)) {
               _results.push(++numCollapsed);
             } else {
               _results.push(findCollapsed(child));
@@ -584,96 +600,109 @@ body = '''</script>
     };
 
     SysHierarchyChart.prototype.setAllRowPositions = function() {
+      var _this = this;
       this.groups.each(function(datum) {
         var i, laterals, _i, _ref, _results;
         if (datum.parent == null) {
           return;
         }
-        laterals = this.getDataByDepth(datum.depth);
+        laterals = _this.getDataByDepth(datum.depth);
         datum.newX = 0;
-        _results = [];
-        for (i = _i = 0, _ref = laterals.indexOf(datum); 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
-          _results.push(datum.newX += laterals[i].dx);
+        if (laterals.indexOf(datum) !== 0) {
+          _results = [];
+          for (i = _i = 0, _ref = laterals.indexOf(datum) - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+            _results.push(datum.newX += laterals[i].dx);
+          }
+          return _results;
         }
-        return _results;
       });
       return this.groups.each(function(datum) {
         if (datum.parent == null) {
           return;
         }
-        d.x = datum.newX;
+        datum.x = datum.newX;
         return delete datum.newX;
       });
     };
 
     SysHierarchyChart.prototype.deltaX = function(datum) {
-      var ele;
-      ele = datum.element;
-      if (ele.nodeName === 'text') {
-        return this.rangeX(datum.x) + deltaWidth(datum) / 2 - ele.getBBox().width / 2;
+      var chart;
+      chart = datum.chart;
+      if (this.nodeName === 'text') {
+        return chart.rangeX(datum.x) + chart.deltaWidth(datum) / 2 - this.getBBox().width / 2;
       } else {
-        return this.rangeX(datum.x);
+        return chart.rangeX(datum.x);
       }
     };
 
     SysHierarchyChart.prototype.deltaY = function(datum) {
-      var ele;
-      ele = datum.element;
-      if (ele.nodeName === 'text') {
-        return this.rangeY(datum.y) + ele.getBBox().height;
+      var chart;
+      chart = datum.chart;
+      if (this.nodeName === 'text') {
+        return chart.rangeY(datum.y) + this.getBBox().height;
       } else {
-        return this.rangeY(datum.y);
+        return chart.rangeY(datum.y);
       }
     };
 
     SysHierarchyChart.prototype.deltaWidth = function(datum) {
-      return this.rangeX(datum.x + datum.dx) - this.rangeX(datum.x);
+      var chart;
+      chart = datum.chart;
+      return chart.rangeX(datum.x + datum.dx) - chart.rangeX(datum.x);
     };
 
     SysHierarchyChart.prototype.deltaHeight = function(datum) {
-      return this.rangeY(datum.y + datum.dy) - this.rangeY(datum.y);
+      var chart;
+      chart = datum.chart;
+      return chart.rangeY(datum.y + datum.dy) - chart.rangeY(datum.y);
     };
 
     SysHierarchyChart.prototype.deltaText = function(datum) {
-      var calcedSize, height, rootFontSize;
-      height = this.rootDatum.element.getElementsByTagName('rect')[0].getAttribute('height');
-      rootFontSize = height * 0.8 > this.config.ROOT_ELEMENT_MAX_FONT_SIZE ? this.config.ROOT_ELEMENT_MAX_FONT_SIZE : height * 0.8;
+      var calcedSize, config, height, rootFontSize, rootRect;
+      config = datum.chart.config;
+      rootRect = datum.chart.rootDatum.element.getElementsByTagName('rect')[0];
+      height = parseInt(rootRect.getAttribute('height'));
+      rootFontSize = height * 0.8 > config.rootElementMaxFontSize ? config.rootElementMaxFontSize : height * 0.8;
       calcedSize = rootFontSize - 0.15 * rootFontSize * datum.depth;
-      if (rootFontSize < this.config.MIN_FONT_SIZE) {
-        return this.config.MIN_FONT_SIZE;
-      } else {
+      if (calcedSize > config.minFontSize) {
         return calcedSize;
+      } else {
+        return config.minFontSize;
       }
     };
 
     SysHierarchyChart.prototype.handleTextAndTooltips = function(datum) {
-      var ele, gw, i, pw, px, siblings, textLength, tooltip, tw, _i, _ref;
-      ele = datum.element;
-      console.log(ele);
-      ele.innerHTML = this.removeParentNamesRegex.exec(datum.key);
+      var chart, child, ele, gw, i, pw, px, siblings, textLength, tooltip, tw, _i, _j, _ref, _ref1;
+      chart = datum.chart;
+      ele = null;
+      for (i = _i = 0, _ref = datum.element.childNodes.length - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+        child = datum.element.childNodes.item(i);
+        if (child.nodeName === 'text') {
+          ele = child;
+        }
+      }
+      ele.innerHTML = chart.removeParentNamesRegex.exec(datum.key);
       gw = ele.parentNode.getAttribute('width');
       tw = ele.getBBox().width;
       siblings = ele.parentNode.childNodes;
       tooltip = null;
-      for (i = _i = 0, _ref = siblings.length - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
-        console.log(siblings);
+      for (i = _j = 0, _ref1 = siblings.length - 1; 0 <= _ref1 ? _j <= _ref1 : _j >= _ref1; i = 0 <= _ref1 ? ++_j : --_j) {
         if (siblings.item(i).nodeName === 'title') {
           tooltip = siblings.item(i);
-          break;
         }
       }
       if (tw > gw - 10) {
-        if (this.isCollapsed(ele.parentNode)) {
+        if (chart.isCollapsed(ele.parentNode)) {
           ele.style.visiblity = 'hidden';
           return tooltip.innerHTML = 'datum.key';
         } else {
           ele.style.visiblity = 'visible';
           tooltip.innerHTML = '';
-          if (!this.elipsisRegex.test(ele.innerHTML)) {
+          if (!chart.elipsisRegex.test(ele.innerHTML)) {
             this.innerHTML += '...';
           }
           textLength = ele.innerHTML.length - 3;
-          while (ele.getBBox().width > parseInt(ele.parentNode.getAtribute('width')) - 10) {
+          while (ele.getBBox().width > parseInt(ele.parentNode.getAttribute('width')) - 10) {
             if (textLength < 1) {
               ele.innerHTML = '...';
               break;
@@ -685,23 +714,23 @@ body = '''</script>
             ele.innerHTML = '';
           }
           px = parseInt(ele.parentNode.getAttribute('x'));
-          pw = parseInt(ele.parentNode.getAtribute('width'));
+          pw = parseInt(ele.parentNode.getAttribute('width'));
           tw = ele.getBBox().width;
           return ele.setAttribute('x', px + (pw / 2 - tw / 2));
         }
       } else {
-        if (this.isCollapsed(ele.parentNode)) {
+        if (chart.isCollapsed(ele.parentNode)) {
           ele.style.visibility = 'hidden';
           tooltip.innerHTML = datum.key;
         } else {
           ele.style.visibility = 'visible';
           tooltip.innerHTML = '';
         }
-        if (this.elipsisRegex.test(ele.innerHTML)) {
-          ele.innerHTML = this.removeParentNamesRegex.exec(datum.key);
+        if (chart.elipsisRegex.test(ele.innerHTML)) {
+          ele.innerHTML = chart.removeParentNamesRegex.exec(datum.key);
         }
-        px = parseInt(ele.parentNode.getAtribute('x'));
-        pw = parseInt(ele.parentNode.getAtribute('width'));
+        px = parseInt(ele.parentNode.getAttribute('x'));
+        pw = parseInt(ele.parentNode.getAttribute('width'));
         tw = ele.getBBox().width;
         return ele.setAttribute('x', px + (pw / 2 - tw / 2));
       }
@@ -715,32 +744,45 @@ body = '''</script>
 
 </script>
 <script>
+
+</script>
+<script>
 // Generated by CoffeeScript 1.4.0
 (function() {
+  var click, depChart, isCollapsed, sysChart;
+
+  sysChart = null;
+
+  depChart = null;
 
   window.addEventListener('load', function() {
-    var chart, container;
-    container = document.getElementById('system-hierarchy-chart');
-    return chart = new window.SysHierarchyChart(data, {
-      container: container
-    });
+    var container;
+    if (data.systemHierarchy != null) {
+      container = document.getElementById('system-hierarchy-chart');
+      sysChart = new window.SysHierarchyChart(data, {
+        container: container
+      });
+    }
+    d3.selectAll('g').on('click', click);
+    return d3.selectAll('g').on('contextmenu', click);
   });
 
-  window.addEventListener('click', function(event) {
-    return event = d3.event;
-  });
+  click = function(datum) {
+    var button, ele;
+    button = d3.event.button;
+    ele = datum.element;
+    if (button === 0 && !isCollapsed(ele)) {
+      return sysChart.zoom(datum);
+    } else if (button > 0 && isCollapsed(ele)) {
+      return sysChart.expand(datum);
+    } else if (button > 0) {
+      return sysChart.collapse(datum);
+    }
+  };
 
-}).call(this);
-
-</script>
-<script>
-
-</script>
-<script>
-// Generated by CoffeeScript 1.4.0
-(function() {
-
-  window.addEventListener('load', function() {});
+  isCollapsed = function(element) {
+    return element.classList.contains('collapsed');
+  };
 
 }).call(this);
 
